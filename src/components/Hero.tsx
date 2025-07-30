@@ -27,17 +27,17 @@ export const Hero = () => {
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
-            <span className="text-foreground">InnoVista </span>
-            <span className="text-primary shadow-text-glow">Learn Easy</span>
+            <span className="text-foreground">Patronces </span>
+            <span className="text-primary shadow-text-glow">Make your Future Bright</span>
           </h1>
           
           <h2 className="text-2xl md:text-4xl font-semibold mb-4">
             Offers Online Course With{" "}
-            <span className="text-primary">Free Certificate</span> in Pakistan
+            <span className="text-primary">Certificate</span> in Pakistan
           </h2>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Advance your career with high-quality courses taught by industry experts.
+            Advance your career with high-quality courses taught by industry Experts .
           </p>
           
           <p className="text-lg font-medium mb-12">
@@ -74,11 +74,11 @@ export const Hero = () => {
             <Card className="p-8 bg-card-gradient border border-border/50">
               <p className="text-lg leading-relaxed text-muted-foreground">
                 Are you ready to upgrade your skills and build a successful future? At{" "}
-                <span className="text-primary font-semibold">LearnEasy.pk</span>, we offer a wide range of{" "}
-                <span className="text-accent">free online courses in Pakistan with certificates</span>, 
-                helping students, professionals, and beginners achieve their goals without any cost. Whether you want to start a{" "}
-                <span className="text-primary">freelancing career</span>, master{" "}
-                <span className="text-primary">digital marketing</span>, learn{" "}
+                <span className="text-primary font-semibold">Patronecs.com</span>, we offer a wide range of{" "}
+                <span className="text-accent"> online courses in Pakistan with certificates</span>, 
+                helping students, professionals, and beginners achieve their goals without any extra cost. Whether you want to start a{" "}
+                <span className="text-primary">Mobile Development</span>, master{" "}
+                <span className="text-primary">Website Development</span>, master{" "}
                 <span className="text-primary">programming</span>, or improve your{" "}
                 <span className="text-primary">writing skills</span>, our courses are designed to make learning easy and accessible for everyone.
               </p>
