@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Search } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/patronecs-logo.png";
 
 export const Header = () => {
   const navItems = [
@@ -18,7 +18,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <img src={logo} alt="LearnEasy" className="h-10" />
+            <img src={logo} alt="Patronecs" className="h-8" />
           </div>
 
           {/* Desktop Navigation */}

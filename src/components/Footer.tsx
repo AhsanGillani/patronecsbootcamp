@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/patronecs-logo.png";
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 
 export const Footer = () => {
@@ -39,7 +39,7 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-6">
-              <img src={logo} alt="LearnEasy" className="h-12" />
+              <img src={logo} alt="Patronecs" className="h-8" />
             </div>
             <p className="text-muted-foreground mb-6 leading-relaxed">
               Empowering Pakistan's youth with free, high-quality online education and certifications to build successful careers.
