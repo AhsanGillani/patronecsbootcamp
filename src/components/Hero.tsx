@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { GraduationCap, Award, Users } from "lucide-react";
+import { GraduationCap, Award, Users, Search } from "lucide-react";
 
 export const Hero = () => {
   const features = [
@@ -24,25 +24,39 @@ export const Hero = () => {
   return (
     <section className="min-h-screen bg-hero-gradient flex items-center justify-center pt-20">
       <div className="container mx-auto px-4 py-16">
+        {/* Promotional Banner - Udemy Style */}
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-8 text-center">
+          <p className="text-primary font-semibold">
+            🎉 Special Offer: Get unlimited access to all courses - Starting from PKR 1,999!
+          </p>
+        </div>
+
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6">
-            <span className="text-foreground">Patronces </span>
-            <span className="text-primary shadow-text-glow">Make your Future Bright</span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <span className="text-foreground">Learn skills that </span>
+            <span className="text-primary shadow-text-glow">advance your career</span>
           </h1>
           
-          <h2 className="text-2xl md:text-4xl font-semibold mb-4">
-            Offers Online Course With{" "}
-            <span className="text-primary">Certificate</span> in Pakistan
-          </h2>
-          
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Advance your career with high-quality courses taught by industry Experts .
+            Join millions of learners from around the world already learning on Patronecs. 
+            Find the right instructor for you.
           </p>
-          
-          <p className="text-lg font-medium mb-12">
-            Learn at your own pace, anytime, anywhere.
-          </p>
+
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-12">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="What do you want to learn?"
+                className="w-full pl-12 pr-4 py-4 text-lg border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+              <Button className="absolute right-2 top-2 bottom-2">
+                Search
+              </Button>
+            </div>
+          </div>
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">

@@ -100,9 +100,17 @@ export const Courses = () => {
                   {course.title}
                 </h3>
                 
-                <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
+                <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
                   {course.description}
                 </p>
+                
+                {/* Rating - Udemy Style */}
+                <div className="flex items-center mb-3">
+                  <div className="flex text-yellow-400">
+                    {"★".repeat(5)}
+                  </div>
+                  <span className="ml-2 text-sm text-muted-foreground">4.8 (2,847)</span>
+                </div>
                 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                   <div className="flex items-center gap-1">

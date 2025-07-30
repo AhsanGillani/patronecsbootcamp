@@ -21,13 +21,25 @@ export const Header = () => {
             <img src={logo} alt="Patronecs" className="h-8" />
           </div>
 
+          {/* Search Bar - Udemy Style */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search for anything..."
+                className="w-full pl-10 pr-4 py-2 border border-border rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
+          </div>
+
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-6">
             {navItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
-                className="text-foreground hover:text-primary transition-colors duration-200"
+                className="text-foreground hover:text-primary transition-colors duration-200 text-sm font-medium"
               >
                 {item.name}
               </a>
@@ -35,16 +47,13 @@ export const Header = () => {
           </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Search className="h-4 w-4" />
+          <div className="flex items-center space-x-3">
+            <span className="hidden lg:block text-sm text-muted-foreground">Teach on Patronecs</span>
+            <Button variant="ghost" className="hidden md:flex text-sm">
+              Log in
             </Button>
-            <span className="hidden md:block text-sm text-muted-foreground">Need Help?</span>
-            <Button variant="outline" className="hidden md:flex">
-              LOGIN
-            </Button>
-            <Button variant="hero">
-              Inquire Now
+            <Button variant="hero" className="text-sm">
+              Sign up
             </Button>
             
             {/* Mobile Menu Button */}
