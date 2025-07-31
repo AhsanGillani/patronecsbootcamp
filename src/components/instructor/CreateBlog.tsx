@@ -72,7 +72,7 @@ export const CreateBlog = ({ onBlogCreated }: CreateBlogProps) => {
           title: formData.title,
           content: formData.content,
           excerpt: formData.excerpt,
-          category_id: formData.category_id || null,
+          category_id: formData.category_id === "none" ? null : formData.category_id,
           featured_image_url: formData.featured_image_url || null,
           author_id: user.id,
           status: formData.status as 'draft' | 'pending' | 'approved' | 'rejected',
@@ -170,7 +170,7 @@ export const CreateBlog = ({ onBlogCreated }: CreateBlogProps) => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Category</SelectItem>
+                    <SelectItem value="none">No Category</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}

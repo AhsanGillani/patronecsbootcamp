@@ -72,7 +72,7 @@ export const CreateCourse = ({ onCourseCreated }: CreateCourseProps) => {
         .insert([{
           title: formData.title,
           description: formData.description,
-          category_id: formData.category_id || null,
+          category_id: formData.category_id === "none" ? null : formData.category_id,
           level: formData.level as 'beginner' | 'intermediate' | 'advanced',
           price: parseFloat(formData.price),
           thumbnail_url: formData.thumbnail_url || null,
@@ -159,7 +159,7 @@ export const CreateCourse = ({ onCourseCreated }: CreateCourseProps) => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Category</SelectItem>
+                    <SelectItem value="none">No Category</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
