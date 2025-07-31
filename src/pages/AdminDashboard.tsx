@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { LogOut } from 'lucide-react';
+
+// Import all admin components
 import UserManagement from '@/components/admin/UserManagement';
 import InstructorControl from '@/components/admin/InstructorControl';
 import CourseModeration from '@/components/admin/CourseModeration';
@@ -11,18 +15,6 @@ import CategoryManagement from '@/components/admin/CategoryManagement';
 import CMSControl from '@/components/admin/CMSControl';
 import Analytics from '@/components/admin/Analytics';
 import Announcements from '@/components/admin/Announcements';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Users, 
-  BookOpen, 
-  PenTool, 
-  Settings, 
-  BarChart3, 
-  Megaphone,
-  LogOut,
-  GraduationCap,
-  Tag
-} from 'lucide-react';
 
 export default function AdminDashboard() {
   const { isAdmin, signOut, profile, loading } = useAuth();
@@ -43,63 +35,69 @@ export default function AdminDashboard() {
     return <Navigate to="/auth" replace />;
   }
 
-  const tabs = [
-    { id: 'users', label: 'Users', icon: Users, component: UserManagement },
-    { id: 'instructors', label: 'Instructors', icon: GraduationCap, component: InstructorControl },
-    { id: 'courses', label: 'Courses', icon: BookOpen, component: CourseModeration },
-    { id: 'blogs', label: 'Blogs', icon: PenTool, component: BlogModeration },
-    { id: 'categories', label: 'Categories', icon: Tag, component: CategoryManagement },
-    { id: 'cms', label: 'CMS', icon: Settings, component: CMSControl },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, component: Analytics },
-    { id: 'announcements', label: 'Announcements', icon: Megaphone, component: Announcements },
-  ];
+  const getComponent = () => {
+    switch (activeTab) {
+      case 'users': return <UserManagement />;
+      case 'instructors': return <InstructorControl />;
+      case 'courses': return <CourseModeration />;
+      case 'blogs': return <BlogModeration />;
+      case 'categories': return <CategoryManagement />;
+      case 'cms': return <CMSControl />;
+      case 'analytics': return <Analytics />;
+      case 'announcements': return <Announcements />;
+      default: return <UserManagement />;
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'users': return 'User Management';
+      case 'instructors': return 'Instructor Control';
+      case 'courses': return 'Course Moderation';
+      case 'blogs': return 'Blog Moderation';
+      case 'categories': return 'Category Management';
+      case 'cms': return 'CMS Control';
+      case 'analytics': return 'Analytics Dashboard';
+      case 'announcements': return 'Announcements';
+      default: return 'Dashboard';
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {profile?.full_name}</p>
-          </div>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <header className="h-16 border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+            <div className="h-full px-6 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <SidebarTrigger className="h-8 w-8" />
+                <div>
+                  <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+                  <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name}</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={signOut} className="space-x-2">
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </Button>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-card rounded-xl border shadow-sm">
+                <div className="p-6">
+                  {getComponent()}
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
-                <tab.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {tabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <tab.icon className="h-5 w-5" />
-                    {tab.label} Management
-                  </CardTitle>
-                  <CardDescription>
-                    Manage and oversee {tab.label.toLowerCase()} on the platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <tab.component />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
