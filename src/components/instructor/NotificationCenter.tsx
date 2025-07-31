@@ -305,17 +305,17 @@ export const NotificationCenter = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center space-x-2">
             <Bell className="h-6 w-6" />
-            <span>Notifications & Announcements</span>
+            <span>Notification Center</span>
             {unreadCount > 0 && (
               <Badge variant="destructive">{unreadCount}</Badge>
             )}
           </h2>
-          <p className="text-muted-foreground">Stay updated with course activities and admin announcements</p>
+          <p className="text-muted-foreground">Stay updated with admin announcements and personal notifications</p>
         </div>
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead}>
@@ -325,34 +325,55 @@ export const NotificationCenter = () => {
         )}
       </div>
 
-      {/* Announcements Section */}
-      {announcements.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center space-x-2">
-            <MessageSquare className="h-5 w-5" />
-            <span>Recent Announcements</span>
-          </h3>
-          {announcements.map((announcement) => (
-            <AnnouncementCard key={announcement.id} announcement={announcement} />
-          ))}
-        </div>
-      )}
-
-      {/* Notifications Section */}
+      {/* Admin Notifications Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold flex items-center space-x-2">
-          <Bell className="h-5 w-5" />
-          <span>Personal Notifications</span>
-        </h3>
-        {notifications.length === 0 ? (
-          <Card>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold flex items-center space-x-2 text-blue-700">
+            <MessageSquare className="h-5 w-5" />
+            <span>Admin Notifications</span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              {announcements.length}
+            </Badge>
+          </h3>
+        </div>
+        
+        {announcements.length === 0 ? (
+          <Card className="border-blue-200">
             <CardContent className="py-8 text-center">
-              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No notifications found</p>
+              <MessageSquare className="h-12 w-12 text-blue-300 mx-auto mb-4" />
+              <p className="text-muted-foreground">No admin announcements</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
+            {announcements.map((announcement) => (
+              <AnnouncementCard key={announcement.id} announcement={announcement} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Personal Notifications Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold flex items-center space-x-2 text-purple-700">
+            <Bell className="h-5 w-5" />
+            <span>Personal Notifications</span>
+            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+              {notifications.length}
+            </Badge>
+          </h3>
+        </div>
+        
+        {notifications.length === 0 ? (
+          <Card className="border-purple-200">
+            <CardContent className="py-8 text-center">
+              <Bell className="h-12 w-12 text-purple-300 mx-auto mb-4" />
+              <p className="text-muted-foreground">No personal notifications</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
             {notifications.map((notification) => (
               <NotificationCard key={notification.id} notification={notification} />
             ))}
