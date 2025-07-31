@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import NotFound from "./pages/NotFound";
+import { CourseLearning } from "./components/student/CourseLearning";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/courses" element={<AllCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/course/:courseId/learn" element={<CourseLearning />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/faq" element={<FAQ />} />

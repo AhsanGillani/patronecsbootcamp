@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,9 @@ export function StudentLearning() {
         <Play className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">No Courses in Progress</h3>
         <p className="text-muted-foreground mb-4">Start a course to continue your learning journey!</p>
-        <Button>Browse Courses</Button>
+        <Link to="/courses">
+          <Button>Browse Courses</Button>
+        </Link>
       </div>
     );
   }
@@ -83,10 +86,12 @@ export function StudentLearning() {
                   <span>{enrollment.courses.total_duration || 0}min</span>
                 </div>
               </div>
-              <Button className="w-full">
-                <Play className="h-4 w-4 mr-2" />
-                Continue Learning
-              </Button>
+              <Link to={`/course/${enrollment.courses.id}/learn`}>
+                <Button className="w-full">
+                  <Play className="h-4 w-4 mr-2" />
+                  Continue Learning
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ))}
