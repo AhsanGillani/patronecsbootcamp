@@ -2,26 +2,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/patronecs-logo.png";
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   const footerLinks = {
     "Quick Links": [
-      { name: "About Us", href: "#about" },
-      { name: "All Courses", href: "#courses" },
-      { name: "FAQs", href: "#faq" },
-      { name: "Contact", href: "#contact" }
+      { name: "About Us", href: "/about" },
+      { name: "All Courses", href: "/courses" },
+      { name: "Blog", href: "/blog" },
+      { name: "FAQs", href: "/faq" },
+      { name: "Contact", href: "/contact" }
     ],
     "Courses": [
-      { name: "Digital Marketing", href: "#" },
-      { name: "Web Development", href: "#" },
-      { name: "Freelancing", href: "#" },
-      { name: "Graphic Design", href: "#" }
+      { name: "Digital Marketing", href: "/courses?search=digital marketing" },
+      { name: "Web Development", href: "/courses?search=web development" },
+      { name: "Freelancing", href: "/courses?search=freelancing" },
+      { name: "Graphic Design", href: "/courses?search=graphic design" }
     ],
     "Support": [
-      { name: "Help Center", href: "#" },
-      { name: "Terms of Service", href: "#" },
-      { name: "Privacy Policy", href: "#" },
-      { name: "Cookie Policy", href: "#" }
+      { name: "Help Center", href: "/faq" },
+      { name: "Terms of Service", href: "/terms" },
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Cookie Policy", href: "/cookies" }
     ]
   };
 
@@ -84,12 +86,12 @@ export const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link, index) => (
                   <li key={index}>
-                    <a
-                      href={link.href}
-                      className="text-muted-foreground hover:text-primary transition-colors duration-200"
+                    <Link
+                      to={link.href}
+                      className="text-muted-foreground hover:text-primary transition-colors duration-200 block py-1"
                     >
                       {link.name}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -119,7 +121,7 @@ export const Footer = () => {
         <div className="border-t border-border pt-8 mt-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-muted-foreground text-sm">
-              © 2024 LearnEasy.pk. All rights reserved.
+              © 2024 Patronecs. All rights reserved.
             </p>
             <p className="text-muted-foreground text-sm">
               Made with ❤️ for Pakistan's future leaders
