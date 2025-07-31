@@ -47,7 +47,7 @@ export default function CourseModeration() {
         .select(`
           *,
           profiles!instructor_id(full_name, email),
-          categories(name)
+          categories!fk_courses_category_id(name)
         `)
         .order('created_at', { ascending: false });
 
