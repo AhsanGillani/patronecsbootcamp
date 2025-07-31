@@ -67,7 +67,7 @@ serve(async (req) => {
       });
     }
 
-    // Create user
+    // Create user (profile will be created automatically by handle_new_user trigger)
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -86,20 +86,18 @@ serve(async (req) => {
       });
     }
 
-    // Create profile entry
-    const { error: profileError } = await supabaseAdmin
+    // Wait a moment for the trigger to complete, then verify profile was created
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        email: email,
-        full_name: fullName,
-        role: role,
-        status: 'active'
-      });
+      .select('*')
+      .eq('user_id', newUser.user.id)
+      .single();
 
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      // Try to clean up the user if profile creation failed
+    if (profileError || !profile) {
+      console.error('Profile not created by trigger:', profileError);
+      // Clean up the user if profile wasn't created
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(JSON.stringify({ error: 'Failed to create user profile' }), {
         status: 500,
