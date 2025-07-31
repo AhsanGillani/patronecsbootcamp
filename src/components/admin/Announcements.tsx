@@ -64,13 +64,13 @@ export default function Announcements() {
   };
 
   const handleCreateAnnouncement = async () => {
-    if (!profile?.id) return;
+    if (!profile?.user_id) return;
 
     try {
       const { error } = await supabase
         .from('announcements')
         .insert({
-          admin_id: profile.id,
+          admin_id: profile.user_id,
           title: formData.title,
           content: formData.content,
           target_role: formData.target_role === 'all' ? null : formData.target_role,
