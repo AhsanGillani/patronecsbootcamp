@@ -30,8 +30,8 @@ const CourseDetail = () => {
           .from('courses')
           .select(`
             *,
-            category:categories!category_id(name),
-            profile:profiles!instructor_id(full_name)
+            category:categories!courses_category_id_fkey(name),
+            profile:profiles!courses_instructor_id_fkey(full_name)
           `)
           .eq('id', id)
           .eq('status', 'approved')

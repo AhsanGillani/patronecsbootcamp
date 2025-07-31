@@ -25,8 +25,8 @@ const BlogDetail = () => {
           .from('blogs')
           .select(`
             *,
-            category:categories!category_id(name),
-            profile:profiles!author_id(full_name)
+            category:categories!blogs_category_id_fkey(name),
+            profile:profiles!blogs_author_id_fkey(full_name)
           `)
           .eq('id', id)
           .eq('status', 'approved')
