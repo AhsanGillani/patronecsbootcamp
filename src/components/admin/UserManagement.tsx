@@ -60,17 +60,17 @@ export default function UserManagement() {
 
   const handleCreateUser = async () => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: formData.full_name,
-          role: formData.role,
-        },
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.full_name,
+          role: formData.role
+        }
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       toast({
         title: 'Success',
@@ -116,12 +116,12 @@ export default function UserManagement() {
 
   const handleResetPassword = async (userId: string, email: string) => {
     try {
-      const { error } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: email,
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { email }
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       toast({
         title: 'Success',
