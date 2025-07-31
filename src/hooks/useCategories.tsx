@@ -24,7 +24,7 @@ export const useCategories = () => {
           .from('categories')
           .select(`
             *,
-            courses(count)
+            courses!courses_category_id_fkey(count)
           `)
           .order('name');
 
