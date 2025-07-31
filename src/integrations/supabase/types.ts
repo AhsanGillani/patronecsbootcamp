@@ -146,6 +146,41 @@ export type Database = {
         }
         Relationships: []
       }
+      certificates: {
+        Row: {
+          certificate_number: string
+          course_id: string
+          created_at: string | null
+          id: string
+          issued_at: string | null
+          student_id: string
+        }
+        Insert: {
+          certificate_number: string
+          course_id: string
+          created_at?: string | null
+          id?: string
+          issued_at?: string | null
+          student_id: string
+        }
+        Update: {
+          certificate_number?: string
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          issued_at?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cms_content: {
         Row: {
           content: Json
@@ -334,6 +369,44 @@ export type Database = {
           },
         ]
       }
+      lesson_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          lesson_id: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lesson_id: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lesson_id?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           content: string | null
@@ -456,6 +529,53 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          passed: boolean | null
+          quiz_id: string
+          score: number
+          started_at: string | null
+          student_id: string
+          total_questions: number
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed?: boolean | null
+          quiz_id: string
+          score?: number
+          started_at?: string | null
+          student_id: string
+          total_questions?: number
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed?: boolean | null
+          quiz_id?: string
+          score?: number
+          started_at?: string | null
+          student_id?: string
+          total_questions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           correct_answer: number
@@ -543,6 +663,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_certificate_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
