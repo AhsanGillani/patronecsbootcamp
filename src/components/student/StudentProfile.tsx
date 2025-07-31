@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Lock, Save } from "lucide-react";
+import { ProfileImageUpload } from "@/components/ProfileImageUpload";
+import { User, Mail, Lock, Save, Award, BookOpen, Clock, MapPin, Phone } from "lucide-react";
 
 export function StudentProfile() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -17,7 +18,9 @@ export function StudentProfile() {
   const [formData, setFormData] = useState({
     full_name: '',
     bio: '',
-    avatar_url: ''
+    avatar_url: '',
+    phone: '',
+    location: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -30,7 +33,9 @@ export function StudentProfile() {
       setFormData({
         full_name: profile.full_name || '',
         bio: (profile as any).bio || '',
-        avatar_url: (profile as any).avatar_url || ''
+        avatar_url: (profile as any).avatar_url || '',
+        phone: (profile as any).phone || '',
+        location: (profile as any).location || ''
       });
     }
   }, [profile]);
@@ -45,7 +50,9 @@ export function StudentProfile() {
         .update({
           full_name: formData.full_name,
           bio: formData.bio,
-          avatar_url: formData.avatar_url
+          avatar_url: formData.avatar_url,
+          phone: formData.phone,
+          location: formData.location
         })
         .eq('user_id', user.id);
 
@@ -114,6 +121,15 @@ export function StudentProfile() {
     }
   };
 
+  const handleImageUpload = (url: string) => {
+    setFormData({ ...formData, avatar_url: url });
+  };
+
+  const getUserInitials = () => {
+    const name = formData.full_name || profile?.full_name || "User";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   if (authLoading) {
     return <div className="text-center py-8">Loading profile...</div>;
   }
@@ -136,45 +152,59 @@ export function StudentProfile() {
             <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={formData.avatar_url} />
-                <AvatarFallback>
-                  {formData.full_name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Label htmlFor="avatar_url">Profile Picture URL</Label>
-                <Input
-                  id="avatar_url"
-                  value={formData.avatar_url}
-                  onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
+            <div className="flex justify-center mb-4">
+              <ProfileImageUpload
+                currentImageUrl={formData.avatar_url}
+                onImageUploaded={handleImageUpload}
+                userInitials={getUserInitials()}
+              />
             </div>
             
-            <div>
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="Your full name"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="full_name">Full Name</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Your full name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email cannot be changed
+                </p>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                value={user?.email || ''}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed from this interface
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="Your phone number"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="Your location"
+                />
+              </div>
             </div>
 
             <div>
@@ -247,6 +277,37 @@ export function StudentProfile() {
                   <span>Account Status:</span>
                   <span className="capitalize">{profile?.status}</span>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Learning Statistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Award className="h-5 w-5" />
+              <span>Learning Statistics</span>
+            </CardTitle>
+            <CardDescription>Your learning progress overview</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-primary/5 rounded-lg">
+                <div className="text-2xl font-bold text-primary">12</div>
+                <div className="text-sm text-muted-foreground">Courses Enrolled</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">8</div>
+                <div className="text-sm text-muted-foreground">Completed</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">145</div>
+                <div className="text-sm text-muted-foreground">Hours Learned</div>
+              </div>
+              <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">8</div>
+                <div className="text-sm text-muted-foreground">Certificates</div>
               </div>
             </div>
           </CardContent>

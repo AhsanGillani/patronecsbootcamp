@@ -19,6 +19,7 @@ export type Database = {
           admin_id: string
           content: string
           created_at: string
+          expires_at: string | null
           id: string
           is_published: boolean | null
           target_role: Database["public"]["Enums"]["user_role"] | null
@@ -28,6 +29,7 @@ export type Database = {
           admin_id: string
           content: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_published?: boolean | null
           target_role?: Database["public"]["Enums"]["user_role"] | null
@@ -37,6 +39,7 @@ export type Database = {
           admin_id?: string
           content?: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_published?: boolean | null
           target_role?: Database["public"]["Enums"]["user_role"] | null
