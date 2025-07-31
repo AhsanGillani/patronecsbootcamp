@@ -53,13 +53,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               .select('*')
               .eq('user_id', session.user.id)
               .single()
-              .then(({ data }) => setProfile(data));
+              .then(({ data }) => {
+                setProfile(data);
+                setLoading(false);
+              });
           }, 0);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -74,10 +76,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('*')
           .eq('user_id', session.user.id)
           .single()
-          .then(({ data }) => setProfile(data));
+          .then(({ data }) => {
+            setProfile(data);
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
