@@ -196,7 +196,11 @@ export const MyCourses = () => {
           )}
 
           <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.open(`/courses/${course.id}/edit`, '_blank')}
+            >
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>

@@ -149,7 +149,11 @@ export const BlogManager = () => {
           )}
 
           <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.open(`/blog/${blog.id}/edit`, '_blank')}
+            >
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
