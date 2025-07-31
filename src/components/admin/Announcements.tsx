@@ -74,6 +74,7 @@ export default function Announcements() {
           title: formData.title,
           content: formData.content,
           target_role: formData.target_role === 'all' ? null : formData.target_role,
+          is_published: true,
         });
 
       if (error) throw error;

@@ -16,15 +16,28 @@ interface Notification {
   created_at: string;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  target_role: 'admin' | 'instructor' | 'student' | null;
+  created_at: string;
+  profiles: {
+    full_name: string;
+  };
+}
+
 export const NotificationCenter = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchAnnouncements();
     }
   }, [user]);
 
@@ -47,6 +60,29 @@ export const NotificationCenter = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("announcements")
+        .select(`
+          *,
+          profiles!admin_id(full_name)
+        `)
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAnnouncements(data || []);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch announcements",
+        variant: "destructive",
+      });
     }
   };
 
@@ -215,6 +251,48 @@ export const NotificationCenter = () => {
     </Card>
   );
 
+  const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => (
+    <Card className="hover:shadow-md transition-shadow border-blue-200 bg-blue-50/50">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-full bg-blue-100">
+              <MessageSquare className="h-4 w-4 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg flex items-center space-x-2">
+                <span>{announcement.title}</span>
+                <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
+                  Announcement
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                <span className="text-sm text-blue-600">
+                  From: {announcement.profiles?.full_name}
+                </span>
+                {announcement.target_role && (
+                  <Badge variant="secondary" className="ml-2">
+                    {announcement.target_role === 'instructor' ? 'Instructors Only' : 
+                     announcement.target_role === 'student' ? 'Students Only' : 
+                     announcement.target_role === 'admin' ? 'Admins Only' : 'All Users'}
+                  </Badge>
+                )}
+              </CardDescription>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <p className="text-sm">{announcement.content}</p>
+          <p className="text-xs text-muted-foreground">
+            {new Date(announcement.created_at).toLocaleString()}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   if (loading) {
     return <div className="text-center py-8">Loading notifications...</div>;
   }
@@ -225,12 +303,12 @@ export const NotificationCenter = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center space-x-2">
             <Bell className="h-6 w-6" />
-            <span>Notifications</span>
+            <span>Notifications & Announcements</span>
             {unreadCount > 0 && (
               <Badge variant="destructive">{unreadCount}</Badge>
             )}
           </h2>
-          <p className="text-muted-foreground">Stay updated with course and blog activities</p>
+          <p className="text-muted-foreground">Stay updated with course activities and admin announcements</p>
         </div>
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead}>
@@ -240,20 +318,40 @@ export const NotificationCenter = () => {
         )}
       </div>
 
-      {notifications.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No notifications found</p>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Announcements Section */}
+      {announcements.length > 0 && (
         <div className="space-y-4">
-          {notifications.map((notification) => (
-            <NotificationCard key={notification.id} notification={notification} />
+          <h3 className="text-lg font-semibold flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5" />
+            <span>Recent Announcements</span>
+          </h3>
+          {announcements.map((announcement) => (
+            <AnnouncementCard key={announcement.id} announcement={announcement} />
           ))}
         </div>
       )}
+
+      {/* Notifications Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center space-x-2">
+          <Bell className="h-5 w-5" />
+          <span>Personal Notifications</span>
+        </h3>
+        {notifications.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No notifications found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {notifications.map((notification) => (
+              <NotificationCard key={notification.id} notification={notification} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
