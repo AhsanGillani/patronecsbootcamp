@@ -52,7 +52,14 @@ export default function CourseModeration() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCourses(data || []);
+      
+      // Handle potential null category relationships
+      const coursesWithCategory = (data || []).map((course: any) => ({
+        ...course,
+        categories: course.categories || { name: "Uncategorized" }
+      }));
+      
+      setCourses(coursesWithCategory);
     } catch (error: any) {
       toast({
         title: 'Error',
