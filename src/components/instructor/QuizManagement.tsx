@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Brain, Award } from "lucide-react";
+import { CreateQuiz } from "./CreateQuiz";
 
 interface Quiz {
   id: string;
@@ -31,6 +32,36 @@ export const QuizManagement = () => {
 
   const fetchQuizzes = async () => {
     try {
+      // First get courses owned by this instructor
+      const { data: coursesData, error: coursesError } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("instructor_id", user?.id);
+
+      if (coursesError) throw coursesError;
+      
+      const courseIds = coursesData?.map(c => c.id) || [];
+      
+      if (courseIds.length === 0) {
+        setQuizzes([]);
+        return;
+      }
+
+      // Get lessons for these courses
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from("lessons")
+        .select("id")
+        .in("course_id", courseIds);
+
+      if (lessonsError) throw lessonsError;
+      
+      const lessonIds = lessonsData?.map(l => l.id) || [];
+      
+      if (lessonIds.length === 0) {
+        setQuizzes([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("quizzes")
         .select(`
@@ -41,10 +72,11 @@ export const QuizManagement = () => {
           ),
           quiz_questions(id)
         `)
+        .in("lesson_id", lessonIds)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setQuizzes(data as any || []);
+      setQuizzes(data || []);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
       toast({
@@ -150,10 +182,7 @@ export const QuizManagement = () => {
           <h2 className="text-2xl font-bold">Quiz Management</h2>
           <p className="text-muted-foreground">Create and manage quizzes for your lessons</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Quiz
-        </Button>
+        <CreateQuiz onQuizCreated={fetchQuizzes} />
       </div>
 
       {quizzes.length === 0 ? (

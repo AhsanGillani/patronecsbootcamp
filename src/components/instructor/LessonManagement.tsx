@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, GripVertical, Video, FileText, HelpCircle } from "lucide-react";
+import { CreateLesson } from "./CreateLesson";
 
 interface Lesson {
   id: string;
@@ -35,18 +36,33 @@ export const LessonManagement = () => {
 
   const fetchLessons = async () => {
     try {
+      // First get lessons for courses owned by this instructor
+      const { data: coursesData, error: coursesError } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("instructor_id", user?.id);
+
+      if (coursesError) throw coursesError;
+      
+      const courseIds = coursesData?.map(c => c.id) || [];
+      
+      if (courseIds.length === 0) {
+        setLessons([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("lessons")
         .select(`
           *,
           course:courses(title)
         `)
-        .eq("courses.instructor_id", user?.id)
+        .in("course_id", courseIds)
         .order("course_id")
         .order("order_index");
 
       if (error) throw error;
-      setLessons(data as any || []);
+      setLessons((data || []) as Lesson[]);
     } catch (error) {
       console.error("Error fetching lessons:", error);
       toast({
@@ -179,10 +195,7 @@ export const LessonManagement = () => {
           <h2 className="text-2xl font-bold">Lesson Management</h2>
           <p className="text-muted-foreground">Create and organize your course content</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Lesson
-        </Button>
+        <CreateLesson onLessonCreated={fetchLessons} />
       </div>
 
       {lessons.length === 0 ? (

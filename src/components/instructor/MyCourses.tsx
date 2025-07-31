@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Copy, Trash2, Eye, Clock, Users } from "lucide-react";
+import { CreateCourse } from "./CreateCourse";
 
 interface Course {
   id: string;
@@ -41,14 +42,21 @@ export const MyCourses = () => {
         .from("courses")
         .select(`
           *,
-          category:categories(name)
+          categories(name)
         `)
         .eq("instructor_id", user?.id)
         .eq("soft_deleted", false)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setCourses(data || []);
+      
+      // Handle potential null category relationships
+      const coursesWithCategory = (data || []).map((course: any) => ({
+        ...course,
+        category: course.categories || { name: "Uncategorized" }
+      }));
+      
+      setCourses(coursesWithCategory);
     } catch (error) {
       console.error("Error fetching courses:", error);
       toast({
@@ -225,10 +233,7 @@ export const MyCourses = () => {
           <h2 className="text-2xl font-bold">My Courses</h2>
           <p className="text-muted-foreground">Manage your course content</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Course
-        </Button>
+        <CreateCourse onCourseCreated={fetchCourses} />
       </div>
 
       <Tabs defaultValue="all" className="space-y-6">

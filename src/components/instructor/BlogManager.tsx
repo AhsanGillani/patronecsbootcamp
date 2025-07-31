@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
+import { CreateBlog } from "./CreateBlog";
 
 interface Blog {
   id: string;
@@ -40,13 +41,20 @@ export const BlogManager = () => {
         .from("blogs")
         .select(`
           *,
-          category:categories(name)
+          categories(name)
         `)
         .eq("author_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setBlogs(data as Blog[] || []);
+      
+      // Handle potential null category relationships
+      const blogsWithCategory = (data || []).map((blog: any) => ({
+        ...blog,
+        category: blog.categories || { name: "Uncategorized" }
+      }));
+      
+      setBlogs(blogsWithCategory);
     } catch (error) {
       console.error("Error fetching blogs:", error);
       toast({
@@ -170,10 +178,7 @@ export const BlogManager = () => {
           <h2 className="text-2xl font-bold">Blog Manager</h2>
           <p className="text-muted-foreground">Create and manage your blog content</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Blog Post
-        </Button>
+        <CreateBlog onBlogCreated={fetchBlogs} />
       </div>
 
       <Tabs defaultValue="all" className="space-y-6">
