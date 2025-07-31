@@ -6,6 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import About from "./pages/About";
+import AllCourses from "./pages/AllCourses";
+import Blog from "./pages/Blog";
+import FAQ from "./pages/FAQ";
+import Contact from "./pages/Contact";
+import CourseDetail from "./pages/CourseDetail";
+import BlogDetail from "./pages/BlogDetail";
 import AdminDashboard from "./pages/AdminDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -23,6 +30,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<AllCourses />} />
+            <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/instructor" element={<InstructorDashboard />} />
             <Route path="/student" element={<StudentDashboard />} />

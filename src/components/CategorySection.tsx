@@ -1,6 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Code, Palette, TrendingUp, Camera, Music, BookOpen, Cpu, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useCategories } from "@/hooks/useCategories";
 
 export const CategorySection = () => {
   const categories = [

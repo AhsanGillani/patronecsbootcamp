@@ -1,0 +1,330 @@
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
+import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Course } from "@/hooks/useCourses";
+
+const CourseDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('courses')
+          .select(`
+            *,
+            category:categories!category_id(name),
+            profile:profiles!instructor_id(full_name)
+          `)
+          .eq('id', id)
+          .eq('status', 'approved')
+          .single();
+
+        if (error) throw error;
+        setCourse(data);
+
+        // Check if user is enrolled
+        if (user) {
+          const { data: enrollment } = await supabase
+            .from('enrollments')
+            .select('id')
+            .eq('course_id', id)
+            .eq('student_id', user.id)
+            .single();
+          
+          setIsEnrolled(!!enrollment);
+        }
+      } catch (error) {
+        console.error('Error fetching course:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load course details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourse();
+  }, [id, user, toast]);
+
+  const handleEnroll = async () => {
+    if (!user || !course) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to enroll in this course",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .insert({
+          course_id: course.id,
+          student_id: user.id
+        });
+
+      if (error) throw error;
+
+      setIsEnrolled(true);
+      toast({
+        title: "Success!",
+        description: "You've successfully enrolled in this course",
+      });
+    } catch (error) {
+      console.error('Error enrolling:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enroll in course",
+        variant: "destructive",
+      });
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-20">
+          <div className="container mx-auto px-4 py-16">
+            <Skeleton className="h-8 w-32 mb-8" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Skeleton className="h-64 w-full mb-6" />
+                <Skeleton className="h-8 w-3/4 mb-4" />
+                <Skeleton className="h-6 w-1/2 mb-6" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+              <div>
+                <Skeleton className="h-96 w-full" />
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-20">
+          <div className="container mx-auto px-4 py-16 text-center">
+            <h1 className="text-3xl font-bold mb-4">Course not found</h1>
+            <p className="text-muted-foreground mb-8">The course you're looking for doesn't exist or has been removed.</p>
+            <Button asChild>
+              <Link to="/courses">Browse All Courses</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="pt-20">
+        <div className="container mx-auto px-4 py-8">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+            <Link to="/" className="hover:text-primary">Home</Link>
+            <span>/</span>
+            <Link to="/courses" className="hover:text-primary">Courses</Link>
+            <span>/</span>
+            <span className="text-foreground">{course.title}</span>
+          </nav>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {/* Course Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  {course.category && (
+                    <Badge variant="secondary">{course.category.name}</Badge>
+                  )}
+                  <Badge className={getLevelColor(course.level)}>
+                    {course.level}
+                  </Badge>
+                </div>
+                
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
+                
+                {course.profile && (
+                  <p className="text-lg text-muted-foreground mb-6">
+                    by <span className="font-medium text-foreground">{course.profile.full_name}</span>
+                  </p>
+                )}
+
+                <div className="flex items-center gap-6 text-sm text-muted-foreground mb-6">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{course.total_enrollments} students</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{Math.floor(course.total_duration / 60)}h total</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{course.lesson_count} lessons</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span>4.8 (1,234 reviews)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Course Image */}
+              <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-8">
+                {course.thumbnail_url ? (
+                  <img 
+                    src={course.thumbnail_url} 
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                    <Play className="h-16 w-16 text-primary" />
+                  </div>
+                )}
+              </div>
+
+              {/* Course Description */}
+              <Card className="p-6 mb-8 bg-card-gradient">
+                <h2 className="text-2xl font-semibold mb-4">About this course</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  {course.description || "No description available for this course."}
+                </p>
+              </Card>
+
+              {/* What you'll learn */}
+              <Card className="p-6 mb-8 bg-card-gradient">
+                <h2 className="text-2xl font-semibold mb-4">What you'll learn</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    "Master the fundamentals and advanced concepts",
+                    "Build real-world projects from scratch",
+                    "Best practices and industry standards",
+                    "Hands-on exercises and practical examples",
+                    "Certificate of completion",
+                    "Lifetime access to course materials"
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                      <span className="text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div>
+              <Card className="p-6 bg-card-gradient sticky top-24">
+                <div className="text-center mb-6">
+                  <div className="text-3xl font-bold text-primary mb-2">FREE</div>
+                  <p className="text-sm text-muted-foreground">Full lifetime access</p>
+                </div>
+
+                {user ? (
+                  isEnrolled ? (
+                    <div className="space-y-4">
+                      <Button className="w-full" asChild>
+                        <Link to={profile?.role === 'student' ? '/student' : '/dashboard'}>
+                          <Play className="w-4 h-4 mr-2" />
+                          Continue Learning
+                        </Link>
+                      </Button>
+                      <div className="text-center">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          ✓ Enrolled
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full" 
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                    >
+                      {enrolling ? "Enrolling..." : "Enroll Free"}
+                    </Button>
+                  )
+                ) : (
+                  <Button className="w-full" asChild>
+                    <Link to="/auth">Sign up to Enroll</Link>
+                  </Button>
+                )}
+
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="font-semibold mb-4">This course includes:</h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Play className="h-4 w-4 text-primary" />
+                      <span>{course.lesson_count} video lessons</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Download className="h-4 w-4 text-primary" />
+                      <span>Downloadable resources</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="h-4 w-4 text-primary" />
+                      <span>Certificate of completion</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span>Lifetime access</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default CourseDetail;
