@@ -42,7 +42,7 @@ export const MyCourses = () => {
         .from("courses")
         .select(`
           *,
-          categories(name)
+          categories!fk_courses_category_id(name)
         `)
         .eq("instructor_id", user?.id)
         .eq("soft_deleted", false)

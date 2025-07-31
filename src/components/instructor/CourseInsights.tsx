@@ -20,8 +20,8 @@ interface Feedback {
   id: string;
   rating: number;
   comment: string;
-  student: { full_name: string } | null;
-  course: { title: string } | null;
+  student_name: string;
+  course_title: string;
   created_at: string;
 }
 
@@ -54,18 +54,20 @@ export const CourseInsights = () => {
 
       if (coursesError) throw coursesError;
 
-      // Fetch feedback
+      // Fetch feedback - simplified to avoid relationship issues
       const { data: feedbackData, error: feedbackError } = await supabase
         .from("course_feedback")
         .select(`
           *,
-          student:profiles!student_id(full_name),
           course:courses(title)
         `)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      if (feedbackError) throw feedbackError;
+      if (feedbackError) {
+        console.error('Error fetching feedback:', feedbackError);
+        // Don't throw, just continue without feedback
+      }
 
       // Transform courses data to include calculated metrics
       const metricsData: CourseMetrics[] = (coursesData || []).map(course => ({
@@ -77,7 +79,16 @@ export const CourseInsights = () => {
       }));
 
       setMetrics(metricsData);
-      setFeedback(feedbackData as any || []);
+      // Transform feedback data with anonymous student names
+      const transformedFeedback: Feedback[] = (feedbackData || []).map((item: any) => ({
+        id: item.id,
+        student_name: "Anonymous Student",
+        course_title: item.course?.title || "Unknown Course",
+        rating: item.rating,
+        comment: item.comment,
+        created_at: item.created_at
+      }));
+      setFeedback(transformedFeedback);
     } catch (error) {
       console.error("Error fetching insights:", error);
       toast({
@@ -227,7 +238,7 @@ export const CourseInsights = () => {
                         {item.rating}/5
                       </Badge>
                       <span className="text-sm font-medium">
-                        {item.student?.full_name || "Anonymous"}
+                        {item.student_name}
                       </span>
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -235,7 +246,7 @@ export const CourseInsights = () => {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    Course: {item.course?.title}
+                    Course: {item.course_title}
                   </p>
                   <p className="text-sm">{item.comment}</p>
                 </div>

@@ -41,7 +41,7 @@ export const BlogManager = () => {
         .from("blogs")
         .select(`
           *,
-          categories(name)
+          categories!fk_blogs_category_id(name)
         `)
         .eq("author_id", user?.id)
         .order("created_at", { ascending: false });
