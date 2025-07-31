@@ -62,6 +62,7 @@ export type Database = {
           excerpt: string | null
           featured_image_url: string | null
           id: string
+          is_published: boolean
           status: Database["public"]["Enums"]["blog_status"]
           title: string
           updated_at: string
@@ -76,6 +77,7 @@ export type Database = {
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_published?: boolean
           status?: Database["public"]["Enums"]["blog_status"]
           title: string
           updated_at?: string
@@ -90,6 +92,7 @@ export type Database = {
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_published?: boolean
           status?: Database["public"]["Enums"]["blog_status"]
           title?: string
           updated_at?: string
@@ -168,6 +171,33 @@ export type Database = {
           },
         ]
       }
+      course_feedback: {
+        Row: {
+          comment: string | null
+          course_id: string
+          created_at: string
+          id: string
+          rating: number
+          student_id: string
+        }
+        Insert: {
+          comment?: string | null
+          course_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          student_id: string
+        }
+        Update: {
+          comment?: string | null
+          course_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          student_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           admin_comments: string | null
@@ -176,11 +206,14 @@ export type Database = {
           description: string | null
           id: string
           instructor_id: string
+          lesson_count: number | null
           level: Database["public"]["Enums"]["course_level"]
           price: number
+          soft_deleted: boolean
           status: Database["public"]["Enums"]["course_status"]
           thumbnail_url: string | null
           title: string
+          total_duration: number | null
           total_enrollments: number | null
           updated_at: string
         }
@@ -191,11 +224,14 @@ export type Database = {
           description?: string | null
           id?: string
           instructor_id: string
+          lesson_count?: number | null
           level?: Database["public"]["Enums"]["course_level"]
           price?: number
+          soft_deleted?: boolean
           status?: Database["public"]["Enums"]["course_status"]
           thumbnail_url?: string | null
           title: string
+          total_duration?: number | null
           total_enrollments?: number | null
           updated_at?: string
         }
@@ -206,11 +242,14 @@ export type Database = {
           description?: string | null
           id?: string
           instructor_id?: string
+          lesson_count?: number | null
           level?: Database["public"]["Enums"]["course_level"]
           price?: number
+          soft_deleted?: boolean
           status?: Database["public"]["Enums"]["course_status"]
           thumbnail_url?: string | null
           title?: string
+          total_duration?: number | null
           total_enrollments?: number | null
           updated_at?: string
         }
@@ -273,6 +312,81 @@ export type Database = {
           },
         ]
       }
+      lessons: {
+        Row: {
+          content: string | null
+          course_id: string
+          created_at: string
+          duration: number | null
+          id: string
+          is_published: boolean
+          order_index: number
+          pdf_url: string | null
+          title: string
+          type: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          course_id: string
+          created_at?: string
+          duration?: number | null
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          pdf_url?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          course_id?: string
+          created_at?: string
+          duration?: number | null
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          pdf_url?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -309,6 +423,72 @@ export type Database = {
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          difficulty: string
+          explanation: string | null
+          id: string
+          options: Json
+          order_index: number
+          question: string
+          quiz_id: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          options: Json
+          order_index?: number
+          question: string
+          quiz_id: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          order_index?: number
+          question?: string
+          quiz_id?: string
+        }
+        Relationships: []
+      }
+      quizzes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          lesson_id: string
+          passing_score: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lesson_id: string
+          passing_score?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lesson_id?: string
+          passing_score?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
