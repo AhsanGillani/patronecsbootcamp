@@ -75,7 +75,16 @@ export default function CMSControl() {
         setFeaturesData(contentMap.features.content);
       }
       if (contentMap.footer) {
-        setFooterData(contentMap.footer.content);
+        const footerContent = contentMap.footer.content;
+        setFooterData({
+          company: footerContent?.company || '',
+          description: footerContent?.description || '',
+          links: {
+            about: footerContent?.links?.about || '',
+            contact: footerContent?.links?.contact || '',
+            privacy: footerContent?.links?.privacy || ''
+          }
+        });
       }
     } catch (error: any) {
       toast({
