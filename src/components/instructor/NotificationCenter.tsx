@@ -65,6 +65,7 @@ export const NotificationCenter = () => {
 
   const fetchAnnouncements = async () => {
     try {
+      console.log('Fetching announcements for instructor...');
       const { data, error } = await supabase
         .from("announcements")
         .select(`
@@ -74,7 +75,13 @@ export const NotificationCenter = () => {
         .eq("is_published", true)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        throw error;
+      }
+      
+      console.log('Fetched announcements:', data);
+      console.log('Number of announcements:', data?.length || 0);
       setAnnouncements(data || []);
     } catch (error) {
       console.error("Error fetching announcements:", error);
