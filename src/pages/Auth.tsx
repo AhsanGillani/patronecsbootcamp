@@ -47,9 +47,14 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
+    console.log('Starting signup process...', { email, fullName });
+
     try {
       const { error } = await signUp(email, password, fullName);
+      console.log('Signup result:', { error });
+      
       if (error) {
+        console.error('Signup error details:', error);
         toast({
           title: "Error",
           description: error.message,
@@ -62,9 +67,10 @@ export default function Auth() {
         });
       }
     } catch (error) {
+      console.error('Unexpected signup error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred: " + (error as Error).message,
         variant: "destructive",
       });
     } finally {

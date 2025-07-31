@@ -91,18 +91,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: string = 'student') => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: fullName,
-          role: role
+    console.log('Auth hook signUp called with:', { email, fullName, role });
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName,
+            role: role
+          }
         }
-      }
-    });
-    return { error };
+      });
+      
+      console.log('Supabase auth.signUp response:', { data, error });
+      return { error };
+    } catch (err) {
+      console.error('Exception in signUp:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
