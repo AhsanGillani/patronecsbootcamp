@@ -4,8 +4,10 @@ import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import UserManagement from '@/components/admin/UserManagement';
+import InstructorControl from '@/components/admin/InstructorControl';
 import CourseModeration from '@/components/admin/CourseModeration';
 import BlogModeration from '@/components/admin/BlogModeration';
+import CategoryManagement from '@/components/admin/CategoryManagement';
 import CMSControl from '@/components/admin/CMSControl';
 import Analytics from '@/components/admin/Analytics';
 import Announcements from '@/components/admin/Announcements';
@@ -17,7 +19,9 @@ import {
   Settings, 
   BarChart3, 
   Megaphone,
-  LogOut
+  LogOut,
+  GraduationCap,
+  Tag
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -41,8 +45,10 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: 'users', label: 'Users', icon: Users, component: UserManagement },
+    { id: 'instructors', label: 'Instructors', icon: GraduationCap, component: InstructorControl },
     { id: 'courses', label: 'Courses', icon: BookOpen, component: CourseModeration },
     { id: 'blogs', label: 'Blogs', icon: PenTool, component: BlogModeration },
+    { id: 'categories', label: 'Categories', icon: Tag, component: CategoryManagement },
     { id: 'cms', label: 'CMS', icon: Settings, component: CMSControl },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, component: Analytics },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, component: Announcements },
@@ -65,7 +71,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
                 <tab.icon className="h-4 w-4" />

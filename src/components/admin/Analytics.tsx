@@ -29,26 +29,44 @@ export default function Analytics() {
     try {
       setLoading(true);
 
-      // Get total users
-      const { data: users, error: usersError } = await supabase
-        .from('profiles')
-        .select('role');
+      // Calculate date filter
+      let dateFilter = '';
+      if (timeFilter === 'month') {
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        dateFilter = lastMonth.toISOString();
+      } else if (timeFilter === 'week') {
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        dateFilter = lastWeek.toISOString();
+      }
+
+      // Get total users with optional date filter
+      let usersQuery = supabase.from('profiles').select('role, created_at');
+      if (dateFilter) {
+        usersQuery = usersQuery.gte('created_at', dateFilter);
+      }
+      const { data: users, error: usersError } = await usersQuery;
       if (usersError) throw usersError;
 
-      // Get total courses
-      const { data: courses, error: coursesError } = await supabase
-        .from('courses')
-        .select('status, price');
+      // Get total courses with optional date filter
+      let coursesQuery = supabase.from('courses').select('status, price, created_at');
+      if (dateFilter) {
+        coursesQuery = coursesQuery.gte('created_at', dateFilter);
+      }
+      const { data: courses, error: coursesError } = await coursesQuery;
       if (coursesError) throw coursesError;
 
-      // Get total enrollments
-      const { data: enrollments, error: enrollmentsError } = await supabase
-        .from('enrollments')
-        .select(`
-          *,
-          courses(price),
-          profiles(full_name, email)
-        `);
+      // Get total enrollments with optional date filter
+      let enrollmentsQuery = supabase.from('enrollments').select(`
+        *,
+        courses(price),
+        profiles(full_name, email)
+      `);
+      if (dateFilter) {
+        enrollmentsQuery = enrollmentsQuery.gte('enrolled_at', dateFilter);
+      }
+      const { data: enrollments, error: enrollmentsError } = await enrollmentsQuery;
       if (enrollmentsError) throw enrollmentsError;
 
       // Calculate analytics
