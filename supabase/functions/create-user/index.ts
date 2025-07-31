@@ -89,13 +89,13 @@ serve(async (req) => {
     // Wait a moment for the trigger to complete, then verify profile was created
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: newUserProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('user_id', newUser.user.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError || !newUserProfile) {
       console.error('Profile not created by trigger:', profileError);
       // Clean up the user if profile wasn't created
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
