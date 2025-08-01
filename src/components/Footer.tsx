@@ -189,24 +189,23 @@ export const Footer = () => {
                 <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-primary to-accent"></div>
               </h3>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Get the latest course updates, learning tips, and career guidance directly in your inbox.
+                Get the latest course updates, coding tips, and career advice delivered to your inbox.
               </p>
-              <Card className="p-4 bg-gradient-to-br from-card to-card/80 border border-border/50">
-                <div className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex gap-2">
                   <Input
                     type="email"
-                    placeholder="Enter your email address"
-                    className="bg-background/80 border-border/50 focus:border-primary"
+                    placeholder="Enter your email"
+                    className="flex-1 bg-background/80 border-border/50 focus:border-primary"
                   />
-                  <Button className="w-full group" variant="hero">
-                    Subscribe Now
-                    <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <Button variant="default" className="px-6">
+                    Subscribe
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Join 5,000+ subscribers. Unsubscribe anytime.
-                  </p>
                 </div>
-              </Card>
+                <p className="text-xs text-muted-foreground text-center">
+                  No spam, unsubscribe at any time.
+                </p>
+              </div>
             </div>
           </div>
         </div>
