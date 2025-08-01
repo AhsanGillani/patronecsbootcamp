@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudentSidebar } from "@/components/student/StudentSidebar";
-import { LogOut } from "lucide-react";
+import { LogOut, Home } from "lucide-react";
 
 // Import all student components
 import { StudentHome } from "@/components/student/StudentHome";

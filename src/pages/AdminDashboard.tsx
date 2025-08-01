@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { LogOut } from 'lucide-react';
+import { LogOut, Home } from 'lucide-react';
 
 // Import all admin components
 import UserManagement from '@/components/admin/UserManagement';
