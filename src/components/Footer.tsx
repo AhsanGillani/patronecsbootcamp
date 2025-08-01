@@ -117,37 +117,42 @@ export const Footer = () => {
                 </Card>
               </div>
 
-{/* Contact Information Section - Row Layout */}
-<div className="flex flex-col md:flex-row flex-wrap gap-6 mb-10 text-sm text-gray-700">
+<div className="flex items-center justify-start flex-wrap gap-x-6 gap-y-4 text-sm text-gray-700 mb-10">
 
   {/* Email */}
   <a 
     href="mailto:info@patronecs.pk"
-    className="flex items-center gap-3 group hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+    className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Mail className="h-5 w-5 text-primary" />
     </div>
-    <span className="truncate">info@patronecs.pk</span>
+    <span>info@patronecs.pk</span>
   </a>
+
+  {/* Divider */}
+  <div className="h-5 w-px bg-border hidden sm:block" />
 
   {/* Phone */}
   <a 
     href="tel:+923001234567"
-    className="flex items-center gap-3 group hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+    className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
     </div>
-    <span className="truncate">+92 300 1234567</span>
+    <span>+92 300 1234567</span>
   </a>
+
+  {/* Divider */}
+  <div className="h-5 w-px bg-border hidden sm:block" />
 
   {/* Location */}
   <div className="flex items-center gap-3 group hover:text-primary transition-colors">
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <MapPin className="h-5 w-5 text-primary" />
     </div>
-    <span className="truncate">Lahore, Punjab, Pakistan</span>
+    <span>Lahore, Punjab, Pakistan</span>
   </div>
 
 </div>
