@@ -83,25 +83,8 @@ export const Header = () => {
             })}
           </nav>
 
-          {/* Search Bar 
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearchSubmit} className="relative w-full group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search courses, skills, topics..."
-                className="w-full pl-12 pr-4 py-3 border border-border/50 rounded-full bg-background/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 placeholder:text-muted-foreground/70"
-              />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs text-muted-foreground bg-muted rounded border">
-                  ⌘K
-                </kbd>
-              </div>
-            </form>
-          </div>
-*/}
+        
+
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
             {!user ? (
