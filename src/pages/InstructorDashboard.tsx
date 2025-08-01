@@ -85,6 +85,10 @@ const InstructorDashboard = () => {
                   <p className="text-sm text-muted-foreground">Welcome back, {profile.full_name}</p>
                 </div>
               </div>
+              <Button variant="outline" href= { } className="space-x-2">
+                <StudentHome className = "h-1 w-1" />
+                <span>Home</span>
+              </Button>
               <Button variant="outline" onClick={handleSignOut} className="space-x-2">
                 <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
