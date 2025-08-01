@@ -20,6 +20,7 @@ import InstructorDashboard from "./pages/InstructorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import NotFound from "./pages/NotFound";
 import { CourseLearning } from "./components/student/CourseLearning";
+import MuiIndex from "./pages/MuiIndex";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +34,8 @@ const App = () => (
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-            <Route path="/" element={<Index />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/mui" element={<MuiIndex />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/about" element={<About />} />
             <Route path="/courses" element={<AllCourses />} />

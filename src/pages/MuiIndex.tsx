@@ -1,13 +1,19 @@
 import { MuiHeader } from "@/components/mui/MuiHeader";
 import { MuiHero } from "@/components/mui/MuiHero";
-import { Footer } from "@/components/Footer";
+import { MuiCategories } from "@/components/mui/MuiCategories";
+import { MuiStats } from "@/components/mui/MuiStats";
+import { MuiCourses } from "@/components/mui/MuiCourses";
+import { MuiFooter } from "@/components/mui/MuiFooter";
 
 const MuiIndex = () => {
   return (
     <div>
       <MuiHeader />
       <MuiHero />
-      <Footer />
+      <MuiCategories />
+      <MuiStats />
+      <MuiCourses />
+      <MuiFooter />
     </div>
   );
 };
