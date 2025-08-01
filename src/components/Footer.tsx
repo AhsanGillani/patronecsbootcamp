@@ -87,32 +87,6 @@ export const Footer = () => {
               </Link>
               
               
-              
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <Card className="p-4 bg-gradient-to-br from-card to-card/80 border border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-green-500/10">
-                      <Shield className="h-5 w-5 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">100% Free</p>
-                      <p className="text-xs text-muted-foreground">Always & Forever</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-4 bg-gradient-to-br from-card to-card/80 border border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <Award className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Certified</p>
-                      <p className="text-xs text-muted-foreground">Official Certificates</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
 
 <div className="flex items-center justify-start flex-wrap gap-x-6 gap-y-4 text-sm text-gray-700 mb-10">
 
