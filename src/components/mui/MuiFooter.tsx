@@ -3,7 +3,6 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
   Link,
   TextField,
   Button,
@@ -71,9 +70,9 @@ export const MuiFooter = () => {
     >
       <Container maxWidth="lg">
         {/* Main Footer Content */}
-        <Grid container spacing={4} sx={{ mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr 2fr' }, gap: 4, mb: 4 }}>
           {/* Company Info */}
-          <Grid item xs={12} md={4}>
+          <Box>
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <School sx={{ mr: 1, fontSize: 32, color: 'primary.main' }} />
@@ -147,11 +146,11 @@ export const MuiFooter = () => {
                 ))}
               </Box>
             </Box>
-          </Grid>
+          </Box>
 
           {/* Navigation Links */}
           {Object.entries(footerLinks).map(([title, links]) => (
-            <Grid item xs={6} md={2.67} key={title}>
+            <Box key={title}>
               <Typography
                 variant="h6"
                 sx={{
@@ -183,11 +182,11 @@ export const MuiFooter = () => {
                   </Link>
                 ))}
               </Box>
-            </Grid>
+            </Box>
           ))}
 
           {/* Newsletter */}
-          <Grid item xs={12} md={4}>
+          <Box>
             <Typography
               variant="h6"
               sx={{
@@ -259,8 +258,8 @@ export const MuiFooter = () => {
             >
               We respect your privacy. Unsubscribe at any time.
             </Typography>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
 

@@ -5,7 +5,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Button,
   Chip,
   Skeleton,
@@ -50,13 +49,11 @@ export const MuiCategories = () => {
         <Container maxWidth="lg">
           <Skeleton variant="text" width="60%" height={60} sx={{ mx: 'auto', mb: 2 }} />
           <Skeleton variant="text" width="40%" height={30} sx={{ mx: 'auto', mb: 6 }} />
-          <Grid container spacing={3}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3 }}>
             {[...Array(4)].map((_, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-              </Grid>
+              <Skeleton key={index} variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
             ))}
-          </Grid>
+          </Box>
         </Container>
       </Box>
     );
@@ -106,110 +103,108 @@ export const MuiCategories = () => {
         </Fade>
 
         {/* Categories Grid */}
-        <Grid container spacing={3} sx={{ mb: 6 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 6 }}>
           {topCategories.map((category, index) => (
-            <Grid item xs={12} sm={6} md={3} key={category.id}>
-              <Zoom in timeout={600} style={{ transitionDelay: `${index * 100}ms` }}>
-                <Card
-                  component={Link}
-                  to={`/courses?category=${category.id}`}
-                  sx={{
-                    height: '100%',
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease-in-out',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 12px 28px rgba(0, 0, 0, 0.15)',
-                      '& .category-icon': {
-                        transform: 'scale(1.1) rotate(5deg)',
-                      },
-                      '& .category-bg': {
-                        transform: 'scale(1.05)',
-                        opacity: 0.8,
-                      },
+            <Zoom key={category.id} in timeout={600} style={{ transitionDelay: `${index * 100}ms` }}>
+              <Card
+                component={Link}
+                to={`/courses?category=${category.id}`}
+                sx={{
+                  height: '100%',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease-in-out',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.15)',
+                    '& .category-icon': {
+                      transform: 'scale(1.1) rotate(5deg)',
                     },
+                    '& .category-bg': {
+                      transform: 'scale(1.05)',
+                      opacity: 0.8,
+                    },
+                  },
+                }}
+              >
+                {/* Background Gradient */}
+                <Box
+                  className="category-bg"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '60%',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    transition: 'all 0.3s ease',
+                    opacity: 0.9,
                   }}
-                >
-                  {/* Background Gradient */}
+                />
+                
+                <CardContent sx={{ position: 'relative', zIndex: 2, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  {/* Icon */}
                   <Box
-                    className="category-bg"
+                    className="category-icon"
                     sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '60%',
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      backgroundColor: 'white',
+                      borderRadius: '50%',
+                      width: 64,
+                      height: 64,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 2,
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                       transition: 'all 0.3s ease',
-                      opacity: 0.9,
+                    }}
+                  >
+                    {React.cloneElement(getIconForCategory(category.name), {
+                      sx: { fontSize: 32, color: 'primary.main' },
+                    })}
+                  </Box>
+
+                  {/* Content */}
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      color: 'white',
+                    }}
+                  >
+                    {category.name}
+                  </Typography>
+                  
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      mb: 2,
+                      flexGrow: 1,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {category.description || `Explore ${category.name.toLowerCase()} courses`}
+                  </Typography>
+
+                  {/* Course Count Chip */}
+                  <Chip
+                    label="12+ courses"
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white',
+                      fontWeight: 500,
+                      alignSelf: 'flex-start',
                     }}
                   />
-                  
-                  <CardContent sx={{ position: 'relative', zIndex: 2, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    {/* Icon */}
-                    <Box
-                      className="category-icon"
-                      sx={{
-                        backgroundColor: 'white',
-                        borderRadius: '50%',
-                        width: 64,
-                        height: 64,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mb: 2,
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      {React.cloneElement(getIconForCategory(category.name), {
-                        sx: { fontSize: 32, color: 'primary.main' },
-                      })}
-                    </Box>
-
-                    {/* Content */}
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 600,
-                        mb: 1,
-                        color: 'white',
-                      }}
-                    >
-                      {category.name}
-                    </Typography>
-                    
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        mb: 2,
-                        flexGrow: 1,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {category.description || `Explore ${category.name.toLowerCase()} courses`}
-                    </Typography>
-
-                    {/* Course Count Chip */}
-                    <Chip
-                      label="12+ courses"
-                      size="small"
-                      sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        fontWeight: 500,
-                        alignSelf: 'flex-start',
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </Zoom>
-            </Grid>
+                </CardContent>
+              </Card>
+            </Zoom>
           ))}
-        </Grid>
+        </Box>
 
         {/* View All Button */}
         <Fade in timeout={800} style={{ transitionDelay: '400ms' }}>

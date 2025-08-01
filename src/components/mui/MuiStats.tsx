@@ -232,16 +232,16 @@ export const MuiStats = () => {
         </Fade>
 
         {/* Stats Grid */}
-        <Grid container spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr 1fr' }, gap: 4 }}>
           {stats.map((stat, index) => (
-            <Grid item xs={12} sm={6} lg={3} key={index}>
+            <Box key={index}>
               <StatCard
                 {...stat}
                 delay={index * 200}
               />
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </Container>
     </Box>
   );
