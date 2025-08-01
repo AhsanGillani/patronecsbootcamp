@@ -30,29 +30,42 @@ export const Stats = () => {
   ];
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-24 bg-gradient-to-b from-secondary/10 to-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            <span className="text-foreground">Trusted by </span>
-            <span className="text-primary">thousands</span>
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Trusted by </span>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Thousands</span>
           </h2>
-          <p className="text-xl text-muted-foreground">
-            Join our growing community of learners
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+            Join Pakistan's fastest-growing community of <span className="text-primary font-semibold">skilled professionals</span>
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="p-6 bg-card-gradient border-border hover:border-primary transition-all duration-300 hover:shadow-feature-glow text-center">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  {stat.icon}
+            <Card key={index} className={`group relative p-8 bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 text-center hover:-translate-y-2 animate-fade-in animation-delay-${200 + index * 150} overflow-hidden`}>
+              {/* Background Glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="relative z-10 flex flex-col items-center space-y-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                  <div className="relative p-4 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 group-hover:scale-110 transition-transform duration-300">
+                    {stat.icon}
+                  </div>
                 </div>
+                
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">{stat.value}</div>
-                  <div className="font-semibold text-foreground mb-2">{stat.label}</div>
-                  <div className="text-sm text-muted-foreground">{stat.description}</div>
+                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">
+                    {stat.value}
+                  </div>
+                  <div className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                    {stat.label}
+                  </div>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
+                    {stat.description}
+                  </div>
                 </div>
               </div>
             </Card>

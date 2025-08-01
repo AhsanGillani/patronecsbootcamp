@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories } from "@/hooks/useCategories";
-import { Monitor, Palette, Code, TrendingUp, BookOpen, Camera, Briefcase, Globe } from "lucide-react";
+import { Monitor, Palette, Code, TrendingUp, BookOpen, Camera, Briefcase, Globe, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const getIconForCategory = (categoryName: string) => {
@@ -65,45 +65,71 @@ export const CategorySection = () => {
   const displayCategories = categories.slice(0, 4);
 
   return (
-    <section className="py-20 bg-secondary/30">
+    <section className="py-24 bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
-            Top Categories
+        <div className="text-center mb-20 animate-fade-in">
+          <h2 className="text-5xl md:text-6xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              Explore 
+            </span>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> Categories</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Explore our most popular course categories and start your learning journey
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Discover your passion with our expertly curated course categories designed for 
+            <span className="text-primary font-semibold"> Pakistani learners</span>
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {displayCategories.map((category) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {displayCategories.map((category, index) => (
             <Link 
               key={category.id} 
               to={`/courses?category=${category.id}`}
               className="block"
             >
-              <Card className="p-8 text-center hover:shadow-lg transition-all duration-300 group bg-card border-border hover:border-primary/50 cursor-pointer">
-                <div className="mb-6 flex justify-center group-hover:scale-110 transition-transform duration-300">
-                  {getIconForCategory(category.name)}
+              <Card className={`group relative p-8 text-center bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/50 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-3 animate-fade-in animation-delay-${200 + index * 150} overflow-hidden`}>
+                {/* Background Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="mb-8 flex justify-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                      <div className="relative p-4 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 group-hover:scale-110 transition-transform duration-300">
+                        {getIconForCategory(category.name)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold mb-4 text-foreground group-hover:text-primary transition-colors duration-300">
+                    {category.name}
+                  </h3>
+                  
+                  <p className="text-muted-foreground mb-6 leading-relaxed text-sm">
+                    {category.description || `Master ${category.name} skills with expert guidance and practical projects`}
+                  </p>
+                  
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-primary font-bold text-lg">{category.course_count || 0}+</span>
+                    <span className="text-muted-foreground text-sm">Courses Available</span>
+                  </div>
+                  
+                  {/* Hover Arrow */}
+                  <div className="mt-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ArrowRight className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-foreground group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-muted-foreground mb-4 leading-relaxed">
-                  {category.description || `Explore ${category.name} courses and master new skills`}
-                </p>
-                <p className="text-sm text-primary font-medium">
-                  {category.course_count || 0} Courses
-                </p>
               </Card>
             </Link>
           ))}
         </div>
         
-        <div className="text-center">
-          <Button size="lg" variant="outline" className="px-8" asChild>
-            <Link to="/courses">View All Categories</Link>
+        <div className="text-center animate-fade-in animation-delay-1000">
+          <Button size="lg" variant="hero" className="group px-10 py-6 text-lg hover-scale shadow-xl" asChild>
+            <Link to="/courses">
+              Explore All Categories
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </Button>
         </div>
       </div>
