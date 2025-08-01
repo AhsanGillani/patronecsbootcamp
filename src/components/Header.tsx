@@ -83,19 +83,13 @@ export const Header = () => {
             })}
           </nav>
 
-        
+          
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
             {!user ? (
               <>
-                <Link 
-                  to="/instructor" 
-                  className="hidden lg:flex items-center text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group"
-                >
-                  <GraduationCap className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
-                  Teach on Patronecs
-                </Link>
+                
                 <Button variant="ghost" size="sm" className="hidden md:flex" asChild>
                   <Link to="/auth">Log in</Link>
                 </Button>
