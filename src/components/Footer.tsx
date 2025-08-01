@@ -91,7 +91,7 @@ export const Footer = () => {
                 <span className="text-accent font-semibold"> official certifications</span> to build successful, future-ready careers.
               </p>
               
-              /* {/* Trust Indicators */}
+              {/* Trust Indicators 
               <div className="grid grid-cols-2 gap-4 mb-8">
                 <Card className="p-4 bg-gradient-to-br from-card to-card/80 border border-border/50">
                   <div className="flex items-center gap-3">
@@ -115,8 +115,9 @@ export const Footer = () => {
                     </div>
                   </div>
                 </Card>
-              </div> */
-
+              </div>
+                */}
+              
 <div className="flex items-center justify-start flex-wrap gap-x-6 gap-y-4 text-sm text-gray-700 mb-10">
 
   {/* Email */}
