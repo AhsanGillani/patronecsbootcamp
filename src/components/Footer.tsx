@@ -195,6 +195,30 @@ export const Footer = () => {
           </div>
         </div>
 
+        {/* Newsletter Signup */}
+        <div className="mt-16 p-8 bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl border border-primary/20">
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="text-2xl font-bold mb-4">Stay Updated</h3>
+            <p className="text-muted-foreground mb-6">
+              Get the latest course updates, coding tips, and career advice delivered to your inbox.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input 
+                type="email" 
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-2 rounded-lg border border-input bg-background"
+              />
+              <Button variant="default" className="px-6">
+                Subscribe
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              No spam, unsubscribe at any time.
+            </p>
+          </div>
+        </div>
+      </div>
+
         {/* Bottom Bar */}
         <div className="border-t border-border/50 bg-gradient-to-r from-background to-secondary/20">
           <div className="container mx-auto px-4 py-8">
