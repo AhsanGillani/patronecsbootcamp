@@ -86,6 +86,10 @@ const StudentDashboard = () => {
                 <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
               </Button>
+              <Button variant="outline" onClick={handleSignOut} className="space-x-2">
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </Button>
             </div>
           </header>
 
