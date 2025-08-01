@@ -83,7 +83,7 @@ export const Header = () => {
             })}
           </nav>
 
-          {/* Search Bar */}
+          {/* Search Bar 
           <div className="hidden md:flex flex-1 max-w-md mx-8">
             <form onSubmit={handleSearchSubmit} className="relative w-full group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -101,7 +101,7 @@ export const Header = () => {
               </div>
             </form>
           </div>
-
+*/}
           {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
             {!user ? (
