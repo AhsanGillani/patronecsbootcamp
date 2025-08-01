@@ -141,7 +141,7 @@ export const Footer = () => {
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
     </div>
-    <span>+92 334 8124091</span>
+    <span>+92 300 1234567</span>
   </a>
 
   {/* Divider */}
@@ -152,7 +152,8 @@ export const Footer = () => {
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <MapPin className="h-5 w-5 text-primary" />
     </div>
-    <span>Lahore, Punjab, Pakistan</span>
+    <span>Patronecs Office, Doburji Mallian,
+Pasrur Bypass, Sialkot, Punjab 51350</span>
   </div>
 
 </div>
