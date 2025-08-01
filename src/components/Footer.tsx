@@ -118,27 +118,39 @@ export const Footer = () => {
                 </Card>
               </div>
 
-              {/* Contact Info */}
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-4 text-sm group hover:text-primary transition-colors cursor-pointer">
-                  <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <Mail className="h-4 w-4 text-primary" />
-                  </div>
-                  <span>info@patronecs.pk</span>
-                </div>
-                <div className="flex items-center gap-4 text-sm group hover:text-primary transition-colors cursor-pointer">
-                  <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <Phone className="h-4 w-4 text-primary" />
-                  </div>
-                  <span>+92 300 1234567</span>
-                </div>
-                <div className="flex items-center gap-4 text-sm group hover:text-primary transition-colors cursor-pointer">
-                  <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <MapPin className="h-4 w-4 text-primary" />
-                  </div>
-                  <span>Lahore, Punjab, Pakistan</span>
-                </div>
-              </div>
+              {/* Contact Information Section */}
+<div className="space-y-6 mb-10 text-sm text-gray-700">
+  {/* Email */}
+  <a 
+    href="mailto:info@patronecs.pk"
+    className="flex items-center gap-4 group transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+  >
+    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+      <Mail className="h-5 w-5 text-primary" />
+    </div>
+    <span className="truncate">info@patronecs.pk</span>
+  </a>
+
+  {/* Phone */}
+  <a 
+    href="tel:+923001234567"
+    className="flex items-center gap-4 group transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+  >
+    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+      <Phone className="h-5 w-5 text-primary" />
+    </div>
+    <span className="truncate">+92 300 1234567</span>
+  </a>
+
+  {/* Location */}
+  <div className="flex items-center gap-4 group transition-colors hover:text-primary">
+    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+      <MapPin className="h-5 w-5 text-primary" />
+    </div>
+    <span className="truncate">Lahore, Punjab, Pakistan</span>
+  </div>
+</div>
+
 
               {/* Social Links */}
               <div className="flex space-x-3">
