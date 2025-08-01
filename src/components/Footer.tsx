@@ -99,7 +99,7 @@ export const Footer = () => {
                       <Shield className="h-5 w-5 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">100% Hand on Experince</p>
+                      <p className="text-sm font-semibold">100% Free</p>
                       <p className="text-xs text-muted-foreground">Always & Forever</p>
                     </div>
                   </div>
@@ -127,7 +127,7 @@ export const Footer = () => {
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Mail className="h-5 w-5 text-primary" />
     </div>
-    <span>info@patronecs.com</span>
+    <span>info@patronecs.pk</span>
   </a>
 
   {/* Divider */}
@@ -135,13 +135,13 @@ export const Footer = () => {
 
   {/* Phone */}
   <a 
-    href="tel:+923348124091"
+    href="tel:+923001234567"
     className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
     </div>
-    <span>+92 334 8124091</span>
+    <span>+92 300 1234567</span>
   </a>
 
   {/* Divider */}
@@ -152,7 +152,8 @@ export const Footer = () => {
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <MapPin className="h-5 w-5 text-primary" />
     </div>
-    <span>Lahore, Punjab, Pakistan</span>
+    <span>Patronecs Office, Doburji Mallian,
+Pasrur Bypass, Sialkot, Punjab 51350</span>
   </div>
 
 </div>
