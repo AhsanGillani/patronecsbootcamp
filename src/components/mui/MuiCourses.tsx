@@ -265,7 +265,7 @@ export const MuiCourses = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Enroll Free
+                    Enroll
                   </Button>
                 </CardContent>
               </Card>
