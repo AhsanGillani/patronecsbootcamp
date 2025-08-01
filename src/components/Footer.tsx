@@ -117,12 +117,13 @@ export const Footer = () => {
                 </Card>
               </div>
 
-              {/* Contact Information Section */}
-<div className="space-y-6 mb-10 text-sm text-gray-700">
+{/* Contact Information Section - Row Layout */}
+<div className="flex flex-col md:flex-row flex-wrap gap-6 mb-10 text-sm text-gray-700">
+
   {/* Email */}
   <a 
     href="mailto:info@patronecs.pk"
-    className="flex items-center gap-4 group transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+    className="flex items-center gap-3 group hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Mail className="h-5 w-5 text-primary" />
@@ -133,7 +134,7 @@ export const Footer = () => {
   {/* Phone */}
   <a 
     href="tel:+923001234567"
-    className="flex items-center gap-4 group transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
+    className="flex items-center gap-3 group hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
@@ -142,12 +143,13 @@ export const Footer = () => {
   </a>
 
   {/* Location */}
-  <div className="flex items-center gap-4 group transition-colors hover:text-primary">
+  <div className="flex items-center gap-3 group hover:text-primary transition-colors">
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <MapPin className="h-5 w-5 text-primary" />
     </div>
     <span className="truncate">Lahore, Punjab, Pakistan</span>
   </div>
+
 </div>
 
 
