@@ -99,7 +99,7 @@ export const Footer = () => {
                       <Shield className="h-5 w-5 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">100% Free</p>
+                      <p className="text-sm font-semibold">100% Hand on Experince</p>
                       <p className="text-xs text-muted-foreground">Always & Forever</p>
                     </div>
                   </div>
@@ -127,7 +127,7 @@ export const Footer = () => {
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Mail className="h-5 w-5 text-primary" />
     </div>
-    <span>info@patronecs.pk</span>
+    <span>info@patronecs.com</span>
   </a>
 
   {/* Divider */}
@@ -135,13 +135,13 @@ export const Footer = () => {
 
   {/* Phone */}
   <a 
-    href="tel:+923001234567"
+    href="tel:+923348124091"
     className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
     </div>
-    <span>+92 300 1234567</span>
+    <span>+92 334 8124091</span>
   </a>
 
   {/* Divider */}
