@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudentSidebar } from "@/components/student/StudentSidebar";
-import { LogOut, Home } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 // Import all student components
 import { StudentHome } from "@/components/student/StudentHome";
@@ -16,7 +16,6 @@ import { StudentProfile } from "@/components/student/StudentProfile";
 
 const StudentDashboard = () => {
   const { user, profile, signOut, loading } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
 
   // Redirect if not authenticated or not a student
@@ -83,7 +82,7 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground">Welcome back, {profile.full_name}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => navigate("/")} className="space-x-2">
+              <Button variant="outline" onClick={() => window.location.href = '/'} className="space-x-2">
                 <Home className="h-4 w-4" />
                 <span>Home</span>
               </Button>
