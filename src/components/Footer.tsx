@@ -29,10 +29,9 @@ export const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: <Facebook className="h-5 w-5" />, href: "#", name: "Facebook" },
-    { icon: <Twitter className="h-5 w-5" />, href: "#", name: "Twitter" },
-    { icon: <Instagram className="h-5 w-5" />, href: "#", name: "Instagram" },
-    { icon: <Linkedin className="h-5 w-5" />, href: "#", name: "LinkedIn" }
+    { icon: <Facebook className="h-5 w-5" />, href: "https://www.facebook.com/patronecs", name: "Facebook" },
+    { icon: <Instagram className="h-5 w-5" />, href: "https://www.instagram.com/patronecs/", name: "Instagram" },
+    { icon: <Linkedin className="h-5 w-5" />, href: "https://www.linkedin.com/company/30082956/admin/dashboard/", name: "LinkedIn" }
   ];
 
   return (
@@ -99,7 +98,7 @@ export const Footer = () => {
                       <Shield className="h-5 w-5 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">100% Free</p>
+                      <p className="text-sm font-semibold">100% Hand on Experience</p>
                       <p className="text-xs text-muted-foreground">Always & Forever</p>
                     </div>
                   </div>
@@ -121,13 +120,13 @@ export const Footer = () => {
 
   {/* Email */}
   <a 
-    href="mailto:info@patronecs.pk"
+    href="mailto:info@patronecs.com"
     className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Mail className="h-5 w-5 text-primary" />
     </div>
-    <span>info@patronecs.pk</span>
+    <span>info@patronecs.com</span>
   </a>
 
   {/* Divider */}
@@ -135,13 +134,13 @@ export const Footer = () => {
 
   {/* Phone */}
   <a 
-    href="tel:+923001234567"
+    href="tel:+923348124091"
     className="flex items-center gap-3 group hover:text-primary transition-colors"
   >
     <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
       <Phone className="h-5 w-5 text-primary" />
     </div>
-    <span>+92 300 1234567</span>
+    <span>+92 334 8124091</span>
   </a>
 
   {/* Divider */}
@@ -153,7 +152,7 @@ export const Footer = () => {
       <MapPin className="h-5 w-5 text-primary" />
     </div>
     <span>Patronecs Office, Doburji Mallian,
-Pasrur Bypass, Sialkot, Punjab 51350</span>
+Pasrur Bypass, Sialkot, Punjab 51350n</span>
   </div>
 
 </div>
