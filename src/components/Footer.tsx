@@ -181,31 +181,6 @@ export const Footer = () => {
                 </ul>
               </div>
             ))}
-
-            {/* Newsletter */}
-            <div>
-              <h3 className="font-bold text-xl mb-6 text-foreground relative">
-                Stay Updated
-                <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-primary to-accent"></div>
-              </h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                Get the latest course updates, coding tips, and career advice delivered to your inbox.
-              </p>
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 bg-background/80 border-border/50 focus:border-primary"
-                  />
-                  <Button variant="default" className="px-6">
-                    Subscribe
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  No spam, unsubscribe at any time.
-                </p>
-              </div>
             </div>
           </div>
         </div>
