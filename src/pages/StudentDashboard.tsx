@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudentSidebar } from "@/components/student/StudentSidebar";
-import { LogOut } from "lucide-react";
+import { LogOut, Home } from "lucide-react";
 
 // Import all student components
 import { StudentHome } from "@/components/student/StudentHome";
@@ -16,6 +16,7 @@ import { StudentProfile } from "@/components/student/StudentProfile";
 
 const StudentDashboard = () => {
   const { user, profile, signOut, loading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
 
   // Redirect if not authenticated or not a student
