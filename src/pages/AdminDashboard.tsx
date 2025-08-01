@@ -79,9 +79,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name}</p>
                 </div>
               </div>
-               <Button variant="outline" onClick={signOut} className="space-x-2">
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+              <Button variant="outline" onClick={() => window.location.href = '/'} className="space-x-2">
+                <Home className="h-4 w-4" />
+                <span>Home</span>
               </Button>
               <Button variant="outline" onClick={signOut} className="space-x-2">
                 <LogOut className="h-4 w-4" />
