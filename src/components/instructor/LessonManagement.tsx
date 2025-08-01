@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, GripVertical, Video, FileText, HelpCircle } from "lucide-react";
 import { CreateLesson } from "./CreateLesson";
+import { EditLesson } from "./EditLesson";
 
 interface Lesson {
   id: string;
@@ -27,6 +28,8 @@ export const LessonManagement = () => {
   const { toast } = useToast();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -166,7 +169,14 @@ export const LessonManagement = () => {
           )}
 
           <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => {
+                setEditingLesson(lesson);
+                setEditOpen(true);
+              }}
+            >
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
@@ -210,6 +220,15 @@ export const LessonManagement = () => {
             <LessonCard key={lesson.id} lesson={lesson} />
           ))}
         </div>
+      )}
+
+      {editingLesson && (
+        <EditLesson
+          lesson={editingLesson}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onLessonUpdated={fetchLessons}
+        />
       )}
     </div>
   );

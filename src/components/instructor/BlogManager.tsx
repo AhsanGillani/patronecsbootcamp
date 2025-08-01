@@ -8,18 +8,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
 import { CreateBlog } from "./CreateBlog";
+import { EditBlog } from "./EditBlog";
 
 interface Blog {
   id: string;
   title: string;
   content: string;
-  excerpt: string;
+  excerpt: string | null;
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   is_published: boolean;
   views: number;
-  featured_image_url: string;
+  featured_image_url: string | null;
   admin_comments: string;
   created_at: string;
+  category_id: string | null;
   category: { name: string } | null;
 }
 
@@ -28,6 +30,8 @@ export const BlogManager = () => {
   const { toast } = useToast();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -152,7 +156,10 @@ export const BlogManager = () => {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => window.open(`/blog/${blog.id}/edit`, '_blank')}
+              onClick={() => {
+                setEditingBlog(blog);
+                setEditOpen(true);
+              }}
             >
               <Edit className="h-4 w-4 mr-1" />
               Edit
@@ -227,6 +234,15 @@ export const BlogManager = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {editingBlog && (
+        <EditBlog
+          blog={editingBlog}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onBlogUpdated={fetchBlogs}
+        />
+      )}
     </div>
   );
 };

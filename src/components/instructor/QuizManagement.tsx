@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Brain, Award } from "lucide-react";
 import { CreateQuiz } from "./CreateQuiz";
+import { EditQuiz } from "./EditQuiz";
 
 interface Quiz {
   id: string;
@@ -23,6 +24,8 @@ export const QuizManagement = () => {
   const { toast } = useToast();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -149,7 +152,14 @@ export const QuizManagement = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => {
+                setEditingQuiz(quiz);
+                setEditOpen(true);
+              }}
+            >
               <Edit className="h-4 w-4 mr-1" />
               Edit Quiz
             </Button>
@@ -197,6 +207,15 @@ export const QuizManagement = () => {
             <QuizCard key={quiz.id} quiz={quiz} />
           ))}
         </div>
+      )}
+
+      {editingQuiz && (
+        <EditQuiz
+          quiz={editingQuiz}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onQuizUpdated={fetchQuizzes}
+        />
       )}
     </div>
   );

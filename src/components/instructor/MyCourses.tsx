@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Copy, Trash2, Eye, Clock, Users } from "lucide-react";
 import { CreateCourse } from "./CreateCourse";
+import { EditCourse } from "./EditCourse";
 
 interface Course {
   id: string;
@@ -21,6 +22,8 @@ interface Course {
   total_duration: number;
   admin_comments: string;
   created_at: string;
+  category_id: string | null;
+  thumbnail_url: string | null;
   category: { name: string } | null;
 }
 
@@ -29,6 +32,8 @@ export const MyCourses = () => {
   const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,7 +46,19 @@ export const MyCourses = () => {
       const { data, error } = await supabase
         .from("courses")
         .select(`
-          *,
+          id,
+          title,
+          description,
+          status,
+          price,
+          level,
+          total_enrollments,
+          lesson_count,
+          total_duration,
+          admin_comments,
+          created_at,
+          category_id,
+          thumbnail_url,
           categories!fk_courses_category_id(name)
         `)
         .eq("instructor_id", user?.id)
@@ -199,7 +216,10 @@ export const MyCourses = () => {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => window.open(`/courses/${course.id}/edit`, '_blank')}
+              onClick={() => {
+                setEditingCourse(course);
+                setEditOpen(true);
+              }}
             >
               <Edit className="h-4 w-4 mr-1" />
               Edit
@@ -282,6 +302,23 @@ export const MyCourses = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {editingCourse && (
+        <EditCourse
+          course={{
+            id: editingCourse.id,
+            title: editingCourse.title,
+            description: editingCourse.description,
+            category_id: editingCourse.category_id,
+            level: editingCourse.level,
+            price: editingCourse.price,
+            thumbnail_url: editingCourse.thumbnail_url
+          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onCourseUpdated={fetchCourses}
+        />
+      )}
     </div>
   );
 };
