@@ -51,18 +51,18 @@ export const Header = () => {
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg group-hover:blur-xl transition-all duration-300"></div>
-            </div>
-            <div className="hidden sm:block">
-  <a href="/" className="footer-brand _1 w-inline-block">
-    <img
-      src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
-      loading="lazy"
-      alt="Company Logo"
-      className="w-28 h-auto image-8 juio"
-    />
-  </a>
-  <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
-</div>
+                </div>
+                      <div className="">
+                      <a href="/" className="footer-brand _1 w-inline-block">
+                        <img
+                          src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+                          loading="lazy"
+                          alt="Company Logo"
+                          className="w-28 h-auto image-8 juio"
+                        />
+                      </a>
+                      <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
+                  </div>
 
           </Link>
 
@@ -185,8 +185,14 @@ export const Header = () => {
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col h-full">
                   <div className="flex items-center space-x-3 mb-8">
-                    <img src={logo} alt="Patronecs" className="h-8" />
-                    <h2 className="text-xl font-bold text-primary">Patronecs</h2>
+                    <a href="/" className="footer-brand _1 w-inline-block">
+                      <img
+                        src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+                        loading="lazy"
+                        alt="Company Logo"
+                        className="w-28 h-auto image-8 juio"
+                      />
+                    </a>
                   </div>
                   
                   {/* Mobile Search */}
