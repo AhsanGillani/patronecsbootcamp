@@ -131,7 +131,11 @@ export function StudentCourses() {
               </div>
 
               <div className="flex space-x-2">
-                <Button className="flex-1" size="sm">
+                <Button 
+                  className="flex-1" 
+                  size="sm"
+                  onClick={() => window.location.href = `/course-learning/${enrollment.courses.id}`}
+                >
                   <Play className="h-4 w-4 mr-2" />
                   {enrollment.progress === 0 ? 'Start Course' : 'Continue'}
                 </Button>

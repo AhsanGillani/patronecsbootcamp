@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { LessonPlayer } from "./LessonPlayer";
+import { CourseFeedback } from "./CourseFeedback";
 import { 
   Play, 
   CheckCircle, 
@@ -16,7 +18,9 @@ import {
   HelpCircle, 
   BookOpen,
   ArrowLeft,
-  Award
+  Award,
+  List,
+  MessageSquare
 } from "lucide-react";
 
 interface Lesson {
@@ -66,6 +70,9 @@ export const CourseLearning = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [showCourseContent, setShowCourseContent] = useState(true);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
     if (user && courseId) {
@@ -177,6 +184,45 @@ export const CourseLearning = () => {
     }
   };
 
+  const startLesson = (lesson: Lesson) => {
+    setCurrentLesson(lesson);
+    setShowCourseContent(false);
+    setShowFeedback(false);
+  };
+
+  const goToNext = () => {
+    if (!currentLesson) return;
+    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    if (currentIndex < lessons.length - 1) {
+      setCurrentLesson(lessons[currentIndex + 1]);
+    }
+  };
+
+  const goToPrevious = () => {
+    if (!currentLesson) return;
+    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    if (currentIndex > 0) {
+      setCurrentLesson(lessons[currentIndex - 1]);
+    }
+  };
+
+  const backToCourseContent = () => {
+    setCurrentLesson(null);
+    setShowCourseContent(true);
+    setShowFeedback(false);
+  };
+
+  const showCourseFeedback = () => {
+    setCurrentLesson(null);
+    setShowCourseContent(false);
+    setShowFeedback(true);
+  };
+
+  const getCurrentLessonIndex = () => {
+    if (!currentLesson) return -1;
+    return lessons.findIndex(l => l.id === currentLesson.id);
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading course content...</div>;
   }
@@ -191,7 +237,7 @@ export const CourseLearning = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/student-dashboard">
+              <Link to="/student">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Dashboard
@@ -222,92 +268,142 @@ export const CourseLearning = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Course Content */}
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Sidebar - Navigation */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Course Navigation</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  variant={showCourseContent ? "default" : "outline"} 
+                  className="w-full justify-start"
+                  onClick={backToCourseContent}
+                >
+                  <List className="h-4 w-4 mr-2" />
                   Course Content
-                </h2>
-                <div className="space-y-3">
-                  {lessons.map((lesson, index) => {
-                    const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
-                    
-                    return (
-                      <Card key={lesson.id} className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              {isCompleted ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                              ) : (
-                                <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
-                              )}
-                              <div>
-                                <CardTitle className="text-base flex items-center space-x-2">
-                                  {getTypeIcon(lesson.type)}
-                                  <span>Lesson {index + 1}: {lesson.title}</span>
-                                </CardTitle>
-                                <CardDescription className="flex items-center space-x-2 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{lesson.duration || 0} minutes</span>
-                                </CardDescription>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge variant="outline">{lesson.type}</Badge>
-                              {!isCompleted && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => markLessonComplete(lesson.id)}
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  Start
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
+                </Button>
+                
+                <Button 
+                  variant={showFeedback ? "default" : "outline"} 
+                  className="w-full justify-start"
+                  onClick={showCourseFeedback}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Give Feedback
+                </Button>
 
-              {/* Quizzes Section */}
-              {quizzes.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-semibold mb-4 flex items-center">
-                    <HelpCircle className="h-5 w-5 mr-2" />
-                    Quizzes & Assessments
-                  </h2>
-                  <div className="space-y-3">
-                    {quizzes.map((quiz) => {
-                      const hasAttempted = quiz.quiz_attempts && quiz.quiz_attempts.length > 0;
-                      const lastAttempt = hasAttempted ? quiz.quiz_attempts[quiz.quiz_attempts.length - 1] : null;
+                <div className="pt-4 border-t">
+                  <h4 className="font-medium mb-3">Lessons</h4>
+                  <div className="space-y-2">
+                    {lessons.map((lesson, index) => {
+                      const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
+                      const isCurrent = currentLesson?.id === lesson.id;
                       
                       return (
-                        <Card key={quiz.id} className="hover:shadow-md transition-all">
-                          <CardHeader>
+                        <Button
+                          key={lesson.id}
+                          variant={isCurrent ? "default" : "ghost"}
+                          size="sm"
+                          className={`w-full justify-start text-left ${isCompleted ? 'text-green-600' : ''}`}
+                          onClick={() => startLesson(lesson)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            {isCompleted ? (
+                              <CheckCircle className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <div className="h-3 w-3 border border-gray-300 rounded-full" />
+                            )}
+                            {getTypeIcon(lesson.type)}
+                            <span className="truncate">L{index + 1}: {lesson.title}</span>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Progress</span>
+                    <span className="text-sm font-medium">{Math.round(progress)}%</span>
+                  </div>
+                  <Progress value={progress} />
+                </div>
+
+                {progress === 100 && (
+                  <div className="pt-4 border-t">
+                    <Button className="w-full" variant="default">
+                      <Award className="h-4 w-4 mr-2" />
+                      Get Certificate
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-3">
+            {currentLesson && !showCourseContent && !showFeedback && (
+              <LessonPlayer
+                lesson={currentLesson}
+                onComplete={markLessonComplete}
+                onNext={goToNext}
+                onPrevious={goToPrevious}
+                hasNext={getCurrentLessonIndex() < lessons.length - 1}
+                hasPrevious={getCurrentLessonIndex() > 0}
+              />
+            )}
+
+            {showFeedback && (
+              <CourseFeedback 
+                courseId={courseId!} 
+                courseName={course.title} 
+              />
+            )}
+
+            {showCourseContent && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold mb-4 flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Course Content
+                  </h2>
+                  <div className="space-y-3">
+                    {lessons.map((lesson, index) => {
+                      const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
+                      
+                      return (
+                        <Card key={lesson.id} className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
+                          <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
-                              <div>
-                                <CardTitle className="text-base flex items-center space-x-2">
-                                  <HelpCircle className="h-4 w-4" />
-                                  <span>{quiz.title}</span>
-                                </CardTitle>
-                                <CardDescription>{quiz.description}</CardDescription>
+                              <div className="flex items-center space-x-3">
+                                {isCompleted ? (
+                                  <CheckCircle className="h-5 w-5 text-green-500" />
+                                ) : (
+                                  <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
+                                )}
+                                <div>
+                                  <CardTitle className="text-base flex items-center space-x-2">
+                                    {getTypeIcon(lesson.type)}
+                                    <span>Lesson {index + 1}: {lesson.title}</span>
+                                  </CardTitle>
+                                  <CardDescription className="flex items-center space-x-2 mt-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{lesson.duration || 0} minutes</span>
+                                  </CardDescription>
+                                </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                {hasAttempted && (
-                                  <Badge variant={lastAttempt?.passed ? "default" : "destructive"}>
-                                    {lastAttempt?.passed ? "Passed" : "Failed"}
-                                    {lastAttempt && ` (${lastAttempt.score}%)`}
-                                  </Badge>
-                                )}
-                                <Button size="sm">
-                                  {hasAttempted ? "Retake" : "Take Quiz"}
+                                <Badge variant="outline">{lesson.type}</Badge>
+                                <Button
+                                  size="sm"
+                                  onClick={() => startLesson(lesson)}
+                                >
+                                  <Play className="h-3 w-3 mr-1" />
+                                  {isCompleted ? 'Review' : 'Start'}
                                 </Button>
                               </div>
                             </div>
@@ -317,57 +413,50 @@ export const CourseLearning = () => {
                     })}
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Lessons</span>
-                  <span className="font-medium">{lessons.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Duration</span>
-                  <span className="font-medium">{course.total_duration || 0} minutes</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Quizzes</span>
-                  <span className="font-medium">{quizzes.length}</span>
-                </div>
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Progress</span>
-                    <span className="text-sm font-medium">{Math.round(progress)}%</span>
+                {/* Quizzes Section */}
+                {quizzes.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4 flex items-center">
+                      <HelpCircle className="h-5 w-5 mr-2" />
+                      Quizzes & Assessments
+                    </h2>
+                    <div className="space-y-3">
+                      {quizzes.map((quiz) => {
+                        const hasAttempted = quiz.quiz_attempts && quiz.quiz_attempts.length > 0;
+                        const lastAttempt = hasAttempted ? quiz.quiz_attempts[quiz.quiz_attempts.length - 1] : null;
+                        
+                        return (
+                          <Card key={quiz.id} className="hover:shadow-md transition-all">
+                            <CardHeader>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle className="text-base flex items-center space-x-2">
+                                    <HelpCircle className="h-4 w-4" />
+                                    <span>{quiz.title}</span>
+                                  </CardTitle>
+                                  <CardDescription>{quiz.description}</CardDescription>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {hasAttempted && (
+                                    <Badge variant={lastAttempt?.passed ? "default" : "destructive"}>
+                                      {lastAttempt?.passed ? "Passed" : "Failed"}
+                                      {lastAttempt && ` (${lastAttempt.score}%)`}
+                                    </Badge>
+                                  )}
+                                  <Button size="sm">
+                                    {hasAttempted ? "Retake" : "Take Quiz"}
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <Progress value={progress} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {progress === 100 && (
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="text-green-700 flex items-center">
-                    <Award className="h-5 w-5 mr-2" />
-                    Course Completed!
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-green-600 text-sm mb-4">
-                    Congratulations! You've completed this course. Download your certificate below.
-                  </p>
-                  <Button className="w-full" variant="default">
-                    <Award className="h-4 w-4 mr-2" />
-                    Download Certificate
-                  </Button>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             )}
           </div>
         </div>
