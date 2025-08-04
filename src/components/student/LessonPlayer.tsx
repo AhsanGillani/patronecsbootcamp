@@ -46,23 +46,40 @@ export const LessonPlayer = ({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
 
+  const getYouTubeEmbedUrl = (url: string) => {
+    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
   const renderContent = () => {
     switch (lesson.type) {
       case 'video':
         return (
           <div className="space-y-4">
             {lesson.video_url ? (
-              <div className="relative bg-black rounded-lg overflow-hidden">
-                <video 
-                  className="w-full h-auto max-h-96"
-                  controls
-                  onPlay={() => setIsVideoPlaying(true)}
-                  onPause={() => setIsVideoPlaying(false)}
-                  onEnded={() => !isCompleted && onComplete(lesson.id)}
-                >
-                  <source src={lesson.video_url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+              <div className="relative rounded-lg overflow-hidden bg-black">
+                {lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be') ? (
+                  <iframe
+                    className="w-full h-96"
+                    src={getYouTubeEmbedUrl(lesson.video_url)}
+                    title={lesson.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    onLoad={() => setIsVideoPlaying(true)}
+                  />
+                ) : (
+                  <video 
+                    className="w-full h-auto max-h-96"
+                    controls
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                    onEnded={() => !isCompleted && onComplete(lesson.id)}
+                  >
+                    <source src={lesson.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                )}
               </div>
             ) : (
               <div className="bg-muted rounded-lg p-8 text-center">

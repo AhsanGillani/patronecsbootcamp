@@ -34,7 +34,7 @@ export function StudentLearning() {
         .eq('student_id', user?.id)
         .gt('progress', 0)
         .lt('progress', 100)
-        .order('updated_at', { ascending: false });
+        .order('enrolled_at', { ascending: false });
 
       if (error) throw error;
       setRecentCourses(data || []);
