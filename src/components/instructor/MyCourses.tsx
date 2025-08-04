@@ -59,7 +59,7 @@ export const MyCourses = () => {
           created_at,
           category_id,
           thumbnail_url,
-          categories!fk_courses_category_id(name)
+          category:categories!courses_category_id_fkey(name)
         `)
         .eq("instructor_id", user?.id)
         .eq("soft_deleted", false)
@@ -70,7 +70,7 @@ export const MyCourses = () => {
       // Handle potential null category relationships
       const coursesWithCategory = (data || []).map((course: any) => ({
         ...course,
-        category: course.categories || { name: "Uncategorized" }
+        category: course.category || { name: "Uncategorized" }
       }));
       
       setCourses(coursesWithCategory);
