@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, BookOpen, Clock } from "lucide-react";
+import { CourseCardSkeleton } from "@/components/ui/skeleton-loader";
 
 export function StudentLearning() {
   const { user } = useAuth();
@@ -45,7 +46,20 @@ export function StudentLearning() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Continue Learning</h2>
+          <p className="text-muted-foreground">Pick up where you left off</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <CourseCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (recentCourses.length === 0) {

@@ -10,6 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { LessonPlayer } from "./LessonPlayer";
 import { CourseFeedback } from "./CourseFeedback";
 import { 
+  LessonCardSkeleton, 
+  QuizCardSkeleton, 
+  CourseOverviewSkeleton, 
+  NavigationSkeleton,
+  LessonPlayerSkeleton
+} from "@/components/ui/skeleton-loader";
+import { 
   Play, 
   CheckCircle, 
   Clock, 
@@ -224,7 +231,69 @@ export const CourseLearning = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading course content...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link to="/student">
+                  <Button variant="ghost" size="sm">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                  </Button>
+                </Link>
+                <div>
+                  <div className="h-8 w-48 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="h-4 w-16 bg-muted rounded animate-pulse mb-1" />
+                  <div className="flex items-center space-x-2">
+                    <div className="h-2 w-32 bg-muted rounded animate-pulse" />
+                    <div className="h-4 w-8 bg-muted rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Left Sidebar - Navigation Skeleton */}
+            <div className="lg:col-span-1">
+              <NavigationSkeleton />
+            </div>
+
+            {/* Main Content Area Skeleton */}
+            <div className="lg:col-span-3">
+              <div className="space-y-6">
+                <div>
+                  <div className="h-6 w-48 bg-muted rounded animate-pulse mb-4" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <LessonCardSkeleton key={i} />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="h-6 w-56 bg-muted rounded animate-pulse mb-4" />
+                  <div className="space-y-3">
+                    {[1, 2].map((i) => (
+                      <QuizCardSkeleton key={i} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!course) {

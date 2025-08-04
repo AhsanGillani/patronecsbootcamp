@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Play, Clock, Award, Users } from "lucide-react";
+import { CourseCardSkeleton } from "@/components/ui/skeleton-loader";
 
 interface EnrolledCourse {
   id: string;
@@ -69,7 +70,22 @@ export function StudentCourses() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading your courses...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">My Courses</h2>
+            <p className="text-muted-foreground">Track your learning progress</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <CourseCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (enrolledCourses.length === 0) {
