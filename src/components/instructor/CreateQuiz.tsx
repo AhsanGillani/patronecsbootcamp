@@ -46,18 +46,40 @@ export const CreateQuiz = ({ onQuizCreated }: CreateQuizProps) => {
     if (!user) return;
 
     try {
+      // First get courses for this instructor
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, title')
+        .eq('instructor_id', user.id);
+
+      if (coursesError) throw coursesError;
+
+      if (!coursesData || coursesData.length === 0) {
+        setLessons([]);
+        return;
+      }
+
+      const courseIds = coursesData.map(c => c.id);
+
+      // Then get lessons for those courses
       const { data, error } = await supabase
         .from('lessons')
-        .select(`
-          id,
-          title,
-          course:courses(title)
-        `)
-        .eq('courses.instructor_id', user.id)
+        .select('id, title, course_id')
+        .in('course_id', courseIds)
         .order('title');
 
       if (error) throw error;
-      setLessons(data || []);
+
+      // Transform data to include course title
+      const lessonsWithCourse = (data || []).map(lesson => {
+        const course = coursesData.find(c => c.id === lesson.course_id);
+        return {
+          ...lesson,
+          course: { title: course?.title || 'Unknown Course' }
+        };
+      });
+
+      setLessons(lessonsWithCourse);
     } catch (error) {
       console.error('Error fetching lessons:', error);
       toast({

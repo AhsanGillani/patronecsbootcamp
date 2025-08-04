@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, Folder, Plus, Edit, Trash2, Brain, Award } from "lucide-react";
 import { CreateQuiz } from "./CreateQuiz";
 import { EditQuiz } from "./EditQuiz";
+import { CreateQuestion } from "./CreateQuestion";
 
 interface Quiz {
   id: string;
@@ -34,6 +35,8 @@ export const QuizManagement = () => {
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
+  const [addingQuestionToQuiz, setAddingQuestionToQuiz] = useState<string | null>(null);
+  const [questionDialogOpen, setQuestionDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -181,7 +184,14 @@ export const QuizManagement = () => {
               <Edit className="h-4 w-4 mr-1" />
               Edit Quiz
             </Button>
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => {
+                setAddingQuestionToQuiz(quiz.id);
+                setQuestionDialogOpen(true);
+              }}
+            >
               <Plus className="h-4 w-4 mr-1" />
               Add Questions
             </Button>
@@ -283,6 +293,20 @@ export const QuizManagement = () => {
           open={editOpen}
           onOpenChange={setEditOpen}
           onQuizUpdated={fetchQuizzes}
+        />
+      )}
+      
+      {addingQuestionToQuiz && (
+        <CreateQuestion
+          quizId={addingQuestionToQuiz}
+          open={questionDialogOpen}
+          onOpenChange={(open) => {
+            setQuestionDialogOpen(open);
+            if (!open) {
+              setAddingQuestionToQuiz(null);
+            }
+          }}
+          onQuestionCreated={fetchQuizzes}
         />
       )}
     </div>

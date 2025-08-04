@@ -50,7 +50,7 @@ const CourseDetail = () => {
           .eq('is_published', true)
           .order('order_index')
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (!lessonsError && lessonsData) {
           setFirstLesson(lessonsData);
@@ -151,16 +151,29 @@ const CourseDetail = () => {
         </div>
 
         {firstLesson.type === 'video' && firstLesson.video_url ? (
-          <div className="relative bg-black rounded-lg overflow-hidden mb-4">
-            <video 
-              className="w-full h-auto max-h-96"
-              controls
-              onEnded={onContentEnd}
-              poster={course?.thumbnail_url}
-            >
-              <source src={firstLesson.video_url} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+          <div className="relative rounded-lg overflow-hidden mb-4">
+            {firstLesson.video_url.includes('youtube.com') || firstLesson.video_url.includes('youtu.be') ? (
+              <div className="aspect-video">
+                <iframe
+                  className="w-full h-full"
+                  src={firstLesson.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                  title={firstLesson.title}
+                  frameBorder="0"
+                  allowFullScreen
+                  onLoad={onContentEnd}
+                />
+              </div>
+            ) : (
+              <video 
+                className="w-full h-auto max-h-96"
+                controls
+                onEnded={onContentEnd}
+                poster={course?.thumbnail_url}
+              >
+                <source src={firstLesson.video_url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )}
           </div>
         ) : firstLesson.type === 'text' && firstLesson.content ? (
           <div className="prose prose-sm max-w-none mb-4 p-4 bg-muted/20 rounded-lg">
