@@ -6,8 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
-import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft, Video, FileText, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Course } from "@/hooks/useCourses";
@@ -17,6 +17,8 @@ const CourseDetail = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [course, setCourse] = useState<Course | null>(null);
+  const [firstLesson, setFirstLesson] = useState<any>(null);
+  const [showEnrollPrompt, setShowEnrollPrompt] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -39,6 +41,20 @@ const CourseDetail = () => {
 
         if (error) throw error;
         setCourse(data);
+
+        // Fetch first lesson
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('course_id', id)
+          .eq('is_published', true)
+          .order('order_index')
+          .limit(1)
+          .single();
+
+        if (!lessonsError && lessonsData) {
+          setFirstLesson(lessonsData);
+        }
 
         // Check if user is enrolled
         if (user) {
@@ -111,6 +127,76 @@ const CourseDetail = () => {
       case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default: return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const renderFirstLessonContent = () => {
+    if (!firstLesson) return null;
+
+    const onContentEnd = () => {
+      if (!isEnrolled) {
+        setShowEnrollPrompt(true);
+      }
+    };
+
+    return (
+      <Card className="p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Preview: {firstLesson.title}</h3>
+          <div className="flex items-center space-x-2">
+            {firstLesson.type === 'video' && <Video className="h-4 w-4" />}
+            {firstLesson.type === 'text' && <FileText className="h-4 w-4" />}
+            {firstLesson.type === 'pdf' && <FileText className="h-4 w-4" />}
+            <span className="text-sm text-muted-foreground capitalize">{firstLesson.type}</span>
+          </div>
+        </div>
+
+        {firstLesson.type === 'video' && firstLesson.video_url ? (
+          <div className="relative bg-black rounded-lg overflow-hidden mb-4">
+            <video 
+              className="w-full h-auto max-h-96"
+              controls
+              onEnded={onContentEnd}
+              poster={course?.thumbnail_url}
+            >
+              <source src={firstLesson.video_url} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        ) : firstLesson.type === 'text' && firstLesson.content ? (
+          <div className="prose prose-sm max-w-none mb-4 p-4 bg-muted/20 rounded-lg">
+            <div dangerouslySetInnerHTML={{ __html: firstLesson.content.slice(0, 300) + (firstLesson.content.length > 300 ? '...' : '') }} />
+          </div>
+        ) : firstLesson.type === 'pdf' && firstLesson.pdf_url ? (
+          <div className="bg-muted/20 rounded-lg p-6 text-center mb-4">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-primary" />
+            <h4 className="font-semibold mb-2">PDF Preview</h4>
+            <p className="text-sm text-muted-foreground mb-4">{firstLesson.title}</p>
+            <Button variant="outline" size="sm" onClick={onContentEnd}>
+              <FileText className="h-4 w-4 mr-2" />
+              View Preview
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-muted/20 rounded-lg p-6 text-center mb-4">
+            <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">Preview content will be available soon</p>
+          </div>
+        )}
+
+        {showEnrollPrompt && !isEnrolled && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
+            <Lock className="h-8 w-8 mx-auto mb-3 text-primary" />
+            <h4 className="font-semibold mb-2">Want to continue learning?</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Enroll in this course to access all {course?.lesson_count} lessons and get your certificate upon completion.
+            </p>
+            <Button onClick={handleEnroll} disabled={enrolling}>
+              {enrolling ? "Enrolling..." : "Enroll Free Now"}
+            </Button>
+          </div>
+        )}
+      </Card>
+    );
   };
 
   if (loading) {
@@ -213,20 +299,25 @@ const CourseDetail = () => {
                 </div>
               </div>
 
-              {/* Course Image */}
-              <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-8">
-                {course.thumbnail_url ? (
-                  <img 
-                    src={course.thumbnail_url} 
-                    alt={course.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                    <Play className="h-16 w-16 text-primary" />
-                  </div>
-                )}
-              </div>
+              {/* First Lesson Preview */}
+              {firstLesson && renderFirstLessonContent()}
+
+              {/* Course Image - Only show if no first lesson or no video */}
+              {(!firstLesson || (firstLesson.type !== 'video' || !firstLesson.video_url)) && (
+                <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-8">
+                  {course.thumbnail_url ? (
+                    <img 
+                      src={course.thumbnail_url} 
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                      <Play className="h-16 w-16 text-primary" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Course Description */}
               <Card className="p-6 mb-8 bg-card-gradient">
