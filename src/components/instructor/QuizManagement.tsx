@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Brain, Award } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight, Folder, Plus, Edit, Trash2, Brain, Award } from "lucide-react";
 import { CreateQuiz } from "./CreateQuiz";
 import { EditQuiz } from "./EditQuiz";
 
@@ -19,13 +20,20 @@ interface Quiz {
   quiz_questions: { id: string }[];
 }
 
+interface CourseWithQuizzes {
+  id: string;
+  title: string;
+  quizzes: Quiz[];
+}
+
 export const QuizManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [courses, setCourses] = useState<CourseWithQuizzes[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -35,51 +43,54 @@ export const QuizManagement = () => {
 
   const fetchQuizzes = async () => {
     try {
-      // First get courses owned by this instructor
+      // Get courses owned by this instructor with their quizzes
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
-        .select("id")
-        .eq("instructor_id", user?.id);
+        .select(`
+          id,
+          title,
+          lessons(
+            id,
+            title,
+            quizzes(
+              id,
+              title,
+              description,
+              passing_score,
+              lesson_id,
+              quiz_questions(id)
+            )
+          )
+        `)
+        .eq("instructor_id", user?.id)
+        .order("title");
 
       if (coursesError) throw coursesError;
       
-      const courseIds = coursesData?.map(c => c.id) || [];
-      
-      if (courseIds.length === 0) {
-        setQuizzes([]);
-        return;
-      }
+      // Transform data to group quizzes by course
+      const coursesWithQuizzes: CourseWithQuizzes[] = (coursesData || []).map(course => {
+        const allQuizzes: Quiz[] = [];
+        
+        (course.lessons || []).forEach(lesson => {
+          (lesson.quizzes || []).forEach(quiz => {
+            allQuizzes.push({
+              ...quiz,
+              lesson: {
+                title: lesson.title,
+                course: { title: course.title }
+              }
+            });
+          });
+        });
 
-      // Get lessons for these courses
-      const { data: lessonsData, error: lessonsError } = await supabase
-        .from("lessons")
-        .select("id")
-        .in("course_id", courseIds);
+        return {
+          id: course.id,
+          title: course.title,
+          quizzes: allQuizzes
+        };
+      });
 
-      if (lessonsError) throw lessonsError;
-      
-      const lessonIds = lessonsData?.map(l => l.id) || [];
-      
-      if (lessonIds.length === 0) {
-        setQuizzes([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("quizzes")
-        .select(`
-          *,
-          lesson:lessons(
-            title,
-            course:courses(title)
-          ),
-          quiz_questions(id)
-        `)
-        .in("lesson_id", lessonIds)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setQuizzes(data || []);
+      setCourses(coursesWithQuizzes);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
       toast({
@@ -116,8 +127,18 @@ export const QuizManagement = () => {
     }
   };
 
+  const toggleCourse = (courseId: string) => {
+    const newOpenCourses = new Set(openCourses);
+    if (newOpenCourses.has(courseId)) {
+      newOpenCourses.delete(courseId);
+    } else {
+      newOpenCourses.add(courseId);
+    }
+    setOpenCourses(newOpenCourses);
+  };
+
   const QuizCard = ({ quiz }: { quiz: Quiz }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow ml-4">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -126,9 +147,6 @@ export const QuizManagement = () => {
               <CardTitle className="text-lg">{quiz.title}</CardTitle>
               <CardDescription>
                 Lesson: {quiz.lesson?.title}
-              </CardDescription>
-              <CardDescription className="text-xs">
-                Course: {quiz.lesson?.course?.title}
               </CardDescription>
             </div>
           </div>
@@ -181,6 +199,56 @@ export const QuizManagement = () => {
     </Card>
   );
 
+  const CourseFolder = ({ course }: { course: CourseWithQuizzes }) => {
+    const isOpen = openCourses.has(course.id);
+    
+    return (
+      <Collapsible open={isOpen} onOpenChange={() => toggleCourse(course.id)}>
+        <CollapsibleTrigger asChild>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Folder className="h-6 w-6 text-primary" />
+                  <div>
+                    <CardTitle className="text-xl">{course.title}</CardTitle>
+                    <CardDescription>
+                      {course.quizzes.length} quiz{course.quizzes.length !== 1 ? 'zes' : ''}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline">
+                    <Brain className="h-3 w-3 mr-1" />
+                    {course.quizzes.reduce((sum, quiz) => sum + (quiz.quiz_questions?.length || 0), 0)} questions
+                  </Badge>
+                  {isOpen ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 mt-3">
+          {course.quizzes.length === 0 ? (
+            <Card className="ml-4">
+              <CardContent className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">No quizzes in this course yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            course.quizzes.map((quiz) => (
+              <QuizCard key={quiz.id} quiz={quiz} />
+            ))
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading quizzes...</div>;
   }
@@ -195,16 +263,16 @@ export const QuizManagement = () => {
         <CreateQuiz onQuizCreated={fetchQuizzes} />
       </div>
 
-      {quizzes.length === 0 ? (
+      {courses.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">No quizzes found. Create your first quiz!</p>
+            <p className="text-muted-foreground">No courses found. Create your first course!</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} />
+        <div className="space-y-4">
+          {courses.map((course) => (
+            <CourseFolder key={course.id} course={course} />
           ))}
         </div>
       )}

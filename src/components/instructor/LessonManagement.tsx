@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, GripVertical, Video, FileText, HelpCircle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight, Folder, Plus, Edit, Trash2, GripVertical, Video, FileText, HelpCircle } from "lucide-react";
 import { CreateLesson } from "./CreateLesson";
 import { EditLesson } from "./EditLesson";
 
@@ -23,13 +24,20 @@ interface Lesson {
   course: { title: string } | null;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  lessons: Lesson[];
+}
+
 export const LessonManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -39,33 +47,44 @@ export const LessonManagement = () => {
 
   const fetchLessons = async () => {
     try {
-      // First get lessons for courses owned by this instructor
+      // Get courses owned by this instructor with their lessons
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
-        .select("id")
-        .eq("instructor_id", user?.id);
+        .select(`
+          id,
+          title,
+          lessons(
+            id,
+            title,
+            content,
+            type,
+            order_index,
+            video_url,
+            pdf_url,
+            duration,
+            is_published,
+            course_id
+          )
+        `)
+        .eq("instructor_id", user?.id)
+        .order("title");
 
       if (coursesError) throw coursesError;
       
-      const courseIds = coursesData?.map(c => c.id) || [];
-      
-      if (courseIds.length === 0) {
-        setLessons([]);
-        return;
-      }
+      // Transform data to group lessons by course
+      const coursesWithLessons: Course[] = (coursesData || []).map(course => ({
+        id: course.id,
+        title: course.title,
+        lessons: (course.lessons || [])
+          .sort((a, b) => a.order_index - b.order_index)
+          .map(lesson => ({
+            ...lesson,
+            type: lesson.type as 'video' | 'text' | 'pdf' | 'quiz',
+            course: { title: course.title }
+          }))
+      }));
 
-      const { data, error } = await supabase
-        .from("lessons")
-        .select(`
-          *,
-          course:courses(title)
-        `)
-        .in("course_id", courseIds)
-        .order("course_id")
-        .order("order_index");
-
-      if (error) throw error;
-      setLessons((data || []) as Lesson[]);
+      setCourses(coursesWithLessons);
     } catch (error) {
       console.error("Error fetching lessons:", error);
       toast({
@@ -122,8 +141,18 @@ export const LessonManagement = () => {
     }
   };
 
+  const toggleCourse = (courseId: string) => {
+    const newOpenCourses = new Set(openCourses);
+    if (newOpenCourses.has(courseId)) {
+      newOpenCourses.delete(courseId);
+    } else {
+      newOpenCourses.add(courseId);
+    }
+    setOpenCourses(newOpenCourses);
+  };
+
   const LessonCard = ({ lesson }: { lesson: Lesson }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow ml-4">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -133,9 +162,6 @@ export const LessonManagement = () => {
                 {getTypeIcon(lesson.type)}
                 <span>{lesson.title}</span>
               </CardTitle>
-              <CardDescription>
-                Course: {lesson.course?.title}
-              </CardDescription>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -194,6 +220,55 @@ export const LessonManagement = () => {
     </Card>
   );
 
+  const CourseFolder = ({ course }: { course: Course }) => {
+    const isOpen = openCourses.has(course.id);
+    
+    return (
+      <Collapsible open={isOpen} onOpenChange={() => toggleCourse(course.id)}>
+        <CollapsibleTrigger asChild>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Folder className="h-6 w-6 text-primary" />
+                  <div>
+                    <CardTitle className="text-xl">{course.title}</CardTitle>
+                    <CardDescription>
+                      {course.lessons.length} lesson{course.lessons.length !== 1 ? 's' : ''}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline">
+                    {course.lessons.filter(l => l.is_published).length} published
+                  </Badge>
+                  {isOpen ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 mt-3">
+          {course.lessons.length === 0 ? (
+            <Card className="ml-4">
+              <CardContent className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">No lessons in this course yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            course.lessons.map((lesson) => (
+              <LessonCard key={lesson.id} lesson={lesson} />
+            ))
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading lessons...</div>;
   }
@@ -208,16 +283,16 @@ export const LessonManagement = () => {
         <CreateLesson onLessonCreated={fetchLessons} />
       </div>
 
-      {lessons.length === 0 ? (
+      {courses.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">No lessons found. Create your first lesson!</p>
+            <p className="text-muted-foreground">No courses found. Create your first course!</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {lessons.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
+          {courses.map((course) => (
+            <CourseFolder key={course.id} course={course} />
           ))}
         </div>
       )}
