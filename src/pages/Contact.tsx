@@ -22,23 +22,29 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: <Mail className="h-6 w-6" />,
+      title: "Skype",
+      description: "Send us an email anytime",
+      contact: "ahsangillani480",
+    },
+    {
+      icon: <Mail className="h-6 w-6" />,
       title: "Email Us",
       description: "Send us an email anytime",
-      contact: "support@patronecs.com",
-      action: "mailto:support@patronecs.com"
+      contact: "info@patronecs.com",
+      action: "mailto:info@patronecs.com"
     },
     {
       icon: <Phone className="h-6 w-6" />,
-      title: "Call Us",
-      description: "Mon-Fri from 8am to 5pm",
-      contact: "+1 (555) 123-4567",
-      action: "tel:+15551234567"
+      title: "Call Us or What's app",
+      description: "Mon-Fri",
+      contact: "92 334 8124091",
+      action: "tel:923348124091"
     },
     {
       icon: <MapPin className="h-6 w-6" />,
       title: "Visit Us",
       description: "Come say hello at our office",
-      contact: "123 Education St, Learning City, LC 12345",
+      contact: "Patronecs Office, Doburji Mallian,Pasrur Bypass, Sialkot, Punjab 51350",
       action: "#"
     }
   ];

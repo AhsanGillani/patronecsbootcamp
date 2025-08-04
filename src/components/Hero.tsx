@@ -72,7 +72,7 @@ export const Hero = () => {
           <div className="animate-fade-in animation-delay-800 flex flex-wrap justify-center gap-8 mb-12 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>100% Free Access</span>
+              <span>100% Hand on Experience </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
