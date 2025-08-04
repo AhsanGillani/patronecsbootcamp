@@ -29,10 +29,9 @@ export const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: <Facebook className="h-5 w-5" />, href: "#", name: "Facebook" },
-    { icon: <Twitter className="h-5 w-5" />, href: "#", name: "Twitter" },
-    { icon: <Instagram className="h-5 w-5" />, href: "#", name: "Instagram" },
-    { icon: <Linkedin className="h-5 w-5" />, href: "#", name: "LinkedIn" }
+    { icon: <Facebook className="h-5 w-5" />, href: "https://www.facebook.com/patronecs", name: "Facebook" },
+    { icon: <Instagram className="h-5 w-5" />, href: "https://www.instagram.com/patronecs/", name: "Instagram" },
+    { icon: <Linkedin className="h-5 w-5" />, href: "https://www.linkedin.com/company/patronecs/", name: "LinkedIn" }
   ];
 
   return (
@@ -59,12 +58,6 @@ export const Footer = () => {
                   <Award className="ml-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="group px-8 py-6 text-lg border-2" asChild>
-                <Link to="/auth?mode=register">
-                  Create Account
-                  <Users className="ml-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                </Link>
-              </Button>
             </div>
           </div>
         </div>
@@ -79,54 +72,60 @@ export const Footer = () => {
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg group-hover:blur-xl transition-all duration-300"></div>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Patronecs
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Learn. Grow. Succeed.</p>
+                 <a href="/" className="footer-brand _1 w-inline-block">
+                    <img
+                      src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+                      loading="lazy"
+                      alt="Company Logo"
+                      className="w-28 h-auto image-8 juio"
+                    />
+                  </a>
+                  <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
                 </div>
               </Link>
               
               
 
-<div className="flex items-center justify-start flex-wrap gap-x-6 gap-y-4 text-sm text-gray-700 mb-10">
+                <div className="flex items-center justify-start flex-wrap gap-x-6 gap-y-4 text-sm text-gray-700 mb-10">
 
-  {/* Email */}
-  <a 
-    href="mailto:info@patronecs.pk"
-    className="flex items-center gap-3 group hover:text-primary transition-colors"
-  >
-    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-      <Mail className="h-5 w-5 text-primary" />
-    </div>
-    <span>info@patronecs.pk</span>
-  </a>
+                  {/* Email */}
+                  <a 
+                    href="mailto:info@patronecs.pk"
+                    className="flex items-center gap-3 group hover:text-primary transition-colors"
+                  >
+                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <span>info@patronecs.com</span>
+                  </a>
 
-  {/* Divider */}
-  <div className="h-5 w-px bg-border hidden sm:block" />
+                  {/* Divider */}
+                  <div className="h-5 w-px bg-border hidden sm:block" />
 
-  {/* Phone */}
-  <a 
-    href="tel:+923001234567"
-    className="flex items-center gap-3 group hover:text-primary transition-colors"
-  >
-    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-      <Phone className="h-5 w-5 text-primary" />
-    </div>
-    <span>+92 300 1234567</span>
-  </a>
+                  {/* Phone */}
+                  <a 
+                    href="tel:+923348124091"
+                    className="flex items-center gap-3 group hover:text-primary transition-colors"
+                  >
+                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Phone className="h-5 w-5 text-primary" />
+                    </div>
+                    <span>+92 334 8124091</span>
+                  </a>
 
-  {/* Divider */}
-  <div className="h-5 w-px bg-border hidden sm:block" />
+                  {/* Divider */}
+                  <div className="h-5 w-px bg-border hidden sm:block" />
 
-  {/* Location */}
-  <div className="flex items-center gap-3 group hover:text-primary transition-colors">
-    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-      <MapPin className="h-5 w-5 text-primary" />
-    </div>
-    <span>Lahore, Punjab, Pakistan</span>
-  </div>
+                  {/* Location */}
+                  <div className="flex items-center gap-3 group hover:text-primary transition-colors">
+                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <span>Patronecs Office, Doburji Mallian,
+Pasrur Bypass, Sialkot, Punjab 51350</span>
+                  </div>
 
-</div>
+                </div>
 
 
               {/* Social Links */}
@@ -210,11 +209,6 @@ export const Footer = () => {
                   <span>•</span>
                   <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Made with</span>
-                <Heart className="h-4 w-4 text-red-500 animate-pulse" />
-                <span>for Pakistan's future leaders</span>
               </div>
             </div>
           </div>

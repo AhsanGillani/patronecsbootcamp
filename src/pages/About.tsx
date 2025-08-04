@@ -117,7 +117,7 @@ const About = () => {
                   Born from a vision to make education accessible to all
                 </p>
               </div>
-              
+
               <div className="prose prose-lg max-w-none text-muted-foreground">
                 <p className="text-lg leading-relaxed mb-6">
                   Patronecs was founded with a simple yet powerful belief: that everyone deserves access 
@@ -125,23 +125,39 @@ const About = () => {
                   as a small team of educators and technologists who were frustrated by the barriers that 
                   prevented people from learning new skills and advancing their careers.
                 </p>
-                
+
                 <p className="text-lg leading-relaxed mb-6">
                   What began as a passion project has grown into a thriving community of learners and 
                   educators from around the world. Today, we're proud to offer completely free courses 
                   across a wide range of subjects, from technology and business to creative arts and 
                   personal development.
                 </p>
-                
-                <p className="text-lg leading-relaxed">
+
+                <p className="text-lg leading-relaxed mb-6">
                   As we continue to grow, our commitment remains unchanged: to provide exceptional 
                   educational experiences that transform lives and open doors to new opportunities. 
                   Join us on this journey of learning and discovery.
                 </p>
+
+                {/* Author Block - Side by Side */}
+                <div className="mt-12 flex items-center gap-6">
+                  <img
+                    src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/661e32377046a04957a568f3_image%2075%201.svg"
+                    loading="lazy"
+                    alt="Ahsan Shah"
+                    className="w-32 h-32 object-cover rounded-full"
+                  />
+                  <div>
+                    <div className="text-xl font-semibold">Ahsan Shah</div>
+                    <div className="text-muted-foreground text-base">CEO at Patronecs</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
+
+
       </main>
 
       <Footer />

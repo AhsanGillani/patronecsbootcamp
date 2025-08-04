@@ -44,7 +44,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
+    <header className="shadow-lg mt-6 max-w-7xl mx-auto w-full sticky top-[50px] px-2 py-2 pl-4 bg-white z-50 header-wrapper max-h-[50px] md:max-h-[56px] flex items-center justify-between rounded-[10px]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
@@ -53,11 +53,17 @@ export const Header = () => {
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg group-hover:blur-xl transition-all duration-300"></div>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Patronecs
-              </h1>
-              <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
-            </div>
+  <a href="/" className="footer-brand _1 w-inline-block">
+    <img
+      src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+      loading="lazy"
+      alt="Company Logo"
+      className="w-28 h-auto image-8 juio"
+    />
+  </a>
+  <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
+</div>
+
           </Link>
 
           {/* Desktop Navigation */}
@@ -141,7 +147,7 @@ export const Header = () => {
                         <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    {/* <DropdownMenuItem asChild>
                       <Link to="/student/courses" className="flex items-center cursor-pointer">
                         <BookOpen className="mr-3 h-4 w-4" />
                         <span>My Learning</span>
@@ -158,7 +164,7 @@ export const Header = () => {
                         <Settings className="mr-3 h-4 w-4" />
                         <span>Settings</span>
                       </Link>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     <div className="border-t my-2"></div>
                     <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600 cursor-pointer">
                       <LogOut className="mr-3 h-4 w-4" />

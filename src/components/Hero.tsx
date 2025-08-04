@@ -30,17 +30,6 @@ export const Hero = () => {
       <div className="absolute bottom-20 left-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       
       <div className="container mx-auto px-4 py-16 relative z-10">
-        {/* Promotional Banner */}
-        <div className="animate-fade-in bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/30 rounded-full p-4 mb-8 text-center backdrop-blur-sm">
-          <div className="flex items-center justify-center gap-2">
-            <Star className="h-5 w-5 text-primary animate-pulse" />
-            <p className="text-primary font-semibold">
-              🚀 Join 34,650+ Students Learning for FREE - Start Today!
-            </p>
-            <Star className="h-5 w-5 text-primary animate-pulse" />
-          </div>
-        </div>
-
         <div className="text-center max-w-5xl mx-auto">
           {/* Main Heading with Enhanced Typography */}
           <div className="animate-fade-in animation-delay-200">
