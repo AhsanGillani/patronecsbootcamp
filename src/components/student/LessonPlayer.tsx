@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { QuizPlayer } from "./QuizPlayer";
 import { 
   Play, 
   Pause, 
@@ -9,8 +10,17 @@ import {
   FileText, 
   Video, 
   Download,
-  ExternalLink 
+  ExternalLink,
+  HelpCircle
 } from "lucide-react";
+
+interface Quiz {
+  id: string;
+  title: string;
+  description: string;
+  lesson_id: string;
+  passing_score: number;
+}
 
 interface Lesson {
   id: string;
@@ -20,6 +30,7 @@ interface Lesson {
   video_url?: string;
   pdf_url?: string;
   duration: number;
+  quiz?: Quiz;
   lesson_progress?: {
     is_completed: boolean;
     completed_at: string;
@@ -44,6 +55,7 @@ export const LessonPlayer = ({
   hasPrevious 
 }: LessonPlayerProps) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
 
   const getYouTubeEmbedUrl = (url: string) => {
@@ -150,6 +162,20 @@ export const LessonPlayer = ({
     }
   };
 
+  // Show quiz if lesson has quiz and user clicked to show it
+  if (showQuiz && lesson.quiz) {
+    return (
+      <QuizPlayer
+        quiz={lesson.quiz}
+        onComplete={() => {
+          setShowQuiz(false);
+          if (onNext) onNext();
+        }}
+        onBack={() => setShowQuiz(false)}
+      />
+    );
+  }
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -189,12 +215,20 @@ export const LessonPlayer = ({
             )}
           </div>
           
-          {!isCompleted && (
-            <Button onClick={() => onComplete(lesson.id)}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Mark as Complete
-            </Button>
-          )}
+          <div className="flex space-x-2">
+            {!isCompleted && (
+              <Button onClick={() => onComplete(lesson.id)}>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark as Complete
+              </Button>
+            )}
+            {lesson.quiz && isCompleted && (
+              <Button onClick={() => setShowQuiz(true)}>
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Take Quiz
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

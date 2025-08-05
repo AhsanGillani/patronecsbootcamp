@@ -40,6 +40,7 @@ interface Lesson {
   pdf_url: string;
   duration: number;
   is_published: boolean;
+  quiz?: Quiz;
   lesson_progress?: {
     is_completed: boolean;
     completed_at: string;
@@ -192,7 +193,11 @@ export const CourseLearning = () => {
   };
 
   const startLesson = (lesson: Lesson) => {
-    setCurrentLesson(lesson);
+    // Find and attach quiz to lesson if it exists
+    const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === lesson.id);
+    const lessonWithQuiz = lessonQuiz ? { ...lesson, quiz: lessonQuiz } : lesson;
+    
+    setCurrentLesson(lessonWithQuiz);
     setShowCourseContent(false);
     setShowFeedback(false);
   };
@@ -201,7 +206,10 @@ export const CourseLearning = () => {
     if (!currentLesson) return;
     const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
     if (currentIndex < lessons.length - 1) {
-      setCurrentLesson(lessons[currentIndex + 1]);
+      const nextLesson = lessons[currentIndex + 1];
+      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === nextLesson.id);
+      const lessonWithQuiz = lessonQuiz ? { ...nextLesson, quiz: lessonQuiz } : nextLesson;
+      setCurrentLesson(lessonWithQuiz);
     }
   };
 
@@ -209,7 +217,10 @@ export const CourseLearning = () => {
     if (!currentLesson) return;
     const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
     if (currentIndex > 0) {
-      setCurrentLesson(lessons[currentIndex - 1]);
+      const prevLesson = lessons[currentIndex - 1];
+      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === prevLesson.id);
+      const lessonWithQuiz = lessonQuiz ? { ...prevLesson, quiz: lessonQuiz } : prevLesson;
+      setCurrentLesson(lessonWithQuiz);
     }
   };
 
@@ -443,6 +454,9 @@ export const CourseLearning = () => {
                   <div className="space-y-3">
                     {lessons.map((lesson, index) => {
                       const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
+                      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === lesson.id);
+                      const hasQuizAttempt = lessonQuiz?.quiz_attempts && lessonQuiz.quiz_attempts.length > 0;
+                      const quizPassed = hasQuizAttempt && lessonQuiz.quiz_attempts[lessonQuiz.quiz_attempts.length - 1].passed;
                       
                       return (
                         <Card key={lesson.id} className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
@@ -458,10 +472,24 @@ export const CourseLearning = () => {
                                   <CardTitle className="text-base flex items-center space-x-2">
                                     {getTypeIcon(lesson.type)}
                                     <span>Lesson {index + 1}: {lesson.title}</span>
+                                    {lessonQuiz && (
+                                      <Badge variant="outline" className="ml-2">
+                                        <HelpCircle className="h-3 w-3 mr-1" />
+                                        Quiz
+                                      </Badge>
+                                    )}
                                   </CardTitle>
                                   <CardDescription className="flex items-center space-x-2 mt-1">
                                     <Clock className="h-3 w-3" />
                                     <span>{lesson.duration || 0} minutes</span>
+                                    {lessonQuiz && hasQuizAttempt && (
+                                      <>
+                                        <span>•</span>
+                                        <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
+                                          Quiz: {quizPassed ? "Passed" : "Failed"}
+                                        </Badge>
+                                      </>
+                                    )}
                                   </CardDescription>
                                 </div>
                               </div>
@@ -483,48 +511,6 @@ export const CourseLearning = () => {
                   </div>
                 </div>
 
-                {/* Quizzes Section */}
-                {quizzes.length > 0 && (
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4 flex items-center">
-                      <HelpCircle className="h-5 w-5 mr-2" />
-                      Quizzes & Assessments
-                    </h2>
-                    <div className="space-y-3">
-                      {quizzes.map((quiz) => {
-                        const hasAttempted = quiz.quiz_attempts && quiz.quiz_attempts.length > 0;
-                        const lastAttempt = hasAttempted ? quiz.quiz_attempts[quiz.quiz_attempts.length - 1] : null;
-                        
-                        return (
-                          <Card key={quiz.id} className="hover:shadow-md transition-all">
-                            <CardHeader>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <CardTitle className="text-base flex items-center space-x-2">
-                                    <HelpCircle className="h-4 w-4" />
-                                    <span>{quiz.title}</span>
-                                  </CardTitle>
-                                  <CardDescription>{quiz.description}</CardDescription>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  {hasAttempted && (
-                                    <Badge variant={lastAttempt?.passed ? "default" : "destructive"}>
-                                      {lastAttempt?.passed ? "Passed" : "Failed"}
-                                      {lastAttempt && ` (${lastAttempt.score}%)`}
-                                    </Badge>
-                                  )}
-                                  <Button size="sm">
-                                    {hasAttempted ? "Retake" : "Take Quiz"}
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardHeader>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
