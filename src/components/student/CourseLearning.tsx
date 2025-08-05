@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { LessonPlayer } from "./LessonPlayer";
 import { CourseFeedback } from "./CourseFeedback";
@@ -27,7 +28,10 @@ import {
   ArrowLeft,
   Award,
   List,
-  MessageSquare
+  MessageSquare,
+  ChevronDown,
+  ChevronRight,
+  Trophy
 } from "lucide-react";
 
 interface Lesson {
@@ -81,6 +85,7 @@ export const CourseLearning = () => {
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [showCourseContent, setShowCourseContent] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user && courseId) {
@@ -239,6 +244,18 @@ export const CourseLearning = () => {
   const getCurrentLessonIndex = () => {
     if (!currentLesson) return -1;
     return lessons.findIndex(l => l.id === currentLesson.id);
+  };
+
+  const toggleLessonExpanded = (lessonId: string) => {
+    setExpandedLessons(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(lessonId)) {
+        newExpanded.delete(lessonId);
+      } else {
+        newExpanded.add(lessonId);
+      }
+      return newExpanded;
+    });
   };
 
   if (loading) {
@@ -457,55 +474,119 @@ export const CourseLearning = () => {
                       const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === lesson.id);
                       const hasQuizAttempt = lessonQuiz?.quiz_attempts && lessonQuiz.quiz_attempts.length > 0;
                       const quizPassed = hasQuizAttempt && lessonQuiz.quiz_attempts[lessonQuiz.quiz_attempts.length - 1].passed;
+                      const isExpanded = expandedLessons.has(lesson.id);
                       
                       return (
-                        <Card key={lesson.id} className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                {isCompleted ? (
-                                  <CheckCircle className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
-                                )}
-                                <div>
-                                  <CardTitle className="text-base flex items-center space-x-2">
-                                    {getTypeIcon(lesson.type)}
-                                    <span>Lesson {index + 1}: {lesson.title}</span>
-                                    {lessonQuiz && (
-                                      <Badge variant="outline" className="ml-2">
-                                        <HelpCircle className="h-3 w-3 mr-1" />
-                                        Quiz
-                                      </Badge>
+                        <Collapsible key={lesson.id} open={isExpanded} onOpenChange={() => toggleLessonExpanded(lesson.id)}>
+                          <Card className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
+                            <CollapsibleTrigger asChild>
+                              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    {isCompleted ? (
+                                      <CheckCircle className="h-5 w-5 text-green-500" />
+                                    ) : (
+                                      <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
                                     )}
-                                  </CardTitle>
-                                  <CardDescription className="flex items-center space-x-2 mt-1">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{lesson.duration || 0} minutes</span>
-                                    {lessonQuiz && hasQuizAttempt && (
-                                      <>
-                                        <span>•</span>
-                                        <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
-                                          Quiz: {quizPassed ? "Passed" : "Failed"}
-                                        </Badge>
-                                      </>
+                                    <div className="flex-1">
+                                      <CardTitle className="text-base flex items-center space-x-2">
+                                        {getTypeIcon(lesson.type)}
+                                        <span>Lesson {index + 1}: {lesson.title}</span>
+                                        {lessonQuiz && (
+                                          <Badge variant="outline" className="ml-2">
+                                            <HelpCircle className="h-3 w-3 mr-1" />
+                                            Quiz
+                                          </Badge>
+                                        )}
+                                      </CardTitle>
+                                      <CardDescription className="flex items-center space-x-2 mt-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{lesson.duration || 0} minutes</span>
+                                        {lessonQuiz && hasQuizAttempt && (
+                                          <>
+                                            <span>•</span>
+                                            <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
+                                              Quiz: {quizPassed ? "Passed" : "Failed"}
+                                            </Badge>
+                                          </>
+                                        )}
+                                      </CardDescription>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="outline">{lesson.type}</Badge>
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                     )}
-                                  </CardDescription>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline">{lesson.type}</Badge>
-                                <Button
-                                  size="sm"
-                                  onClick={() => startLesson(lesson)}
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  {isCompleted ? 'Review' : 'Start'}
-                                </Button>
-                              </div>
-                            </div>
-                          </CardHeader>
-                        </Card>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+                            
+                            <CollapsibleContent>
+                              <CardContent className="pt-0">
+                                <div className="space-y-4">
+                                  {/* Lesson Content Preview */}
+                                  <div className="bg-muted/30 rounded-lg p-4">
+                                    <h4 className="font-medium mb-2 flex items-center">
+                                      {getTypeIcon(lesson.type)}
+                                      <span className="ml-2">Lesson Content</span>
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                      {lesson.content ? lesson.content.substring(0, 150) + (lesson.content.length > 150 ? '...' : '') : 'No description available'}
+                                    </p>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => startLesson(lesson)}
+                                      className="w-full"
+                                    >
+                                      <Play className="h-3 w-3 mr-2" />
+                                      {isCompleted ? 'Review Lesson' : 'Start Lesson'}
+                                    </Button>
+                                  </div>
+
+                                  {/* Quiz Section */}
+                                  {lessonQuiz && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <h4 className="font-medium mb-2 flex items-center">
+                                        <HelpCircle className="h-4 w-4 text-blue-600" />
+                                        <span className="ml-2">{lessonQuiz.title}</span>
+                                      </h4>
+                                      <p className="text-sm text-muted-foreground mb-3">
+                                        {lessonQuiz.description || 'Test your understanding of this lesson'}
+                                      </p>
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                                          <span className="flex items-center">
+                                            <Trophy className="h-3 w-3 mr-1" />
+                                            Passing Score: {lessonQuiz.passing_score}%
+                                          </span>
+                                        </div>
+                                        {hasQuizAttempt && (
+                                          <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
+                                            {quizPassed ? "Passed" : "Failed"} 
+                                            {lessonQuiz.quiz_attempts && ` (${lessonQuiz.quiz_attempts[lessonQuiz.quiz_attempts.length - 1].score}%)`}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => startLesson(lesson)}
+                                        className="w-full border-blue-200 hover:bg-blue-100"
+                                      >
+                                        <HelpCircle className="h-3 w-3 mr-2" />
+                                        {hasQuizAttempt ? 'Retake Quiz' : 'Take Quiz'}
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Card>
+                        </Collapsible>
                       );
                     })}
                   </div>
