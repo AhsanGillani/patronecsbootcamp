@@ -365,7 +365,9 @@ const CourseDetail = () => {
             <div>
               <Card className="p-6 bg-card-gradient sticky top-24">
                 <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-primary mb-2">FREE</div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    {course.price === 0 ? 'FREE' : `$${course.price}`}
+                  </div>
                   <p className="text-sm text-muted-foreground">Full lifetime access</p>
                 </div>
 
