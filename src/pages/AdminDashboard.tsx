@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { NotificationBell } from "@/components/ui/NotificationBell";
 import { LogOut, Home } from 'lucide-react';
 
 // Import all admin components
@@ -79,14 +80,17 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => window.location.href = '/'} className="space-x-2">
-                <Home className="h-4 w-4" />
-                <span>Home</span>
-              </Button>
-              <Button variant="outline" onClick={signOut} className="space-x-2">
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </Button>
+              <div className="flex items-center space-x-2">
+                <NotificationBell />
+                <Button variant="outline" onClick={() => window.location.href = '/'} className="space-x-2">
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Button>
+                <Button variant="outline" onClick={signOut} className="space-x-2">
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </Button>
+              </div>
             </div>
           </header>
 

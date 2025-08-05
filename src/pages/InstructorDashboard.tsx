@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { InstructorSidebar } from "@/components/instructor/InstructorSidebar";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 import { LogOut, Home } from "lucide-react";
 
 // Import all instructor components
@@ -86,6 +87,7 @@ const InstructorDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                <NotificationBell />
                 <Button variant="outline" onClick={() => window.location.href = '/'} className="space-x-2">
                   <Home className="h-4 w-4" />
                   <span>Home</span>

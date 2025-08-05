@@ -23,9 +23,11 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
+      fetchUserRole();
       fetchNotifications();
       // Set up real-time subscription for new notifications
       const subscription = supabase
@@ -49,27 +51,87 @@ export function NotificationBell() {
     }
   }, [user]);
 
-  const fetchNotifications = async () => {
+  const fetchUserRole = async () => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setUserRole(data?.role || null);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!user || !userRole) return;
+
+    try {
+      // First, fetch notifications directly assigned to this user
+      const { data: userNotifications, error: userError } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (userError) throw userError;
+
+      // Then, fetch announcements for this user's role and general announcements
+      const { data: announcements, error: announcementError } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_published', true)
+        .or(`target_role.is.null,target_role.eq.${userRole}`)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(10);
 
-      if (error) throw error;
+      if (announcementError) throw announcementError;
 
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter(n => !n.is_read).length);
+      // Convert announcements to notification format
+      const announcementNotifications = (announcements || []).map(announcement => ({
+        id: `announcement_${announcement.id}`,
+        title: announcement.title,
+        message: announcement.content,
+        type: 'announcement',
+        is_read: false, // Announcements are always shown as unread initially
+        created_at: announcement.created_at,
+        user_id: user.id
+      }));
+
+      // Combine and sort all notifications
+      const allNotifications = [...(userNotifications || []), ...announcementNotifications]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 20); // Limit to 20 most recent
+
+      setNotifications(allNotifications);
+      setUnreadCount(allNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
   };
 
+  // Re-fetch notifications when userRole changes
+  useEffect(() => {
+    if (userRole) {
+      fetchNotifications();
+    }
+  }, [userRole]);
+
   const markAsRead = async (notificationId: string) => {
+    // Skip marking announcements as read in database (they're not user-specific)
+    if (notificationId.startsWith('announcement_')) {
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('notifications')
@@ -90,6 +152,7 @@ export function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
+      // Mark regular notifications as read in database
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -98,6 +161,7 @@ export function NotificationBell() {
 
       if (error) throw error;
 
+      // Mark all notifications as read in state (including announcements)
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -106,6 +170,17 @@ export function NotificationBell() {
   };
 
   const deleteNotification = async (notificationId: string) => {
+    // For announcements, just remove from state (they're not user-specific)
+    if (notificationId.startsWith('announcement_')) {
+      const deletedNotification = notifications.find(n => n.id === notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+      if (deletedNotification && !deletedNotification.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('notifications')
@@ -138,6 +213,16 @@ export function NotificationBell() {
         return '🎯';
       case 'announcement':
         return '📢';
+      case 'course_approved':
+        return '✅';
+      case 'course_rejected':
+        return '❌';
+      case 'blog_approved':
+        return '📝';
+      case 'blog_rejected':
+        return '📝';
+      case 'new_enrollment':
+        return '👥';
       default:
         return '🔔';
     }
@@ -162,16 +247,23 @@ export function NotificationBell() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Notifications</CardTitle>
-              {unreadCount > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={markAllAsRead}
-                  className="text-xs"
-                >
-                  Mark all read
-                </Button>
-              )}
+              <div className="flex items-center space-x-2">
+                {userRole && (
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {userRole}
+                  </Badge>
+                )}
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={markAllAsRead}
+                    className="text-xs"
+                  >
+                    Mark all read
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
