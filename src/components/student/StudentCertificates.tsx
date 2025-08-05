@@ -38,7 +38,7 @@ export function StudentCertificates() {
         .from('certificates')
         .select(`
           *,
-          courses!inner(
+          courses!fk_certificates_course_id(
             title, level, instructor_id,
             profiles!instructor_id(full_name)
           )
@@ -51,7 +51,7 @@ export function StudentCertificates() {
         .from('enrollments')
         .select(`
           *,
-          courses!inner(
+          courses!fk_enrollments_course_id(
             title, level, instructor_id,
             profiles!instructor_id(full_name)
           )

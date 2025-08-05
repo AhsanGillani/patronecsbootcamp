@@ -60,7 +60,7 @@ export default function Analytics() {
       // Get total enrollments with optional date filter
       let enrollmentsQuery = supabase.from('enrollments').select(`
         *,
-        courses(price),
+        courses!fk_enrollments_course_id(price),
         profiles(full_name, email)
       `);
       if (dateFilter) {

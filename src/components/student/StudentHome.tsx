@@ -47,7 +47,7 @@ export function StudentHome() {
         .from('enrollments')
         .select(`
           *,
-          courses!inner(
+          courses!fk_enrollments_course_id(
             id, title, thumbnail_url, instructor_id,
             profiles!instructor_id(full_name)
           )

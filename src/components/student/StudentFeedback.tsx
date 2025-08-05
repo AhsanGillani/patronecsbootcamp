@@ -50,7 +50,7 @@ export function StudentFeedback() {
         .from('enrollments')
         .select(`
           *,
-          courses!inner(
+          courses!fk_enrollments_course_id(
             id, title, description, instructor_id,
             profiles!instructor_id(full_name)
           ),

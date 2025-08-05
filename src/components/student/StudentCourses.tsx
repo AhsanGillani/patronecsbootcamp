@@ -59,7 +59,7 @@ export function StudentCourses() {
         .from('enrollments')
         .select(`
           *,
-          courses!inner(
+          courses!fk_enrollments_course_id(
             id, title, description, thumbnail_url, level, 
             total_duration, lesson_count, instructor_id,
             profiles!instructor_id(full_name),
