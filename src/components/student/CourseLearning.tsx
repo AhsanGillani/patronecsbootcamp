@@ -48,6 +48,7 @@ interface Lesson {
   lesson_progress?: {
     is_completed: boolean;
     completed_at: string;
+    student_id: string;
   }[];
 }
 
@@ -100,7 +101,7 @@ export const CourseLearning = () => {
         .from('courses')
         .select(`
           *,
-          instructor:profiles!instructor_id(full_name)
+          instructor:profiles!courses_instructor_id_fkey(full_name)
         `)
         .eq('id', courseId)
         .single();
@@ -112,11 +113,10 @@ export const CourseLearning = () => {
         .from('lessons')
         .select(`
           *,
-          lesson_progress!left(is_completed, completed_at)
+          lesson_progress!fk_lesson_progress_lesson_id(is_completed, completed_at, student_id)
         `)
         .eq('course_id', courseId)
         .eq('is_published', true)
-        .eq('lesson_progress.student_id', user?.id)
         .order('order_index');
 
       if (lessonsError) throw lessonsError;
@@ -130,7 +130,7 @@ export const CourseLearning = () => {
           .from('quizzes')
           .select(`
             *,
-            quiz_attempts!left(id, score, passed, completed_at, student_id)
+            quiz_attempts!fk_quiz_attempts_quiz_id(id, score, passed, completed_at, student_id)
           `)
           .in('lesson_id', lessonIds);
 
@@ -146,14 +146,22 @@ export const CourseLearning = () => {
           }));
         }
       }
-
+      
       setCourse(courseData);
-      setLessons((lessonsData || []) as Lesson[]);
+
+      setLessons(((lessonsData || []) as Lesson[]).map(lesson => ({
+        ...lesson,
+        lesson_progress: lesson.lesson_progress ? lesson.lesson_progress.filter(progress => 
+          progress.student_id === user?.id
+        ) : []
+      })));
       setQuizzes(quizzesData || []);
 
       // Calculate progress
       const completedLessons = (lessonsData || []).filter(lesson => 
-        lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed
+        lesson.lesson_progress && lesson.lesson_progress.some(progress => 
+          progress.student_id === user?.id && progress.is_completed
+        )
       ).length;
       const totalLessons = (lessonsData || []).length;
       const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
