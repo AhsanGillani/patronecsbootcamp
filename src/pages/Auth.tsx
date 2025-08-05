@@ -82,6 +82,15 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <a href="/" className="flex justify-center items-center ">
+                  <img
+                    src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+                    loading="lazy"
+                    alt="Company Logo"
+                    className="w-40 h-auto"
+                  />
+            </a>
+            <p className="text-ml  text-muted-foreground -mt-1 py-4">Learn. Grow. Succeed.</p>
           <CardTitle className="text-2xl">Welcome</CardTitle>
           <CardDescription>Sign in to your account or create a new one</CardDescription>
         </CardHeader>
