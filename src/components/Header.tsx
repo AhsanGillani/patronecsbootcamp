@@ -7,6 +7,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearch } from "@/hooks/useSearch";
 import logo from "@/assets/patronecs-logo.png";
+import { NotificationBell } from "./ui/NotificationBell";
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -87,6 +88,7 @@ export const Header = () => {
                 </Link>
               );
             })}
+            
           </nav>
 
           
