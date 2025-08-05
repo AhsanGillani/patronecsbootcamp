@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, BookOpen, Clock } from "lucide-react";
 import { CourseCardSkeleton } from "@/components/ui/skeleton-loader";
+import { Progress } from "@/components/ui/progress";
 
 export function StudentLearning() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export function StudentLearning() {
         .eq('student_id', user?.id)
         .gt('progress', 0)
         .lt('progress', 100)
-        .order('enrolled_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       setRecentCourses(data || []);
@@ -100,6 +101,15 @@ export function StudentLearning() {
                   <span>{enrollment.courses.total_duration || 0}min</span>
                 </div>
               </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>{Math.round(enrollment.progress)}%</span>
+                </div>
+                <Progress value={enrollment.progress} className="h-2" />
+              </div>
+              
               <Link to={`/course/${enrollment.courses.id}/learn`}>
                 <Button className="w-full">
                   <Play className="h-4 w-4 mr-2" />

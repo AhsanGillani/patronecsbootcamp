@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Play, Clock, Award, Users } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { BookOpen, Play, Clock, Award, Users, ChevronDown, CheckCircle, HelpCircle, Target } from "lucide-react";
 import { CourseCardSkeleton } from "@/components/ui/skeleton-loader";
 
 interface EnrolledCourse {
@@ -25,6 +26,19 @@ interface EnrolledCourse {
     profiles: {
       full_name: string;
     };
+    lessons: Array<{
+      id: string;
+      title: string;
+      type: string;
+      duration: number;
+      order_index: number;
+      quizzes: Array<{
+        id: string;
+        title: string;
+        passing_score: number;
+        quiz_questions: Array<{ id: string }>;
+      }>;
+    }>;
   };
 }
 
@@ -48,7 +62,14 @@ export function StudentCourses() {
           courses!inner(
             id, title, description, thumbnail_url, level, 
             total_duration, lesson_count, instructor_id,
-            profiles!instructor_id(full_name)
+            profiles!instructor_id(full_name),
+            lessons(
+              id, title, type, duration, order_index,
+              quizzes(
+                id, title, passing_score,
+                quiz_questions(id)
+              )
+            )
           )
         `)
         .eq('student_id', user?.id)
@@ -137,6 +158,56 @@ export function StudentCourses() {
                   <span>{enrollment.courses.total_duration || 0}min</span>
                 </div>
               </div>
+
+              {/* Course Content - Collapsible Lessons */}
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                    <span className="text-sm font-medium">Course Content</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2">
+                  {enrollment.courses.lessons
+                    ?.sort((a, b) => a.order_index - b.order_index)
+                    .map((lesson, index) => (
+                      <div key={lesson.id} className="border rounded p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-medium">{lesson.title}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{lesson.duration}min</span>
+                          </div>
+                        </div>
+                        
+                        {/* Show quiz if exists */}
+                        {lesson.quizzes && lesson.quizzes.length > 0 && (
+                          <div className="ml-6 space-y-1">
+                            {lesson.quizzes.map((quiz) => (
+                              <div key={quiz.id} className="flex items-center justify-between bg-secondary/20 p-2 rounded">
+                                <div className="flex items-center space-x-2">
+                                  <HelpCircle className="h-3 w-3 text-blue-500" />
+                                  <span className="text-xs font-medium">{quiz.title}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                  <Target className="h-3 w-3" />
+                                  <span>{quiz.quiz_questions?.length || 0} questions</span>
+                                  <span>•</span>
+                                  <span>{quiz.passing_score}% to pass</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </CollapsibleContent>
+              </Collapsible>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
