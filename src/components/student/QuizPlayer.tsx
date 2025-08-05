@@ -29,7 +29,7 @@ interface Question {
 
 interface QuizPlayerProps {
   quiz: Quiz;
-  onComplete: () => void;
+  onComplete: (passed: boolean) => void;
   onBack: () => void;
 }
 
@@ -256,7 +256,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
                   Retake Quiz
                 </Button>
               )}
-              <Button onClick={onComplete}>
+              <Button onClick={() => onComplete(passed)}>
                 Continue
               </Button>
             </div>
