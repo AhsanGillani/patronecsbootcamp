@@ -182,6 +182,13 @@ export type Database = {
             referencedRelation: "courses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_certificates_course_id"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cms_content: {
@@ -373,6 +380,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "fk_enrollments_course_id"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lesson_progress: {
@@ -404,6 +418,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_lesson_progress_lesson_id"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lesson_progress_lesson_id_fkey"
             columns: ["lesson_id"]
@@ -579,6 +600,13 @@ export type Database = {
           total_questions?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_quiz_attempts_quiz_id"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quiz_attempts_quiz_id_fkey"
             columns: ["quiz_id"]
