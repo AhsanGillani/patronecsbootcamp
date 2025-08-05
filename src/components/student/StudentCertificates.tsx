@@ -33,7 +33,8 @@ export function StudentCertificates() {
 
   const fetchCertificates = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch actual certificates
+      const { data: certificatesData, error: certificatesError } = await supabase
         .from('certificates')
         .select(`
           *,
@@ -45,8 +46,38 @@ export function StudentCertificates() {
         .eq('student_id', user?.id)
         .order('issued_at', { ascending: false });
 
-      if (error) throw error;
-      setCertificates(data || []);
+      // Fetch completed enrollments (100% progress)
+      const { data: completedData, error: completedError } = await supabase
+        .from('enrollments')
+        .select(`
+          *,
+          courses!inner(
+            title, level, instructor_id,
+            profiles!instructor_id(full_name)
+          )
+        `)
+        .eq('student_id', user?.id)
+        .gte('progress', 100)
+        .order('completed_at', { ascending: false });
+
+      if (certificatesError) throw certificatesError;
+      if (completedError) throw completedError;
+
+      // Combine actual certificates with completed courses
+      const allCertificates = [
+        ...(certificatesData || []),
+        ...(completedData || []).map(enrollment => ({
+          id: `completed-${enrollment.id}`,
+          certificate_number: `CERT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
+          issued_at: enrollment.completed_at,
+          student_id: enrollment.student_id,
+          course_id: enrollment.course_id,
+          courses: enrollment.courses,
+          isFromCompletion: true
+        }))
+      ];
+
+      setCertificates(allCertificates);
     } catch (error) {
       console.error('Error fetching certificates:', error);
     } finally {

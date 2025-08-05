@@ -121,18 +121,31 @@ export const CourseLearning = () => {
 
       if (lessonsError) throw lessonsError;
 
-      // Fetch quizzes with attempts
-      const { data: quizzesData, error: quizzesError } = await supabase
-        .from('quizzes')
-        .select(`
-          *,
-          lessons!inner(course_id),
-          quiz_attempts!left(score, passed, completed_at)
-        `)
-        .eq('lessons.course_id', courseId)
-        .eq('quiz_attempts.student_id', user?.id);
+      // Fetch quizzes with attempts - Fixed RLS handling
+      const lessonIds = (lessonsData || []).map(l => l.id);
+      let quizzesData = [];
+      
+      if (lessonIds.length > 0) {
+        const { data: quizData, error: quizError } = await supabase
+          .from('quizzes')
+          .select(`
+            *,
+            quiz_attempts!left(id, score, passed, completed_at, student_id)
+          `)
+          .in('lesson_id', lessonIds);
 
-      if (quizzesError) throw quizzesError;
+        if (quizError) {
+          console.error('Error fetching quizzes:', quizError);
+        } else {
+          // Filter quiz attempts for current user
+          quizzesData = (quizData || []).map(quiz => ({
+            ...quiz,
+            quiz_attempts: (quiz.quiz_attempts || []).filter(attempt => 
+              attempt.student_id === user?.id
+            )
+          }));
+        }
+      }
 
       setCourse(courseData);
       setLessons((lessonsData || []) as Lesson[]);
