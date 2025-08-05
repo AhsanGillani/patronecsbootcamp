@@ -105,11 +105,7 @@ export const Header = () => {
               </>
             ) : (
               <>
-                {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative group">
-                  <Bell className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
-                </Button>
+                
 
                 {/* User Menu */}
                 <DropdownMenu>
