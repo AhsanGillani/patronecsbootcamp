@@ -14,6 +14,7 @@ export interface Course {
   total_enrollments: number;
   lesson_count: number;
   total_duration: number;
+  slug?: string;
   created_at: string;
   updated_at: string;
   category?: {

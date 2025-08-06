@@ -102,7 +102,7 @@ export const Courses = () => {
                     </div>
                   </div>
                   
-                  <Link to={`/courses/${course.id}`}>
+                  <Link to={`/course/${course.slug || course.id}`}>
                     <Button className="w-full group font-semibold" variant="hero">
                       Start Learning Free
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

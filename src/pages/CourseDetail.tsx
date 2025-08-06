@@ -10,13 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft, Video, FileText, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Course } from "@/hooks/useCourses";
 
 const CourseDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<any>(null);
   const [firstLesson, setFirstLesson] = useState<any>(null);
   const [showEnrollPrompt, setShowEnrollPrompt] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
@@ -25,19 +24,46 @@ const CourseDetail = () => {
 
   useEffect(() => {
     const fetchCourse = async () => {
-      if (!id) return;
+      if (!slug) return;
       
       try {
-        const { data, error } = await supabase
-          .from('courses')
-          .select(`
-            *,
-            category:categories!courses_category_id_fkey(name),
-            profile:profiles!courses_instructor_id_fkey(full_name)
-          `)
-          .eq('id', id)
-          .eq('status', 'approved')
-          .single();
+        setLoading(true);
+        
+        // First try to fetch by slug
+        let data, error;
+        try {
+          const result = await supabase
+            .from('courses')
+            .select('*')
+            .eq('slug', slug)
+            .eq('status', 'approved')
+            .eq('soft_deleted', false)
+            .single();
+          data = result.data;
+          error = result.error;
+        } catch (e) {
+          error = e;
+        }
+
+        // If not found by slug and slug looks like an ID, try by ID for backward compatibility
+        if (error && slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          const idResponse = await supabase
+            .from('courses')
+            .select(`
+              *,
+              category:categories(name),
+              profile:profiles(full_name)
+            `)
+            .eq('id', slug)
+            .eq('status', 'approved')
+            .eq('soft_deleted', false)
+            .single();
+          
+          if (!idResponse.error) {
+            data = idResponse.data;
+            error = null;
+          }
+        }
 
         if (error) throw error;
         setCourse(data);
@@ -46,7 +72,7 @@ const CourseDetail = () => {
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
           .select('*')
-          .eq('course_id', id)
+          .eq('course_id', data.id)
           .eq('is_published', true)
           .order('order_index')
           .limit(1)
@@ -61,7 +87,7 @@ const CourseDetail = () => {
           const { data: enrollment } = await supabase
             .from('enrollments')
             .select('id')
-            .eq('course_id', id)
+            .eq('course_id', data.id)
             .eq('student_id', user.id)
             .single();
           
@@ -80,13 +106,23 @@ const CourseDetail = () => {
     };
 
     fetchCourse();
-  }, [id, user, toast]);
+  }, [slug, user, toast]);
 
   const handleEnroll = async () => {
     if (!user || !course) {
       toast({
         title: "Authentication required",
         description: "Please log in to enroll in this course",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is a student
+    if (profile?.role !== 'student') {
+      toast({
+        title: "Access Restricted",
+        description: "Only students can enroll in courses. Please contact support if you need to switch your account type.",
         variant: "destructive",
       });
       return;
@@ -372,28 +408,39 @@ const CourseDetail = () => {
                 </div>
 
                 {user ? (
-                  isEnrolled ? (
-                    <div className="space-y-4">
-                      <Button className="w-full" asChild>
-                        <Link to={profile?.role === 'student' ? '/student' : '/dashboard'}>
-                          <Play className="w-4 h-4 mr-2" />
-                          Continue Learning
-                        </Link>
-                      </Button>
-                      <div className="text-center">
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          ✓ Enrolled
-                        </Badge>
+                  profile?.role === 'student' ? (
+                    isEnrolled ? (
+                      <div className="space-y-4">
+                        <Button className="w-full" asChild>
+                          <Link to="/student">
+                            <Play className="w-4 h-4 mr-2" />
+                            Continue Learning
+                          </Link>
+                        </Button>
+                        <div className="text-center">
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            ✓ Enrolled
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={handleEnroll}
+                        disabled={enrolling}
+                      >
+                        {enrolling ? "Enrolling..." : "Enroll Free"}
+                      </Button>
+                    )
                   ) : (
-                    <Button 
-                      className="w-full" 
-                      onClick={handleEnroll}
-                      disabled={enrolling}
-                    >
-                      {enrolling ? "Enrolling..." : "Enroll Free"}
-                    </Button>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Only students can enroll in courses
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Contact support to change your account type
+                      </p>
+                    </div>
                   )
                 ) : (
                   <Button className="w-full" asChild>

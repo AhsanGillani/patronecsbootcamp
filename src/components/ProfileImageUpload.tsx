@@ -24,6 +24,17 @@ export const ProfileImageUpload = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload an image",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
@@ -47,15 +58,17 @@ export const ProfileImageUpload = ({
     setUploading(true);
 
     try {
-      // Create unique filename
+      // Create unique filename with user ID in path for RLS policies
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
