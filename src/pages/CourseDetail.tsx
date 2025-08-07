@@ -43,56 +43,35 @@ const CourseDetail = () => {
       try {
         setLoading(true);
         
-        // Create a simple function to avoid type inference issues
-        const fetchCourseBySlug = async () => {
-          return await (supabase as any)
-            .from('courses')
-            .select('*')
-            .eq('slug', slug)
-            .eq('status', 'approved')
-            .eq('soft_deleted', false)
-            .maybeSingle();
-        };
+        // Since slug column doesn't exist yet, treat all slugs as IDs for now
+        const { data: courseData, error } = await (supabase as any)
+          .from('courses')
+          .select(`
+            *,
+            category:categories(name),
+            profile:profiles(full_name)
+          `)
+          .eq('id', slug)
+          .eq('status', 'approved')
+          .eq('soft_deleted', false)
+          .maybeSingle();
         
-        const { data: courseData } = await fetchCourseBySlug();
-        
-        let finalCourseData = courseData;
-        
-        // If not found by slug and slug looks like an ID, try by ID for backward compatibility
-        if (!finalCourseData && slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          const fetchCourseById = async () => {
-            return await (supabase as any)
-              .from('courses')
-              .select(`
-                *,
-                category:categories(name),
-                profile:profiles(full_name)
-              `)
-              .eq('id', slug)
-              .eq('status', 'approved')
-              .eq('soft_deleted', false)
-              .maybeSingle();
-          };
-          
-          const { data: idData, error: idError } = await fetchCourseById();
-          
-          if (!idError && idData) {
-            finalCourseData = idData;
-          }
+        if (error && error.code !== 'PGRST116') {
+          throw error;
         }
 
-        if (!finalCourseData) {
+        if (!courseData) {
           throw new Error('Course not found');
         }
         
-        setCourse(finalCourseData);
+        setCourse(courseData);
 
         // Fetch first lesson
         const fetchFirstLesson = async () => {
           return await (supabase as any)
             .from('lessons')
             .select('*')
-            .eq('course_id', finalCourseData.id)
+            .eq('course_id', courseData.id)
             .eq('is_published', true)
             .order('order_index')
             .limit(1)
@@ -111,7 +90,7 @@ const CourseDetail = () => {
             return await (supabase as any)
               .from('enrollments')
               .select('id')
-              .eq('course_id', finalCourseData.id)
+              .eq('course_id', courseData.id)
               .eq('student_id', user.id)
               .maybeSingle();
           };
