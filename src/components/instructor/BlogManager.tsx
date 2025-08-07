@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Calendar, Globe, Lock } from "lucide-react";
 import { CreateBlog } from "./CreateBlog";
 import { EditBlog } from "./EditBlog";
 
@@ -109,6 +109,30 @@ export const BlogManager = () => {
     }
   };
 
+  const handleTogglePublish = async (blogId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("blogs")
+        .update({ is_published: !currentStatus })
+        .eq("id", blogId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Blog ${!currentStatus ? 'published' : 'unpublished'} successfully`,
+      });
+      fetchBlogs();
+    } catch (error) {
+      console.error("Error updating blog:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update blog status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const BlogCard = ({ blog }: { blog: Blog }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -164,6 +188,28 @@ export const BlogManager = () => {
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
+            
+            {/* Publish/Unpublish button - only show for approved blogs */}
+            {blog.status === 'approved' && (
+              <Button 
+                size="sm" 
+                variant={blog.is_published ? "default" : "secondary"}
+                onClick={() => handleTogglePublish(blog.id, blog.is_published)}
+              >
+                {blog.is_published ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-1" />
+                    Unpublish
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4 mr-1" />
+                    Publish
+                  </>
+                )}
+              </Button>
+            )}
+            
             <Button 
               size="sm" 
               variant="outline"
