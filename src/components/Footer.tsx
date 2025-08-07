@@ -15,10 +15,10 @@ export const Footer = () => {
       { name: "Contact", href: "/contact" }
     ],
     "Courses": [
-      { name: "Digital Marketing", href: "/courses?search=digital marketing" },
-      { name: "Web Development", href: "/courses?search=web development" },
-      { name: "Freelancing", href: "/courses?search=freelancing" },
-      { name: "Graphic Design", href: "/courses?search=graphic design" }
+      { name: "Digital Marketing", href: "/courses?category=digital marketing"},
+      { name: "Web Development", href: "/courses?category=web development" },
+      { name: "Freelancing", href: "/courses?category=freelancing" },
+      { name: "Graphic Design", href: "/courses?category=graphic design" }
     ],
     "Support": [
       { name: "Help Center", href: "/faq" },

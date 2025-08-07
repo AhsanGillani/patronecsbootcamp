@@ -14,11 +14,11 @@ export const Courses = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Free Training</span>{" "}
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Hand on Training</span>{" "}
             <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">for Everyone</span>
           </h2>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-            Discover our <span className="text-primary font-bold">19+ expert-designed courses</span> that have already helped 
+            Discover our <span className="text-primary font-bold">Expert-designed courses</span> that have already helped 
             <span className="text-accent font-semibold"> thousands of Pakistanis</span> advance their careers - completely free!
           </p>
         </div>
@@ -43,7 +43,7 @@ export const Courses = () => {
                   {/* Free Badge */}
                   <div className="absolute top-4 left-4">
                     <Badge className="bg-green-500 text-white font-bold px-3 py-1">
-                      FREE
+                      Expert
                     </Badge>
                   </div>
                   
@@ -117,7 +117,7 @@ export const Courses = () => {
         <div className="text-center mt-16 animate-fade-in animation-delay-1000">
           <Link to="/courses">
             <Button size="lg" variant="hero" className="group text-lg px-12 py-6 hover-scale shadow-2xl">
-              Explore All 19+ Courses
+              Explore All Courses
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>

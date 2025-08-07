@@ -21,6 +21,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import NotFound from "./pages/NotFound";
 import { CourseLearning } from "./components/student/CourseLearning";
 import MuiIndex from "./pages/MuiIndex";
+import ScrollToTopOnNavigate from "./components/ScrollToTopOnNavigate";
 
 const queryClient = new QueryClient();
 
@@ -33,14 +34,15 @@ const App = () => (
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
+          <ScrollToTopOnNavigate />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/mui" element={<MuiIndex />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/about" element={<About />} />
             <Route path="/courses" element={<AllCourses />} />
-            <Route path="/courses/:slug" element={<CourseDetail />} />
-            <Route path="/course/:slug" element={<CourseDetail />} />
+            <Route path="/courses/:id" element={<CourseDetail />} />
+            <Route path="/course/:id" element={<CourseDetail />} />
             <Route path="/course/:courseId/learn" element={<CourseLearning />} />
             <Route path="/course-learning/:courseId" element={<CourseLearning />} />
              <Route path="/blog" element={<Blog />} />
