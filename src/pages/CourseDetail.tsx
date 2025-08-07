@@ -8,8 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft, Video, FileText, Lock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  level: string;
+  price: number;
+  total_enrollments: number;
+  total_duration: number;
+  lesson_count: number;
+  category?: { name: string };
+  profile?: { full_name: string };
+}
 
 const CourseDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -29,68 +43,80 @@ const CourseDetail = () => {
       try {
         setLoading(true);
         
-        // First try to fetch by slug
-        let data, error;
-        try {
-          const result = await supabase
+        // Create a simple function to avoid type inference issues
+        const fetchCourseBySlug = async () => {
+          return await (supabase as any)
             .from('courses')
             .select('*')
             .eq('slug', slug)
             .eq('status', 'approved')
             .eq('soft_deleted', false)
-            .single();
-          data = result.data;
-          error = result.error;
-        } catch (e) {
-          error = e;
-        }
-
+            .maybeSingle();
+        };
+        
+        const { data: courseData } = await fetchCourseBySlug();
+        
+        let finalCourseData = courseData;
+        
         // If not found by slug and slug looks like an ID, try by ID for backward compatibility
-        if (error && slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          const idResponse = await supabase
-            .from('courses')
-            .select(`
-              *,
-              category:categories(name),
-              profile:profiles(full_name)
-            `)
-            .eq('id', slug)
-            .eq('status', 'approved')
-            .eq('soft_deleted', false)
-            .single();
+        if (!finalCourseData && slug.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          const fetchCourseById = async () => {
+            return await (supabase as any)
+              .from('courses')
+              .select(`
+                *,
+                category:categories(name),
+                profile:profiles(full_name)
+              `)
+              .eq('id', slug)
+              .eq('status', 'approved')
+              .eq('soft_deleted', false)
+              .maybeSingle();
+          };
           
-          if (!idResponse.error) {
-            data = idResponse.data;
-            error = null;
+          const { data: idData, error: idError } = await fetchCourseById();
+          
+          if (!idError && idData) {
+            finalCourseData = idData;
           }
         }
 
-        if (error) throw error;
-        setCourse(data);
+        if (!finalCourseData) {
+          throw new Error('Course not found');
+        }
+        
+        setCourse(finalCourseData);
 
         // Fetch first lesson
-        const { data: lessonsData, error: lessonsError } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('course_id', data.id)
-          .eq('is_published', true)
-          .order('order_index')
-          .limit(1)
-          .maybeSingle();
+        const fetchFirstLesson = async () => {
+          return await (supabase as any)
+            .from('lessons')
+            .select('*')
+            .eq('course_id', finalCourseData.id)
+            .eq('is_published', true)
+            .order('order_index')
+            .limit(1)
+            .maybeSingle();
+        };
+        
+        const { data: lessonsData } = await fetchFirstLesson();
 
-        if (!lessonsError && lessonsData) {
+        if (lessonsData) {
           setFirstLesson(lessonsData);
         }
 
         // Check if user is enrolled
         if (user) {
-          const { data: enrollment } = await supabase
-            .from('enrollments')
-            .select('id')
-            .eq('course_id', data.id)
-            .eq('student_id', user.id)
-            .single();
+          const fetchEnrollment = async () => {
+            return await (supabase as any)
+              .from('enrollments')
+              .select('id')
+              .eq('course_id', finalCourseData.id)
+              .eq('student_id', user.id)
+              .maybeSingle();
+          };
           
+          const { data: enrollment } = await fetchEnrollment();
           setIsEnrolled(!!enrollment);
         }
       } catch (error) {
@@ -130,12 +156,16 @@ const CourseDetail = () => {
 
     setEnrolling(true);
     try {
-      const { error } = await supabase
-        .from('enrollments')
-        .insert({
-          course_id: course.id,
-          student_id: user.id
-        });
+      const createEnrollment = async () => {
+        return await (supabase as any)
+          .from('enrollments')
+          .insert({
+            course_id: course.id,
+            student_id: user.id
+          });
+      };
+      
+      const { error } = await createEnrollment();
 
       if (error) throw error;
 
