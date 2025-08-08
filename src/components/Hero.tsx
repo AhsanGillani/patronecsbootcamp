@@ -7,8 +7,8 @@ export const Hero = () => {
   const features = [
     {
       icon: <GraduationCap className="h-8 w-8 text-primary" />,
-      title: "Free access to professional courses",
-      description: "Get unlimited access to high-quality courses without any cost"
+      title: "Access to professional courses",
+      description: "Get unlimited access to high-quality courses "
     },
     {
       icon: <Award className="h-8 w-8 text-primary" />,
@@ -46,8 +46,8 @@ export const Hero = () => {
           
           <div className="animate-fade-in animation-delay-400">
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              Join <span className="text-primary font-bold">34,650+ learners</span> from Pakistan already advancing their careers with our 
-              <span className="text-accent font-semibold"> completely free courses</span> and certificates.
+              Join <span className="text-primary font-bold">Learners</span> from arount the world who already advancing their careers with our 
+              <span className="text-accent font-semibold"> Complete courses</span> and certificates.
             </p>
           </div>
 
@@ -56,13 +56,13 @@ export const Hero = () => {
             <Button size="lg" variant="hero" className="group text-lg px-8 py-6 hover-scale shadow-2xl" asChild>
               <Link to="/courses">
                 <Play className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
-                Start Learning Free
+                Start Learning 
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="group text-lg px-8 py-6 hover-scale border-2" asChild>
               <Link to="/auth?mode=register">
-                Browse 19+ Courses
+                Browse Courses
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
@@ -113,11 +113,11 @@ export const Hero = () => {
                 <p className="text-lg leading-relaxed text-muted-foreground text-center">
                   Ready to upgrade your skills and build a successful future? 
                   <span className="text-primary font-bold"> Patronecs.com</span> offers Pakistan's most comprehensive 
-                  <span className="text-accent font-semibold"> free online courses with certificates</span>. 
+                  <span className="text-accent font-semibold"> online courses with certificates</span>. 
                   From <span className="text-primary font-semibold">Mobile Development</span> to 
                   <span className="text-primary font-semibold"> Web Development</span>, 
                   <span className="text-primary font-semibold"> Programming</span>, and 
-                  <span className="text-primary font-semibold"> Professional Writing</span> - 
+                  <span className="text-primary font-semibold"> Flutter Flow</span> - 
                   our expertly designed courses make quality education accessible to everyone, everywhere.
                 </p>
               </div>
