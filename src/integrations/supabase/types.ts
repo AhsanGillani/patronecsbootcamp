@@ -66,6 +66,7 @@ export type Database = {
           featured_image_url: string | null
           id: string
           is_published: boolean
+          slug: string | null
           status: Database["public"]["Enums"]["blog_status"]
           title: string
           updated_at: string
@@ -81,6 +82,7 @@ export type Database = {
           featured_image_url?: string | null
           id?: string
           is_published?: boolean
+          slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
           title: string
           updated_at?: string
@@ -96,6 +98,7 @@ export type Database = {
           featured_image_url?: string | null
           id?: string
           is_published?: boolean
+          slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
           title?: string
           updated_at?: string
@@ -269,6 +272,7 @@ export type Database = {
           lesson_count: number | null
           level: Database["public"]["Enums"]["course_level"]
           price: number
+          slug: string | null
           soft_deleted: boolean
           status: Database["public"]["Enums"]["course_status"]
           thumbnail_url: string | null
@@ -287,6 +291,7 @@ export type Database = {
           lesson_count?: number | null
           level?: Database["public"]["Enums"]["course_level"]
           price?: number
+          slug?: string | null
           soft_deleted?: boolean
           status?: Database["public"]["Enums"]["course_status"]
           thumbnail_url?: string | null
@@ -305,6 +310,7 @@ export type Database = {
           lesson_count?: number | null
           level?: Database["public"]["Enums"]["course_level"]
           price?: number
+          slug?: string | null
           soft_deleted?: boolean
           status?: Database["public"]["Enums"]["course_status"]
           thumbnail_url?: string | null
@@ -703,8 +709,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_blog_slug: {
+        Args: { title: string }
+        Returns: string
+      }
       generate_certificate_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_course_slug: {
+        Args: { title: string }
         Returns: string
       }
       get_user_role: {
@@ -714,6 +728,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      slugify: {
+        Args: { txt: string }
+        Returns: string
       }
     }
     Enums: {
