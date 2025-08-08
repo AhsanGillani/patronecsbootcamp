@@ -26,7 +26,7 @@ interface Course {
 }
 
 const CourseDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [course, setCourse] = useState<any>(null);
@@ -38,7 +38,7 @@ const CourseDetail = () => {
 
   useEffect(() => {
     const fetchCourse = async () => {
-      if (!slug) return;
+      if (!id) return;
       
       try {
         setLoading(true);
@@ -51,7 +51,7 @@ const CourseDetail = () => {
             category:categories(name),
             profile:profiles(full_name)
           `)
-          .eq('id', slug)
+          .eq('id', id)
           .eq('status', 'approved')
           .eq('soft_deleted', false)
           .maybeSingle();
@@ -111,7 +111,7 @@ const CourseDetail = () => {
     };
 
     fetchCourse();
-  }, [slug, user, toast]);
+  }, [id, user, toast]);
 
   const handleEnroll = async () => {
     if (!user || !course) {
