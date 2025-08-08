@@ -80,7 +80,6 @@ export const Footer = () => {
                       className="w-28 h-auto image-8 juio"
                     />
                   </a>
-                  <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
                 </div>
               </Link>
               
@@ -201,14 +200,7 @@ Pasrur Bypass, Sialkot, Punjab 51350</span>
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
-                <p>© 2024 Patronecs. All rights reserved.</p>
-                <div className="flex items-center gap-4">
-                  <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
-                  <span>•</span>
-                  <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-                  <span>•</span>
-                  <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
-                </div>
+                <p>© 2025 Patronecs. All rights reserved.</p>
               </div>
             </div>
           </div>

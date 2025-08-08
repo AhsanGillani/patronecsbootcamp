@@ -62,7 +62,6 @@ export const Header = () => {
                           className="w-28 h-auto image-8 juio"
                         />
                       </a>
-                      <p className="text-xs text-muted-foreground -mt-1">Learn. Grow. Succeed.</p>
                   </div>
 
           </Link>
