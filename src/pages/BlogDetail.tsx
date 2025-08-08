@@ -21,26 +21,53 @@ const BlogDetail = () => {
       if (!id) return;
       
       try {
-        const { data, error } = await supabase
-          .from('blogs')
-          .select(`
+        setLoading(true);
+
+        const baseSelect = `
             *,
             category:categories!blogs_category_id_fkey(name),
             profile:profiles!blogs_author_id_fkey(full_name)
-          `)
-          .eq('id', id)
+          `;
+
+        let fetched: any = null;
+
+        // Try by slug first, then fallback to ID
+        const { data: bySlug, error: slugErr } = await supabase
+          .from('blogs')
+          .select(baseSelect)
+          .eq('slug', id)
           .eq('status', 'approved')
           .eq('is_published', true)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
-        setBlog(data);
+        if (bySlug) {
+          fetched = bySlug;
+        } else {
+          const { data: byId, error: idErr } = await supabase
+            .from('blogs')
+            .select(baseSelect)
+            .eq('id', id)
+            .eq('status', 'approved')
+            .eq('is_published', true)
+            .maybeSingle();
 
-        // Increment view count
+          if (idErr && (idErr as any).code !== 'PGRST116') {
+            throw idErr;
+          }
+          fetched = byId;
+        }
+
+        if (!fetched) {
+          throw new Error('Blog not found');
+        }
+
+        setBlog(fetched as any);
+
+        // Increment view count using the found blog id
         await supabase
           .from('blogs')
-          .update({ views: (data.views || 0) + 1 })
-          .eq('id', id);
+          .update({ views: ((fetched as any).views || 0) + 1 })
+          .eq('id', (fetched as any).id);
 
       } catch (error) {
         console.error('Error fetching blog:', error);

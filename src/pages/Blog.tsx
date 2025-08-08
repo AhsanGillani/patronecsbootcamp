@@ -166,7 +166,7 @@ const Blog = () => {
                         </div>
                         
                         <h3 className="font-semibold text-lg mb-3 line-clamp-2 hover:text-primary transition-colors">
-                          <Link to={`/blog/${blog.id}`}>
+                          <Link to={`/blog/${blog.slug || blog.id}`}>
                             {blog.title}
                           </Link>
                         </h3>
@@ -195,7 +195,7 @@ const Blog = () => {
                         </div>
                         
                         <Button variant="outline" size="sm" className="w-full" asChild>
-                          <Link to={`/blog/${blog.id}`}>
+                          <Link to={`/blog/${blog.slug || blog.id}`}>
                             Read More
                           </Link>
                         </Button>

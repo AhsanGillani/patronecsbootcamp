@@ -43,21 +43,38 @@ const CourseDetail = () => {
       try {
         setLoading(true);
         
-        // Since slug column doesn't exist yet, treat all slugs as IDs for now
-        const { data: courseData, error } = await (supabase as any)
-          .from('courses')
-          .select(`
+        const baseSelect = `
             *,
             category:categories(name),
             profile:profiles(full_name)
-          `)
-          .eq('id', id)
+          `;
+
+        let courseData: any = null;
+
+        // Try by slug first (since we may receive a slug in the URL param), then fallback to ID
+        const { data: bySlug } = await (supabase as any)
+          .from('courses')
+          .select(baseSelect)
+          .eq('slug', id)
           .eq('status', 'approved')
           .eq('soft_deleted', false)
           .maybeSingle();
-        
-        if (error && error.code !== 'PGRST116') {
-          throw error;
+
+        if (bySlug) {
+          courseData = bySlug;
+        } else {
+          const { data: byId, error: idErr } = await (supabase as any)
+            .from('courses')
+            .select(baseSelect)
+            .eq('id', id)
+            .eq('status', 'approved')
+            .eq('soft_deleted', false)
+            .maybeSingle();
+          
+          if (idErr && (idErr as any).code !== 'PGRST116') {
+            throw idErr;
+          }
+          courseData = byId;
         }
 
         if (!courseData) {

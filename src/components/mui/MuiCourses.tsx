@@ -249,7 +249,7 @@ export const MuiCourses = () => {
                   {/* Enroll Button */}
                   <Button
                     component={Link}
-                    to={`/course/${course.id}`}
+                    to={`/course/${course.slug || course.id}`}
                     variant="contained"
                     fullWidth
                     startIcon={<School />}

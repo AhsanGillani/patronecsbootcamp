@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Blog {
   id: string;
+  slug?: string;
   title: string;
   content: string;
   excerpt: string | null;

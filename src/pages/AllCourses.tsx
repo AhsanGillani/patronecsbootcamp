@@ -215,7 +215,7 @@ const AllCourses = () => {
                         </div>
                         
                         <Button className="w-full" asChild>
-                          <Link to={`/course/${course.id}`}>
+                          <Link to={`/course/${course.slug || course.id}`}>
                             Enroll 
                           </Link>
                         </Button>
