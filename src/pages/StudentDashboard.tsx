@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudentSidebar } from "@/components/student/StudentSidebar";
@@ -17,7 +17,9 @@ import { StudentProfile } from "@/components/student/StudentProfile";
 
 const StudentDashboard = () => {
   const { user, profile, signOut, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState("home");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'home';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Redirect if not authenticated or not a student
   if (loading) {
@@ -34,6 +36,17 @@ const StudentDashboard = () => {
   if (!user || !profile || profile.role !== "student") {
     return <Navigate to="/auth" replace />;
   }
+
+  // Sync activeTab with URL search param
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'home';
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const getComponent = () => {
     switch (activeTab) {
@@ -68,7 +81,7 @@ const StudentDashboard = () => {
       <div className="min-h-screen flex w-full bg-background">
         <StudentSidebar 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           studentName={profile.full_name}
         />
         

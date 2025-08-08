@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface RecentActivity {
 
 export function StudentHome() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalEnrolled: 0,
     completedCourses: 0,
@@ -165,7 +167,7 @@ export function StudentHome() {
                       </div>
                       <Progress value={enrollment.progress} className="h-2" />
                     </div>
-                    <Button size="sm" className="w-full mt-3">
+                    <Button size="sm" className="w-full mt-3" onClick={() => navigate(`/course/${enrollment.courses.id}/learn`)}>
                       Continue Learning
                     </Button>
                   </CardContent>
@@ -184,19 +186,19 @@ export function StudentHome() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/student?tab=courses')}>
               <BookOpen className="h-6 w-6" />
               <span>Browse Courses</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/student?tab=learning')}>
               <Play className="h-6 w-6" />
               <span>Continue Learning</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/student?tab=certificates')}>
               <Award className="h-6 w-6" />
               <span>View Certificates</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => navigate('/student?tab=learning')}>
               <TrendingUp className="h-6 w-6" />
               <span>Track Progress</span>
             </Button>
