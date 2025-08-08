@@ -45,8 +45,8 @@ const CourseDetail = () => {
         
         const baseSelect = `
             *,
-            category:categories(name),
-            profile:profiles(full_name)
+            category:categories!courses_category_id_fkey(name),
+            profile:profiles!courses_instructor_id_fkey(full_name)
           `;
 
         let courseData: any = null;
