@@ -46,6 +46,7 @@ export function InstructorSidebar({ activeTab, onTabChange, instructorName }: In
       ? "bg-primary text-primary-foreground font-medium shadow-sm" 
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
+
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-card border-r">
