@@ -30,7 +30,6 @@ const menuItems = [
   { id: 'instructors', title: 'Instructor Control', url: '/admin?tab=instructors', icon: Shield },
   { id: 'analytics', title: 'Analytics', url: '/admin?tab=analytics', icon: BarChart3 },
   { id: 'announcements', title: 'Announcements', url: '/admin?tab=announcements', icon: Megaphone },
-  { id: 'cms', title: 'CMS Control', url: '/admin?tab=cms', icon: Settings },
 ];
 
 interface AdminSidebarProps {
