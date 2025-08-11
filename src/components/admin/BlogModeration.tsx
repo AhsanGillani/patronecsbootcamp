@@ -22,10 +22,6 @@ interface Blog {
     full_name: string;
     email: string;
   };
-  category?: {
-    name: string;
-    slug?: string;
-  };
 }
 
 export default function BlogModeration() {
@@ -46,8 +42,7 @@ export default function BlogModeration() {
         .from('blogs')
         .select(`
           *,
-          profiles!author_id(full_name, email),
-          category:categories!blogs_category_id_fkey(name, slug)
+          profiles!author_id(full_name, email)
         `)
         .order('created_at', { ascending: false });
 
@@ -134,7 +129,7 @@ export default function BlogModeration() {
                 <TableRow key={blog.id}>
                   <TableCell className="font-medium">{blog.title}</TableCell>
                   <TableCell>{blog.profiles?.full_name}</TableCell>
-                  <TableCell>{blog.category?.name || 'No category'}</TableCell>
+                  <TableCell>{blog.category_id || 'No category'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusColor(blog.status)}>
                       {blog.status}

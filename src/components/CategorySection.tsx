@@ -84,7 +84,7 @@ export const CategorySection = () => {
           {displayCategories.map((category, index) => (
             <Link 
               key={category.id} 
-              to={`/courses?category=${category.slug || category.name}`}
+              to={`/courses?category=${category.id}`}
               className="block"
             >
               <Card className={`group relative p-8 text-center bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/50 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-3 animate-fade-in animation-delay-${200 + index * 150} overflow-hidden`}>

@@ -6,7 +6,6 @@ export interface Category {
   name: string;
   description: string | null;
   icon: string | null;
-  slug?: string;
   course_count?: number;
 }
 
