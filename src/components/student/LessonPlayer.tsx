@@ -7,6 +7,7 @@ import { QuizPlayer } from "./QuizPlayer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import YouTube from 'react-youtube';
 import { 
   Play, 
   Pause, 
@@ -38,8 +39,15 @@ interface Lesson {
   duration: number;
   quiz?: Quiz;
   lesson_progress?: {
+    id: string;
     is_completed: boolean;
     completed_at: string;
+    video_watch_progress: number;
+    video_watched_seconds: number;
+    pdf_viewed: boolean;
+    text_read: boolean;
+    quiz_passed: boolean;
+    last_accessed_at: string;
   }[];
 }
 
@@ -69,12 +77,39 @@ export const LessonPlayer = ({
   const [videoWatched, setVideoWatched] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pdfViewed, setPdfViewed] = useState(false);
+  const [textRead, setTextRead] = useState(false);
   
-  const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
+  // YouTube player state
+  const [youtubePlayer, setYoutubePlayer] = useState<InstanceType<Window['YT']['Player']> | null>(null);
+  const [youtubeProgress, setYoutubeProgress] = useState(0);
+  const [youtubeWatched, setYoutubeWatched] = useState(false);
+  const [youtubeTrackingInterval, setYoutubeTrackingInterval] = useState<NodeJS.Timeout | null>(null);
+  
+  const currentProgress = lesson.lesson_progress && lesson.lesson_progress.length > 0 ? lesson.lesson_progress[0] : null;
+  const isCompleted = currentProgress?.is_completed || false;
 
   useEffect(() => {
     checkQuizCompletion();
+    initializeProgress();
   }, [lesson.id, user]);
+
+  const initializeProgress = () => {
+    if (currentProgress) {
+      if (lesson.video_url && (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be'))) {
+        // YouTube video
+        setYoutubeProgress(currentProgress.video_watch_progress || 0);
+        setYoutubeWatched(currentProgress.video_watch_progress >= 90);
+      } else {
+        // Native video
+        setVideoProgress(currentProgress.video_watch_progress || 0);
+        setVideoWatched(currentProgress.video_watch_progress >= 90);
+      }
+      setPdfViewed(currentProgress.pdf_viewed || false);
+      setTextRead(currentProgress.text_read || false);
+      setQuizCompleted(currentProgress.quiz_passed || false);
+    }
+  };
 
   const checkQuizCompletion = async () => {
     if (!user || !lesson.quiz) return;
@@ -97,26 +132,213 @@ export const LessonPlayer = ({
     }
   };
 
-  const handleVideoTimeUpdate = () => {
+  const handleVideoTimeUpdate = async () => {
     if (!videoRef.current) return;
     
     const video = videoRef.current;
-    const progress = (video.currentTime / video.duration) * 100;
+    const currentTime = video.currentTime;
+    const duration = video.duration;
+    
+    if (duration > 0) {
+      const progress = (currentTime / duration) * 100;
     setVideoProgress(progress);
     
-    // Mark video as watched if user watched 90% or more
+      // Update video progress in database every 5 seconds
+      if (Math.floor(currentTime) % 5 === 0) {
+        await updateVideoProgress(progress, Math.floor(currentTime));
+      }
+      
+      // Mark as watched if 90% completed
     if (progress >= 90 && !videoWatched) {
       setVideoWatched(true);
+        await updateVideoProgress(progress, Math.floor(currentTime));
+      }
     }
   };
 
+  const updateVideoProgress = async (progress: number, watchedSeconds: number) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('lesson_progress')
+        .upsert({
+          student_id: user.id,
+          lesson_id: lesson.id,
+          video_watch_progress: progress,
+          video_watched_seconds: watchedSeconds,
+          last_accessed_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      
+      // Update local state for the appropriate video type
+      if (lesson.video_url && (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be'))) {
+        setYoutubeProgress(progress);
+        if (progress >= 90) {
+          setYoutubeWatched(true);
+        }
+      } else {
+        setVideoProgress(progress);
+        if (progress >= 90) {
+          setVideoWatched(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating video progress:', error);
+    }
+  };
+
+  const markPdfViewed = async () => {
+    if (!user || pdfViewed) return;
+    
+    try {
+      const { error } = await supabase
+        .from('lesson_progress')
+        .upsert({
+          student_id: user.id,
+          lesson_id: lesson.id,
+          pdf_viewed: true,
+          last_accessed_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      setPdfViewed(true);
+    } catch (error) {
+      console.error('Error marking PDF as viewed:', error);
+    }
+  };
+
+  const markTextRead = async () => {
+    if (!user || textRead) return;
+    
+    try {
+      const { error } = await supabase
+        .from('lesson_progress')
+        .upsert({
+          student_id: user.id,
+          lesson_id: lesson.id,
+          text_read: true,
+          last_accessed_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      setTextRead(true);
+    } catch (error) {
+      console.error('Error marking text as read:', error);
+    }
+  };
+
+  // YouTube Player Event Handlers
+  const onYouTubeReady = (event: { target: InstanceType<Window['YT']['Player']> }) => {
+    const player = event.target;
+    setYoutubePlayer(player);
+    
+    // Start tracking progress every second
+    const interval = setInterval(async () => {
+      try {
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        
+        if (duration > 0) {
+          const progress = (currentTime / duration) * 100;
+          setYoutubeProgress(progress);
+          
+          // Update progress in database every 5 seconds
+          if (Math.floor(currentTime) % 5 === 0) {
+            await updateVideoProgress(progress, Math.floor(currentTime));
+          }
+          
+          // Mark as watched if 90% completed
+          if (progress >= 90 && !youtubeWatched) {
+            setYoutubeWatched(true);
+            await updateVideoProgress(progress, Math.floor(currentTime));
+          }
+        }
+      } catch (error) {
+        console.error('Error tracking YouTube progress:', error);
+      }
+    }, 1000);
+    
+    setYoutubeTrackingInterval(interval);
+  };
+
+  const onYouTubeStateChange = (event: { target: InstanceType<Window['YT']['Player']>; data: number }) => {
+    const player = event.target;
+    const state = event.data;
+    
+    // YT.PlayerState.PLAYING = 1, YT.PlayerState.PAUSED = 2, YT.PlayerState.ENDED = 0
+    if (state === 1) {
+      setIsVideoPlaying(true);
+    } else if (state === 2) {
+      setIsVideoPlaying(false);
+    } else if (state === 0) {
+      // Video ended
+      setIsVideoPlaying(false);
+      setYoutubeWatched(true);
+      if (youtubePlayer) {
+        updateVideoProgress(100, Math.floor(youtubePlayer.getDuration()));
+      }
+    }
+  };
+
+  const onYouTubeError = (event: { target: InstanceType<Window['YT']['Player']>; data: number }) => {
+    console.error('YouTube player error:', event.data);
+    toast({
+      title: "Video Error",
+      description: "There was an error loading the video. Please try again.",
+      variant: "destructive",
+    });
+  };
+
+  // Cleanup YouTube tracking interval
+  useEffect(() => {
+    return () => {
+      if (youtubeTrackingInterval) {
+        clearInterval(youtubeTrackingInterval);
+      }
+    };
+  }, [youtubeTrackingInterval]);
+
+  // Cleanup tracking when lesson changes
+  useEffect(() => {
+    if (youtubeTrackingInterval) {
+      clearInterval(youtubeTrackingInterval);
+      setYoutubeTrackingInterval(null);
+    }
+  }, [lesson.id]);
+
   const canCompleteLesson = () => {
-    if (lesson.type === 'video' && lesson.video_url && !videoWatched) {
+    // Check video completion (90% watched) - handle both native and YouTube videos
+    if (lesson.type === 'video' && lesson.video_url) {
+      if (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be')) {
+        // YouTube video
+        if (!youtubeWatched) {
+          return false;
+        }
+      } else {
+        // Native video
+        if (!videoWatched) {
+          return false;
+        }
+      }
+    }
+    
+    // Check PDF completion
+    if (lesson.type === 'pdf' && lesson.pdf_url && !pdfViewed) {
       return false;
     }
+    
+    // Check text completion
+    if (lesson.type === 'text' && lesson.content && !textRead) {
+      return false;
+    }
+    
+    // Check quiz completion if lesson has quiz
     if (lesson.quiz && !quizCompleted) {
       return false;
     }
+    
     return true;
   };
 
@@ -151,12 +373,33 @@ export const LessonPlayer = ({
 
   const getCompletionRequirement = () => {
     const requirements = [];
-    if (lesson.type === 'video' && lesson.video_url && !videoWatched) {
-      requirements.push("Watch the complete video");
+    
+    if (lesson.type === 'video' && lesson.video_url) {
+      if (lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be')) {
+        // YouTube video
+        if (!youtubeWatched) {
+          requirements.push("Watch the complete video (90% minimum)");
+        }
+      } else {
+        // Native video
+        if (!videoWatched) {
+          requirements.push("Watch the complete video (90% minimum)");
+        }
+      }
     }
+    
+    if (lesson.type === 'pdf' && lesson.pdf_url && !pdfViewed) {
+      requirements.push("View the PDF document");
+    }
+    
+    if (lesson.type === 'text' && lesson.content && !textRead) {
+      requirements.push("Read the lesson content");
+    }
+    
     if (lesson.quiz && !quizCompleted) {
       requirements.push("Pass the quiz");
     }
+    
     return requirements.join(" and ");
   };
 
@@ -170,8 +413,13 @@ export const LessonPlayer = ({
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+    const videoId = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)?.[1];
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
+  const getYouTubeVideoId = (url: string) => {
+    const videoId = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)?.[1];
+    return videoId;
   };
 
   const renderContent = () => {
@@ -182,15 +430,43 @@ export const LessonPlayer = ({
             {lesson.video_url ? (
               <div className="relative rounded-lg overflow-hidden bg-black">
                 {lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be') ? (
-                  <iframe
-                    className="w-full h-96"
-                    src={getYouTubeEmbedUrl(lesson.video_url)}
-                    title={lesson.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    onLoad={() => setIsVideoPlaying(true)}
-                  />
+                  <div className="space-y-4">
+                    <YouTube
+                      videoId={getYouTubeVideoId(lesson.video_url)}
+                      opts={{
+                        height: '384',
+                        width: '100%',
+                        playerVars: {
+                          autoplay: 0,
+                          controls: 1,
+                          modestbranding: 1,
+                          rel: 0,
+                        },
+                      }}
+                      onReady={onYouTubeReady}
+                      onStateChange={onYouTubeStateChange}
+                      onError={onYouTubeError}
+                      className="w-full"
+                    />
+                    <div className="space-y-2 px-4 pb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Video Progress</span>
+                        <span className={`${youtubeWatched ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          {Math.round(youtubeProgress)}% {youtubeWatched && '✓'}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={youtubeProgress} 
+                        className={`h-2 ${youtubeWatched ? 'bg-green-100' : ''}`}
+                      />
+                      {!youtubeWatched && (
+                        <p className="text-xs text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Watch 90% of the video to unlock lesson completion
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <video 
@@ -244,8 +520,31 @@ export const LessonPlayer = ({
 
       case 'text':
         return (
+          <div className="space-y-4">
           <div className="prose prose-sm max-w-none">
             <div dangerouslySetInnerHTML={{ __html: lesson.content || 'No content available' }} />
+            </div>
+            {lesson.content && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Reading Progress</span>
+                  <span className={`${textRead ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {textRead ? 'Completed ✓' : 'Not Read'}
+                  </span>
+                </div>
+                {!textRead && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={markTextRead}
+                    className="w-full"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Read
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -259,10 +558,14 @@ export const LessonPlayer = ({
                   <h3 className="font-semibold mb-2">PDF Document</h3>
                   <p className="text-sm text-muted-foreground mb-4">{lesson.title}</p>
                   <div className="flex gap-2 justify-center">
-                    <Button asChild>
+                    <Button 
+                      asChild 
+                      onClick={markPdfViewed}
+                      className={pdfViewed ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
                       <a href={lesson.pdf_url} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        View PDF
+                        {pdfViewed ? 'PDF Viewed ✓' : 'View PDF'}
                       </a>
                     </Button>
                     <Button variant="outline" asChild>
@@ -272,6 +575,11 @@ export const LessonPlayer = ({
                       </a>
                     </Button>
                   </div>
+                  {!pdfViewed && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Click "View PDF" to mark this document as completed
+                    </p>
+                  )}
                 </div>
                 {lesson.content && (
                   <div className="prose prose-sm max-w-none">

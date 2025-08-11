@@ -46,9 +46,16 @@ interface Lesson {
   is_published: boolean;
   quiz?: Quiz;
   lesson_progress?: {
+    id: string;
     is_completed: boolean;
     completed_at: string;
     student_id: string;
+    video_watch_progress: number;
+    video_watched_seconds: number;
+    pdf_viewed: boolean;
+    text_read: boolean;
+    quiz_passed: boolean;
+    last_accessed_at: string;
   }[];
 }
 
@@ -180,31 +187,65 @@ export const CourseLearning = () => {
   };
 
   const markLessonComplete = async (lessonId: string) => {
+    if (!user) return;
+    
     try {
+      // Check if lesson can actually be completed based on progress tracking
+      const canComplete = await checkLessonCompletion(lessonId);
+      if (!canComplete) {
+        toast({
+          title: "Cannot complete lesson",
+          description: "Please complete all lesson requirements first (video, PDF, text, or quiz)",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: user?.id,
+          student_id: user.id,
           lesson_id: lessonId,
           is_completed: true,
-          completed_at: new Date().toISOString(),
+          completed_at: new Date().toISOString()
         });
 
       if (error) throw error;
 
       toast({
-        title: "Lesson completed!",
-        description: "Your progress has been saved.",
+        title: "Lesson Completed!",
+        description: "Great job! You've completed this lesson.",
       });
 
-      fetchCourseData(); // Refresh progress
+      // Refresh course data to show updated progress
+      await fetchCourseData();
     } catch (error) {
       console.error('Error marking lesson complete:', error);
       toast({
         title: "Error",
-        description: "Failed to save progress",
+        description: "Failed to mark lesson as complete. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const checkLessonCompletion = async (lessonId: string) => {
+    if (!user) return false;
+    
+    try {
+      // Use the database function to check if lesson can be completed
+      const { data, error } = await supabase
+        .rpc('calculate_lesson_completion', {
+          p_student_id: user.id,
+          p_lesson_id: lessonId
+        });
+
+      if (error) throw error;
+      
+      return data === 100;
+    } catch (error) {
+      console.error('Error checking lesson completion:', error);
+      return false;
     }
   };
 
