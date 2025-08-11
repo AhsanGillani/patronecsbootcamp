@@ -135,6 +135,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          slug: string | null
         }
         Insert: {
           created_at?: string
@@ -142,6 +143,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          slug?: string | null
         }
         Update: {
           created_at?: string
@@ -149,6 +151,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          slug?: string | null
         }
         Relationships: []
       }
@@ -711,6 +714,10 @@ export type Database = {
     Functions: {
       generate_blog_slug: {
         Args: { title: string }
+        Returns: string
+      }
+      generate_category_slug: {
+        Args: { name: string }
         Returns: string
       }
       generate_certificate_number: {

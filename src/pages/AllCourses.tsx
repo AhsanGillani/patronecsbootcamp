@@ -19,9 +19,11 @@ const AllCourses = () => {
   const [sortBy, setSortBy] = useState('latest');
 
   const { categories } = useCategories();
+  const isCategoryUUID = selectedCategory && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selectedCategory);
   const { courses, loading } = useCourses({
     search: searchQuery,
-    categoryId: selectedCategory || undefined
+    categorySlug: !isCategoryUUID && selectedCategory ? selectedCategory : undefined,
+    categoryId: isCategoryUUID ? selectedCategory : undefined
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -101,7 +103,7 @@ const AllCourses = () => {
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem key={category.id} value={category.slug || category.id}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -151,7 +153,7 @@ const AllCourses = () => {
                     Showing {sortedCourses.length} course{sortedCourses.length !== 1 ? 's' : ''}
                     {searchQuery && ` for "${searchQuery}"`}
                     {selectedCategory && selectedCategory !== 'all' && 
-                      ` in ${categories.find(c => c.id === selectedCategory)?.name}`
+                      ` in ${categories.find(c => (c.slug || c.id) === selectedCategory)?.name}`
                     }
                   </p>
                 </div>

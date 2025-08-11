@@ -145,23 +145,69 @@ export const MyCourses = () => {
 
   const handleSoftDelete = async (courseId: string) => {
     try {
-      const { error } = await supabase
+      // 1) Soft delete the course so it disappears from listings
+      const { error: courseErr } = await supabase
         .from("courses")
         .update({ soft_deleted: true })
         .eq("id", courseId);
 
-      if (error) throw error;
+      if (courseErr) throw courseErr;
+
+      // 2) Cascade delete lessons and quizzes belonging to this course
+      // Fetch lessons for the course
+      const { data: lessons, error: lessonsErr } = await supabase
+        .from("lessons")
+        .select("id")
+        .eq("course_id", courseId);
+
+      if (lessonsErr) throw lessonsErr;
+
+      const lessonIds = (lessons || []).map((l: any) => l.id);
+
+      if (lessonIds.length > 0) {
+        // Fetch quizzes for these lessons
+        const { data: quizzes, error: quizzesErr } = await supabase
+          .from("quizzes")
+          .select("id")
+          .in("lesson_id", lessonIds);
+        if (quizzesErr) throw quizzesErr;
+        const quizIds = (quizzes || []).map((q: any) => q.id);
+
+        // Delete quiz questions first (if any)
+        if (quizIds.length > 0) {
+          const { error: qqErr } = await supabase
+            .from("quiz_questions")
+            .delete()
+            .in("quiz_id", quizIds);
+          if (qqErr) throw qqErr;
+
+          const { error: qErr } = await supabase
+            .from("quizzes")
+            .delete()
+            .in("id", quizIds);
+          if (qErr) throw qErr;
+        }
+
+        // Delete lesson progress records is restricted by RLS (no DELETE policy)
+        // so we skip it here.
+
+        const { error: lErr } = await supabase
+          .from("lessons")
+          .delete()
+          .in("id", lessonIds);
+        if (lErr) throw lErr;
+      }
 
       toast({
         title: "Course deleted",
-        description: "Course has been moved to trash",
+        description: "Course and related lessons/quizzes have been removed",
       });
       fetchCourses();
     } catch (error) {
       console.error("Error deleting course:", error);
       toast({
         title: "Error",
-        description: "Failed to delete course",
+        description: "Failed to delete course and its content",
         variant: "destructive",
       });
     }

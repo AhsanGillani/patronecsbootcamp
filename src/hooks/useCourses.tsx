@@ -27,6 +27,7 @@ export interface Course {
 
 interface UseCoursesOptions {
   categoryId?: string;
+  categorySlug?: string;
   limit?: number;
   search?: string;
 }
@@ -45,7 +46,7 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
           .from('courses')
           .select(`
             *,
-            category:categories!courses_category_id_fkey(name),
+            category:categories!courses_category_id_fkey(name, slug),
             profile:profiles!courses_instructor_id_fkey(full_name)
           `)
           .eq('status', 'approved')
@@ -54,6 +55,9 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
 
         if (options.categoryId) {
           query = query.eq('category_id', options.categoryId);
+        }
+        if (options.categorySlug) {
+          query = query.eq('categories.slug', options.categorySlug);
         }
 
         if (options.search) {
@@ -77,7 +81,7 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
     };
 
     fetchCourses();
-  }, [options.categoryId, options.limit, options.search]);
+  }, [options.categoryId, options.categorySlug, options.limit, options.search]);
 
   return { courses, loading, error };
 };

@@ -108,7 +108,7 @@ export const MuiCategories = () => {
             <Zoom key={category.id} in timeout={600} style={{ transitionDelay: `${index * 100}ms` }}>
               <Card
                 component={Link}
-                to={`/courses?category=${category.id}`}
+                to={`/courses?category=${category.slug || category.name}`}
                 sx={{
                   height: '100%',
                   textDecoration: 'none',
