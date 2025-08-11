@@ -513,7 +513,7 @@ export const CourseLearning = () => {
 
                 {progress === 100 && (
                   <div className="pt-4 border-t">
-                    <Button className="w-full" variant="default">
+                    <Button  className="w-full" variant="default">
                       <Award className="h-4 w-4 mr-2" />
                       Get Certificate
                     </Button>
