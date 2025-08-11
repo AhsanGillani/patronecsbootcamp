@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Award, Download, Calendar } from "lucide-react";
 import { DummyCertificate } from "./DummyCertificate";
+import html2canvas from "html2canvas";
 
 interface Certificate {
   id: string;
@@ -85,9 +86,20 @@ export function StudentCertificates() {
     }
   };
 
-  const downloadCertificate = (certificate: Certificate) => {
-    // TODO: Implement PDF generation/download
-    console.log('Downloading certificate:', certificate.certificate_number);
+  const downloadCertificate = async (certificate: Certificate) => {
+    try {
+      const containerId = `cert-${certificate.id}`;
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${certificate.certificate_number}.png`;
+      link.click();
+    } catch (e) {
+      console.error('Failed to download certificate', e);
+    }
   };
 
   if (loading) {
@@ -132,6 +144,27 @@ export function StudentCertificates() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div id={`cert-${certificate.id}`} className="p-4 bg-white rounded border border-yellow-200">
+                  <div className="flex justify-center mb-3">
+                    <img src="/src/assets/patronecs-logo.png" alt="Patronecs" className="h-12 w-auto" />
+                  </div>
+                  <div className="text-center mb-2">
+                    <div className="flex justify-center mb-1"><Award className="h-6 w-6 text-yellow-600" /></div>
+                    <div className="font-bold">Certificate of Completion</div>
+                  </div>
+                  <div className="text-center text-sm">This certifies that</div>
+                  <div className="text-center text-lg font-semibold">{user?.email}</div>
+                  <div className="text-center text-sm">has successfully completed</div>
+                  <div className="text-center font-semibold mt-2">{certificate.courses.title}</div>
+                  <div className="mt-3 text-sm flex justify-between">
+                    <span className="text-muted-foreground">Certificate #:</span>
+                    <span className="font-mono">{certificate.certificate_number}</span>
+                  </div>
+                  <div className="text-sm flex justify-between">
+                    <span className="text-muted-foreground">Issued:</span>
+                    <span>{new Date(certificate.issued_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Certificate #:</span>
@@ -156,7 +189,7 @@ export function StudentCertificates() {
                   variant="outline"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Download PDF
+                  Download PNG
                 </Button>
               </CardContent>
             </Card>

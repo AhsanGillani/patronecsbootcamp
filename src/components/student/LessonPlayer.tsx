@@ -39,15 +39,15 @@ interface Lesson {
   duration: number;
   quiz?: Quiz;
   lesson_progress?: {
-    id: string;
+    id?: string;
     is_completed: boolean;
     completed_at: string;
-    video_watch_progress: number;
-    video_watched_seconds: number;
-    pdf_viewed: boolean;
-    text_read: boolean;
-    quiz_passed: boolean;
-    last_accessed_at: string;
+    video_watch_progress?: number;
+    video_watched_seconds?: number;
+    pdf_viewed?: boolean;
+    text_read?: boolean;
+    quiz_passed?: boolean;
+    last_accessed_at?: string;
   }[];
 }
 
@@ -68,7 +68,7 @@ export const LessonPlayer = ({
   hasNext, 
   hasPrevious 
 }: LessonPlayerProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -93,6 +93,29 @@ export const LessonPlayer = ({
     checkQuizCompletion();
     initializeProgress();
   }, [lesson.id, user]);
+
+  // Reset media state and position when lesson changes
+  useEffect(() => {
+    setIsVideoPlaying(false);
+    setVideoProgress(0);
+    setVideoWatched(false);
+    setPdfViewed(false);
+    setTextRead(false);
+    setShowQuiz(false);
+    setYoutubeProgress(0);
+    setYoutubeWatched(false);
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      } catch (_) {}
+    }
+    if (youtubePlayer) {
+      try {
+        youtubePlayer.seekTo(0, true);
+      } catch (_) {}
+    }
+  }, [lesson.id]);
 
   const initializeProgress = () => {
     if (currentProgress) {
@@ -119,7 +142,7 @@ export const LessonPlayer = ({
         .from('quiz_attempts')
         .select('passed')
         .eq('quiz_id', lesson.quiz.id)
-        .eq('student_id', user.id)
+        .eq('student_id', profile?.id || user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -163,12 +186,12 @@ export const LessonPlayer = ({
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: user.id,
+          student_id: (profile?.id || user.id) as string,
           lesson_id: lesson.id,
           video_watch_progress: progress,
           video_watched_seconds: watchedSeconds,
           last_accessed_at: new Date().toISOString()
-        });
+        } as any, { onConflict: 'student_id,lesson_id' });
 
       if (error) throw error;
       
@@ -196,11 +219,11 @@ export const LessonPlayer = ({
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: user.id,
+          student_id: (profile?.id || user.id) as string,
           lesson_id: lesson.id,
           pdf_viewed: true,
           last_accessed_at: new Date().toISOString()
-        });
+        } as any, { onConflict: 'student_id,lesson_id' });
 
       if (error) throw error;
       setPdfViewed(true);
@@ -216,11 +239,11 @@ export const LessonPlayer = ({
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: user.id,
+          student_id: (profile?.id || user.id) as string,
           lesson_id: lesson.id,
           text_read: true,
           last_accessed_at: new Date().toISOString()
-        });
+        } as any, { onConflict: 'student_id,lesson_id' });
 
       if (error) throw error;
       setTextRead(true);
@@ -233,6 +256,7 @@ export const LessonPlayer = ({
   const onYouTubeReady = (event: { target: InstanceType<Window['YT']['Player']> }) => {
     const player = event.target;
     setYoutubePlayer(player);
+    try { player.seekTo(0, true); } catch (_) {}
     
     // Start tracking progress every second
     const interval = setInterval(async () => {
@@ -432,6 +456,7 @@ export const LessonPlayer = ({
                 {lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be') ? (
                   <div className="space-y-4">
                     <YouTube
+                      key={lesson.id}
                       videoId={getYouTubeVideoId(lesson.video_url)}
                       opts={{
                         height: '384',

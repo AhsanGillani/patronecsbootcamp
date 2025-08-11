@@ -112,7 +112,7 @@ export function StudentCourses() {
       }
       
       // Now try to fetch the enrolled courses with the full query
-      const { data, error } = await supabase
+       const { data, error } = await supabase
         .from('enrollments')
         .select(`
           *,
@@ -120,15 +120,15 @@ export function StudentCourses() {
             id, title, description, thumbnail_url, level, 
             total_duration, lesson_count, instructor_id,
             profiles!instructor_id(full_name),
-            lessons(
+              lessons(
               id, title, type, duration, order_index,
               quizzes(
                 id, title, passing_score,
                 quiz_questions(id)
               ),
-              lesson_progress!fk_lesson_progress_lesson_id(
-                id, is_completed, completed_at
-              )
+                lesson_progress!fk_lesson_progress_lesson_id(
+                  id, is_completed, completed_at
+                )
             )
           )
         `)
@@ -142,7 +142,15 @@ export function StudentCourses() {
         throw error;
       }
       
-      setEnrolledCourses(data || []);
+      // Recalculate course progress from lesson completions if server-side value is stale
+      const recalculated = (data || []).map((enrollment: any) => {
+        const lessons = enrollment.courses?.lessons || [];
+        const completed = lessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
+        const total = lessons.length || 1;
+        const computed = Math.round((completed / total) * 100);
+        return { ...enrollment, progress: Math.max(enrollment.progress || 0, computed) } as EnrolledCourse;
+      });
+      setEnrolledCourses(recalculated);
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
     } finally {
