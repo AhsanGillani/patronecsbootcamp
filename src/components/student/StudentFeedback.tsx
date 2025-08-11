@@ -32,7 +32,7 @@ interface CompletedCourse {
 }
 
 export function StudentFeedback() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,21 +53,34 @@ export function StudentFeedback() {
           courses!fk_enrollments_course_id(
             id, title, description, instructor_id,
             profiles!instructor_id(full_name)
-          ),
-          course_feedback(id, rating, comment, created_at)
+          )
         `)
-        .eq('student_id', user?.id)
+        .eq('student_id', profile?.id || user?.id)
         .gte('progress', 100)
         .order('completed_at', { ascending: false });
 
       if (error) throw error;
       
-      const coursesWithFeedback = data?.map(enrollment => ({
+      // Fetch feedback separately due to missing FK relationship in schema cache
+      const enrollmentIds = (data || []).map((e: any) => e.id);
+      let feedbackByCourse: Record<string, any[]> = {};
+      if (enrollmentIds.length > 0) {
+        const { data: feedbackData } = await supabase
+          .from('course_feedback')
+          .select('id, course_id, rating, comment, created_at')
+          .in('course_id', (data || []).map((e: any) => e.course_id))
+          .eq('student_id', profile?.id || user?.id);
+        (feedbackData || []).forEach((f: any) => {
+          const arr = feedbackByCourse[f.course_id] || [];
+          arr.push(f);
+          feedbackByCourse[f.course_id] = arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        });
+      }
+
+      const coursesWithFeedback = (data || []).map((enrollment: any) => ({
         ...enrollment,
-        feedback: Array.isArray(enrollment.course_feedback) && enrollment.course_feedback.length > 0 
-          ? enrollment.course_feedback[0] 
-          : null
-      })) || [];
+        feedbacks: feedbackByCourse[enrollment.course_id] || []
+      }));
       
       setCompletedCourses(coursesWithFeedback as CompletedCourse[]);
     } catch (error) {
@@ -188,11 +201,9 @@ export function StudentFeedback() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{course.courses.title}</span>
-                {course.feedback ? (
-                  <Badge variant="default">Feedback Given</Badge>
-                ) : (
-                  <Badge variant="outline">Pending Feedback</Badge>
-                )}
+                {Array.isArray((course as any).feedbacks) && (course as any).feedbacks.length > 0
+                  ? <Badge variant="default">{(course as any).feedbacks.length} Feedback(s)</Badge>
+                  : <Badge variant="outline">Pending Feedback</Badge>}
               </CardTitle>
               <CardDescription>
                 by {course.courses.profiles?.full_name} • Completed on{' '}
@@ -200,21 +211,26 @@ export function StudentFeedback() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {course.feedback ? (
-                <div className="space-y-3">
-                  <div>
-                    <Label>Your Rating</Label>
-                    {renderStars(course.feedback.rating)}
-                  </div>
-                  <div>
-                    <Label>Your Feedback</Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {course.feedback.comment}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Submitted on {new Date(course.feedback.created_at).toLocaleDateString()}
-                  </p>
+              {Array.isArray((course as any).feedbacks) && (course as any).feedbacks.length > 0 ? (
+                <div className="space-y-4">
+                  {(course as any).feedbacks.map((fb: any) => (
+                    <div key={fb.id} className="space-y-2 border rounded p-3">
+                      <div>
+                        <Label>Your Rating</Label>
+                        {renderStars(fb.rating)}
+                      </div>
+                      <div>
+                        <Label>Your Feedback</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {fb.comment}
+                        </p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Submitted on {new Date(fb.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                  <FeedbackForm course={course} />
                 </div>
               ) : (
                 <FeedbackForm course={course} />

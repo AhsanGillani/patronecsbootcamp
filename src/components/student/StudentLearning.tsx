@@ -10,7 +10,7 @@ import { CourseCardSkeleton } from "@/components/ui/skeleton-loader";
 import { Progress } from "@/components/ui/progress";
 
 export function StudentLearning() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,16 +29,41 @@ export function StudentLearning() {
           courses!fk_enrollments_course_id(
             id, title, description, thumbnail_url, level, 
             total_duration, lesson_count, instructor_id,
-            profiles!instructor_id(full_name)
+            profiles!instructor_id(full_name),
+            lessons(
+              id, order_index,
+              lesson_progress!fk_lesson_progress_lesson_id(id, student_id, is_completed, last_accessed_at)
+            )
           )
         `)
-        .eq('student_id', user?.id)
-        .gt('progress', 0)
-        .lt('progress', 100)
+        .eq('student_id', profile?.id || user?.id)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      setRecentCourses(data || []);
+
+      const computed = (data || []).map((enrollment: any) => {
+        const lessons = enrollment.courses?.lessons || [];
+        const filteredLessons = lessons.map((l: any) => ({
+          ...l,
+          lesson_progress: (l.lesson_progress || []).filter((p: any) => p.student_id === (profile?.id || user?.id))
+        }));
+        const completed = filteredLessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
+        const total = filteredLessons.length || 1;
+        const progress = Math.round((completed / total) * 100);
+        const latestAccess = filteredLessons
+          .flatMap((l: any) => l.lesson_progress || [])
+          .map((p: any) => p.last_accessed_at)
+          .filter(Boolean)
+          .sort()
+          .slice(-1)[0] || enrollment.updated_at;
+        return { ...enrollment, computedProgress: progress, latestAccess };
+      });
+
+      const inProgress = computed
+        .filter((e: any) => e.computedProgress > 0 && e.computedProgress < 100)
+        .sort((a: any, b: any) => new Date(b.latestAccess).getTime() - new Date(a.latestAccess).getTime());
+
+      setRecentCourses(inProgress);
     } catch (error) {
       console.error('Error fetching recent courses:', error);
     } finally {
@@ -110,7 +135,7 @@ export function StudentLearning() {
                 <Progress value={enrollment.progress} className="h-2" />
               </div>
               
-              <Link to={`/course/${enrollment.courses.id}/learn`}>
+              <Link to={`/course-learning/${enrollment.courses.id}`}>
                 <Button className="w-full">
                   <Play className="h-4 w-4 mr-2" />
                   Continue Learning

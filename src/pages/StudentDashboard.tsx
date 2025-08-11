@@ -21,6 +21,12 @@ const StudentDashboard = () => {
   const initialTab = searchParams.get('tab') || 'home';
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  // Sync activeTab with URL search param
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'home';
+    if (tab !== activeTab) setActiveTab(tab);
+  }, [searchParams, activeTab]);
+
   // Redirect if not authenticated or not a student
   if (loading) {
     return (
@@ -36,12 +42,6 @@ const StudentDashboard = () => {
   if (!user || !profile || profile.role !== "student") {
     return <Navigate to="/auth" replace />;
   }
-
-  // Sync activeTab with URL search param
-  useEffect(() => {
-    const tab = searchParams.get('tab') || 'home';
-    if (tab !== activeTab) setActiveTab(tab);
-  }, [searchParams]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);

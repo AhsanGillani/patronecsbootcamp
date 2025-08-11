@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type ComponentProps } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,9 +46,16 @@ interface Lesson {
   is_published: boolean;
   quiz?: Quiz;
   lesson_progress?: {
+    id?: string;
     is_completed: boolean;
     completed_at: string;
-    student_id: string;
+    student_id?: string;
+    video_watch_progress?: number;
+    video_watched_seconds?: number;
+    pdf_viewed?: boolean;
+    text_read?: boolean;
+    quiz_passed?: boolean;
+    last_accessed_at?: string;
   }[];
 }
 
@@ -76,7 +83,7 @@ interface Course {
 
 export const CourseLearning = () => {
   const { courseId } = useParams();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -88,13 +95,7 @@ export const CourseLearning = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (user && courseId) {
-      fetchCourseData();
-    }
-  }, [user, courseId]);
-
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
     try {
       // Fetch course details
       const { data: courseData, error: courseError } = await supabase
@@ -113,7 +114,18 @@ export const CourseLearning = () => {
         .from('lessons')
         .select(`
           *,
-          lesson_progress!fk_lesson_progress_lesson_id(is_completed, completed_at, student_id)
+          lesson_progress!fk_lesson_progress_lesson_id(
+            id,
+            student_id,
+            is_completed,
+            completed_at,
+            video_watch_progress,
+            video_watched_seconds,
+            pdf_viewed,
+            text_read,
+            quiz_passed,
+            last_accessed_at
+          )
         `)
         .eq('course_id', courseId)
         .eq('is_published', true)
@@ -149,23 +161,63 @@ export const CourseLearning = () => {
       
       setCourse(courseData);
 
-      setLessons(((lessonsData || []) as Lesson[]).map(lesson => ({
+      const mappedLessons = ((lessonsData || []) as unknown as Lesson[]).map((lesson) => ({
         ...lesson,
         lesson_progress: lesson.lesson_progress ? lesson.lesson_progress.filter(progress => 
           progress.student_id === user?.id
         ) : []
-      })));
+      })) as Lesson[];
+      setLessons(mappedLessons);
       setQuizzes(quizzesData || []);
 
       // Calculate progress
-      const completedLessons = (lessonsData || []).filter(lesson => 
+      const completedLessons = mappedLessons.filter(lesson => 
         lesson.lesson_progress && lesson.lesson_progress.some(progress => 
           progress.student_id === user?.id && progress.is_completed
         )
       ).length;
-      const totalLessons = (lessonsData || []).length;
+      const totalLessons = mappedLessons.length;
       const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
       setProgress(progressPercentage);
+
+      // Persist course progress on enrollment so other views (e.g., Continue Learning) reflect it
+      if (user && courseId) {
+        try {
+          await supabase
+            .from('enrollments')
+            .update({
+              progress: Math.round(progressPercentage),
+              updated_at: new Date().toISOString(),
+              // set completed_at when finished
+              ...(Math.round(progressPercentage) === 100 ? { completed_at: new Date().toISOString() } : {})
+            })
+            .eq('student_id', profile?.id || user.id)
+            .eq('course_id', courseId);
+
+          // Issue certificate when course is completed
+          if (Math.round(progressPercentage) === 100) {
+            // Try to get a generated certificate number from DB, fallback to client-generated
+            let certificateNumber = `CERT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
+            try {
+              const { data: genNum } = await supabase.rpc('generate_certificate_number');
+              if (genNum) certificateNumber = genNum as unknown as string;
+            } catch (_) { /* ignore */ }
+
+            await supabase
+              .from('certificates')
+              .upsert({
+                student_id: (profile?.id || user.id) as string,
+                course_id: courseId,
+                certificate_number: certificateNumber,
+                issued_at: new Date().toISOString()
+              } as unknown as { student_id: string; course_id: string; certificate_number: string; issued_at: string }, {
+                onConflict: 'student_id,course_id'
+              });
+          }
+        } catch (e) {
+          console.error('Error updating enrollment progress / certificate:', e);
+        }
+      }
 
     } catch (error) {
       console.error('Error fetching course data:', error);
@@ -177,32 +229,41 @@ export const CourseLearning = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, toast, user?.id]);
+
+  useEffect(() => {
+    if (user && courseId) {
+      fetchCourseData();
+    }
+  }, [user, courseId, fetchCourseData]);
 
   const markLessonComplete = async (lessonId: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: user?.id,
+          student_id: user.id,
           lesson_id: lessonId,
           is_completed: true,
-          completed_at: new Date().toISOString(),
-        });
+          completed_at: new Date().toISOString()
+        } as unknown as { student_id: string; lesson_id: string; is_completed: boolean; completed_at: string }, { onConflict: 'student_id,lesson_id' });
 
       if (error) throw error;
 
       toast({
-        title: "Lesson completed!",
-        description: "Your progress has been saved.",
+        title: "Lesson Completed!",
+        description: "Great job! You've completed this lesson.",
       });
 
-      fetchCourseData(); // Refresh progress
+      // Refresh course data to show updated progress
+      await fetchCourseData();
     } catch (error) {
       console.error('Error marking lesson complete:', error);
       toast({
         title: "Error",
-        description: "Failed to save progress",
+        description: "Failed to mark lesson as complete. Please try again.",
         variant: "destructive",
       });
     }
@@ -466,6 +527,7 @@ export const CourseLearning = () => {
           <div className="lg:col-span-3">
             {currentLesson && !showCourseContent && !showFeedback && (
               <LessonPlayer
+                key={currentLesson.id}
                 lesson={currentLesson}
                 onComplete={markLessonComplete}
                 onNext={goToNext}

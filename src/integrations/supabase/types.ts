@@ -1,3 +1,38 @@
+// YouTube Player API types
+declare global {
+  interface Window {
+    YT: {
+      Player: {
+        new (elementId: string, config: {
+          height: string | number;
+          width: string | number;
+          playerVars?: Record<string, string | number>;
+        }): {
+          getCurrentTime(): number;
+          getDuration(): number;
+          playVideo(): void;
+          pauseVideo(): void;
+          stopVideo(): void;
+          seekTo(seconds: number, allowSeekAhead: boolean): void;
+          loadVideoById(videoId: string): void;
+          cueVideoById(videoId: string): void;
+          destroy(): void;
+        };
+      };
+      PlayerState: {
+        UNSTARTED: -1;
+        ENDED: 0;
+        PLAYING: 1;
+        PAUSED: 2;
+        BUFFERING: 3;
+        CUED: 5;
+      };
+    };
+  }
+}
+
+export {};
+
 export type Json =
   | string
   | number
