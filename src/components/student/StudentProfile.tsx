@@ -12,7 +12,7 @@ import { ProfileImageUpload } from "@/components/ProfileImageUpload";
 import { User, Mail, Lock, Save, Award, BookOpen, Clock, MapPin, Phone } from "lucide-react";
 
 export function StudentProfile() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,6 +62,9 @@ export function StudentProfile() {
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
+
+      // refresh header/profile avatar immediately
+      await refreshProfile();
     } catch (error: any) {
       toast({
         title: 'Error',

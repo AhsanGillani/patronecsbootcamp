@@ -24,8 +24,10 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
     question: "",
     explanation: "",
     difficulty: "medium",
+    type: "mcq" as "mcq" | "qa",
     correct_answer: 0,
-    options: ["", "", "", ""]
+    options: ["", "", "", ""],
+    expected_answer: ""
   });
 
   const handleOptionChange = (index: number, value: string) => {
@@ -57,10 +59,18 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
     if (!quizId) return;
 
     const filledOptions = formData.options.filter(option => option.trim() !== "");
-    if (filledOptions.length < 2) {
+    if (formData.type === 'mcq' && filledOptions.length < 2) {
       toast({
         title: "Error",
         description: "Please provide at least 2 options",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (formData.type === 'qa' && !formData.expected_answer.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide the expected answer",
         variant: "destructive",
       });
       return;
@@ -73,8 +83,10 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
         .insert([{
           quiz_id: quizId,
           question: formData.question,
-          options: filledOptions,
-          correct_answer: formData.correct_answer,
+          type: formData.type,
+          options: formData.type === 'mcq' ? filledOptions : [],
+          expected_answer: formData.type === 'qa' ? formData.expected_answer : null,
+          correct_answer: formData.type === 'mcq' ? formData.correct_answer : 0,
           explanation: formData.explanation || null,
           difficulty: formData.difficulty
         }]);
@@ -90,8 +102,10 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
         question: "",
         explanation: "",
         difficulty: "medium",
+        type: "mcq",
         correct_answer: 0,
-        options: ["", "", "", ""]
+        options: ["", "", "", ""],
+        expected_answer: ""
       });
       onOpenChange(false);
       onQuestionCreated();
@@ -132,7 +146,24 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
           <div>
             <Label>Answer Options *</Label>
             <div className="space-y-3 mt-2">
-              {formData.options.map((option, index) => (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Question Type</Label>
+                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as 'mcq' | 'qa' })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mcq">Multiple Choice</SelectItem>
+                      <SelectItem value="qa">Question & Answer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.type === 'mcq' && (
+                <>
+                {formData.options.map((option, index) => (
                 <Card key={index} className={`p-3 ${formData.correct_answer === index ? 'ring-2 ring-green-500' : ''}`}>
                   <CardContent className="p-0">
                     <div className="flex items-center space-x-3">
@@ -166,9 +197,23 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-              
-              {formData.options.length < 6 && (
+                ))}
+                </>
+              )}
+
+              {formData.type === 'qa' && (
+                <div className="space-y-2">
+                  <Label>Expected Answer</Label>
+                  <Textarea
+                    value={formData.expected_answer}
+                    onChange={(e) => setFormData({ ...formData, expected_answer: e.target.value })}
+                    placeholder="Provide the reference answer students should write"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {formData.type === 'mcq' && formData.options.length < 6 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -181,7 +226,7 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Select the correct answer by clicking the radio button next to it
+              {formData.type === 'mcq' ? 'Select the correct answer by clicking the radio button next to it' : 'Students will type an answer; match is manual or via review.'}
             </p>
           </div>
 
@@ -221,7 +266,11 @@ export const CreateQuestion = ({ quizId, open, onOpenChange, onQuestionCreated }
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || !formData.question.trim() || formData.options.filter(o => o.trim()).length < 2}
+              disabled={
+                loading ||
+                !formData.question.trim() ||
+                (formData.type === 'mcq' ? formData.options.filter(o => o.trim()).length < 2 : !formData.expected_answer.trim())
+              }
             >
               {loading ? "Creating..." : "Create Question"}
             </Button>

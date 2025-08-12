@@ -26,6 +26,7 @@ const menuItems = [
   { id: 'courses', title: 'My Courses', url: '/instructor?tab=courses', icon: BookOpen },
   { id: 'lessons', title: 'Lessons', url: '/instructor?tab=lessons', icon: PlaySquare },
   { id: 'quizzes', title: 'Quizzes', url: '/instructor?tab=quizzes', icon: Brain },
+  { id: 'submissions', title: 'Submitted Quizzes', url: '/instructor?tab=submissions', icon: FileText },
   { id: 'insights', title: 'Course Insights', url: '/instructor?tab=insights', icon: BarChart3 },
   { id: 'blogs', title: 'Blog Manager', url: '/instructor?tab=blogs', icon: FileText },
   { id: 'notifications', title: 'Notifications', url: '/instructor?tab=notifications', icon: Bell },

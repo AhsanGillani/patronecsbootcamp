@@ -1,127 +1,172 @@
+import { useRef } from "react";
+import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { GraduationCap, Award, Users, Search, ArrowRight, Play, Star } from "lucide-react";
+import { GraduationCap, Award, Users, ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 export const Hero = () => {
-  const features = [
-    {
-      icon: <GraduationCap className="h-8 w-8 text-primary" />,
-      title: "Access to professional courses",
-      description: "Get unlimited access to high-quality courses "
-    },
-    {
-      icon: <Award className="h-8 w-8 text-primary" />,
-      title: "Free certificates upon completion",
-      description: "Earn official certificates to boost your professional credentials"
-    },
-    {
-      icon: <Users className="h-8 w-8 text-primary" />,
-      title: "Learn from Pakistan's top instructors",
-      description: "Study with industry experts and experienced professionals"
-    }
+  const preserve3DStyle: CSSProperties = { transformStyle: "preserve-3d" };
+  const collageRef = useRef<HTMLDivElement | null>(null);
+  const card1Ref = useRef<HTMLDivElement | null>(null);
+  const card2Ref = useRef<HTMLDivElement | null>(null);
+  const card3Ref = useRef<HTMLDivElement | null>(null);
+
+  const categories = [
+    { label: "Web Dev", href: "/courses?category=web" },
+    { label: "Mobile", href: "/courses?category=mobile" },
+    { label: "UI/UX", href: "/courses?category=design" },
+    { label: "AI & Data", href: "/courses?category=ai" },
   ];
 
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = collageRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    const r1x = (-y * 10).toFixed(2);
+    const r1y = (x * 10).toFixed(2);
+    const r2x = (-y * 6).toFixed(2);
+    const r2y = (x * 6).toFixed(2);
+    const r3x = (-y * 14).toFixed(2);
+    const r3y = (x * 14).toFixed(2);
+    if (card1Ref.current) card1Ref.current.style.transform = `rotateX(${r1x}deg) rotateY(${r1y}deg)`;
+    if (card2Ref.current) card2Ref.current.style.transform = `rotateX(${r2x}deg) rotateY(${r2y}deg)`;
+    if (card3Ref.current) card3Ref.current.style.transform = `rotateX(${r3x}deg) rotateY(${r3y}deg)`;
+  };
+
+  const handleLeave = () => {
+    if (card1Ref.current) card1Ref.current.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    if (card2Ref.current) card2Ref.current.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    if (card3Ref.current) card3Ref.current.style.transform = `rotateX(0deg) rotateY(0deg)`;
+  };
+
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center pt-20 overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-      <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 left-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <div className="text-center max-w-5xl mx-auto">
-          {/* Main Heading with Enhanced Typography */}
-          <div className="animate-fade-in animation-delay-200">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground bg-clip-text text-transparent">
-                Master Skills That
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-x">
-                Transform Careers
-              </span>
-            </h1>
-          </div>
-          
-          <div className="animate-fade-in animation-delay-400">
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              Join <span className="text-primary font-bold">Learners</span> from arount the world who already advancing their careers with our 
-              <span className="text-accent font-semibold"> Complete courses</span> and certificates.
-            </p>
-          </div>
+    <section className="relative min-h-[82vh] md:min-h-[88vh] flex items-end overflow-hidden">
+      {/* Background image banner */}
+      <div className="absolute inset-0 -z-10">
+        <ImageWithFallback
+          src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=2000&auto=format&fit=crop&q=60"
+          alt="Hero banner background"
+          className="w-full h-full object-cover"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+      </div>
 
-          {/* Enhanced CTA Buttons */}
-          <div className="animate-fade-in animation-delay-600 flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" variant="hero" className="group text-lg px-8 py-6 hover-scale shadow-2xl" asChild>
-              <Link to="/courses">
-                <Play className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
-                Start Learning 
-                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="group text-lg px-8 py-6 hover-scale border-2" asChild>
-              <Link to="/auth?mode=register">
-                Browse Courses
-                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-          </div>
+      <div className="container mx-auto px-4 pb-10 md:pb-16">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-end">
+          {/* Copy */}
+          <div>
+            <Card className="relative p-6 md:p-10 bg-background/70 backdrop-blur-md border-border/60">
+              <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+              <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
+                Build Real Skills with a Modern Learning Platform
+              </h1>
+              <p className="mt-4 text-muted-foreground text-lg md:text-xl">
+                Project-based courses, expert mentorship and recognized certificates—designed to get you job‑ready.
+              </p>
 
-          {/* Trust Indicators */}
-          <div className="animate-fade-in animation-delay-800 flex flex-wrap justify-center gap-8 mb-12 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>100% Hand on Experience </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span>Official Certificates</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-              <span>Expert Instructors</span>
-            </div>
-          </div>
+              <div className="mt-7 flex flex-col sm:flex-row gap-4">
+                <Button size="lg" variant="hero" className="group px-8 py-6" asChild>
+                  <Link to="/courses">
+                    <Play className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
+                    Start Learning
+                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="group px-8 py-6 border-2" asChild>
+                  <Link to="/auth?mode=register">
+                    Browse Tracks
+                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </div>
 
-          {/* Enhanced Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {features.map((feature, index) => (
-              <Card key={index} className={`group p-8 bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 animate-fade-in animation-delay-${1000 + index * 200}`}>
-                <div className="flex flex-col items-center text-center space-y-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-                    <div className="relative p-4 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 group-hover:scale-110 transition-transform duration-300">
-                      {feature.icon}
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-xl group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Enhanced Description Section */}
-          <div className="animate-fade-in animation-delay-1200 mt-20 max-w-5xl mx-auto">
-            <Card className="relative p-10 bg-gradient-to-br from-card/80 to-background/50 border border-border/30 backdrop-blur-sm overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary"></div>
-              <div className="relative z-10">
-                <h3 className="text-2xl font-bold text-center mb-6 text-foreground">
-                  Why Choose <span className="text-primary">Patronecs?</span>
-                </h3>
-                <p className="text-lg leading-relaxed text-muted-foreground text-center">
-                  Ready to upgrade your skills and build a successful future? 
-                  <span className="text-primary font-bold"> Patronecs.com</span> offers Pakistan's most comprehensive 
-                  <span className="text-accent font-semibold"> online courses with certificates</span>. 
-                  From <span className="text-primary font-semibold">Mobile Development</span> to 
-                  <span className="text-primary font-semibold"> Web Development</span>, 
-                  <span className="text-primary font-semibold"> Programming</span>, and 
-                  <span className="text-primary font-semibold"> Flutter Flow</span> - 
-                  our expertly designed courses make quality education accessible to everyone, everywhere.
-                </p>
+              {/* Category chips */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {categories.map((c) => (
+                  <Link
+                    key={c.label}
+                    to={c.href}
+                    className="inline-flex items-center px-3 py-1.5 rounded-full bg-secondary/60 border border-border/60 text-sm hover:bg-secondary/80 transition-colors"
+                  >
+                    {c.label}
+                  </Link>
+                ))}
               </div>
             </Card>
+
+            {/* Trust strip */}
+            <div className="mt-6 grid grid-cols-3 gap-4 max-w-2xl">
+              <Card className="p-4 bg-background/70 backdrop-blur-md border-border/60">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Hands-on Learning</span>
+                </div>
+              </Card>
+              <Card className="p-4 bg-background/70 backdrop-blur-md border-border/60">
+                <div className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Certificates</span>
+                </div>
+              </Card>
+              <Card className="p-4 bg-background/70 backdrop-blur-md border-border/60">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <span className="text-sm">34,650+ Learners</span>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* 3D-like collage */}
+          <div
+            ref={collageRef}
+            onMouseMove={handleMove}
+            onMouseLeave={handleLeave}
+            className="relative h-[420px] md:h-[520px] perspective-[1000px]"
+          >
+            <div
+              ref={card1Ref}
+              className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl border border-border/50 transition-transform duration-300 will-change-transform"
+              style={preserve3DStyle}
+            >
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=1600&auto=format&fit=crop&q=60"
+                alt="Primary"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            </div>
+
+            <div
+              ref={card2Ref}
+              className="absolute -bottom-8 -left-6 w-44 md:w-60 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-border/50 transition-transform duration-300 will-change-transform"
+              style={preserve3DStyle}
+            >
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=1200&auto=format&fit=crop&q=60"
+                alt="Students"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div
+              ref={card3Ref}
+              className="absolute -top-6 -right-4 w-40 md:w-56 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-border/50 transition-transform duration-300 will-change-transform"
+              style={preserve3DStyle}
+            >
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=60"
+                alt="Collaboration"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>

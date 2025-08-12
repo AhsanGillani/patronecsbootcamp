@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { HelpCircle, CheckCircle, XCircle, Clock, Award } from "lucide-react";
 
 interface Quiz {
@@ -21,8 +22,10 @@ interface Quiz {
 interface Question {
   id: string;
   question: string;
-  options: any; // This will be parsed from JSON
-  correct_answer: number;
+  type?: 'mcq' | 'qa';
+  options: string[]; // MCQ options; empty for Q&A
+  correct_answer?: number | null;
+  expected_answer?: string | null;
   explanation?: string;
   order_index: number;
 }
@@ -37,18 +40,13 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<{ [questionId: string]: number }>({});
+  const [answers, setAnswers] = useState<{ [questionId: string]: number | string }>({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [quiz.id]);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('quiz_questions')
@@ -59,10 +57,21 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
       if (error) throw error;
       
       // Parse the options JSON for each question
-      const parsedQuestions = (data || []).map(question => ({
-        ...question,
-        options: Array.isArray(question.options) ? question.options : JSON.parse(question.options as string)
-      }));
+      const parsedQuestions = (data || []).map(question => {
+        let opts: unknown = question.options;
+        try {
+          if (!Array.isArray(opts)) opts = JSON.parse(opts as string);
+        } catch (_err) { /* ignore parse errors */ }
+        const jsonObj = (opts && !Array.isArray(opts) && typeof opts === 'object') ? (opts as Record<string, unknown>) : undefined;
+        const qType: 'mcq' | 'qa' = (question as { type?: 'mcq' | 'qa' }).type || (jsonObj?.qaExpectedAnswer ? 'qa' : 'mcq');
+        const expected = (question as { expected_answer?: string }).expected_answer || (jsonObj?.qaExpectedAnswer as string | undefined);
+        return {
+          ...question,
+          type: qType,
+          expected_answer: expected,
+          options: qType === 'qa' ? [] : (Array.isArray(opts) ? (opts as string[]) : []),
+        } as Question;
+      });
       
       setQuestions(parsedQuestions);
     } catch (error) {
@@ -75,12 +84,23 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [quiz.id, toast]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   const handleAnswerChange = (questionId: string, answerIndex: number) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answerIndex
+    }));
+  };
+
+  const handleTextAnswerChange = (questionId: string, text: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: text
     }));
   };
 
@@ -92,8 +112,14 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     // Calculate score
     let correctAnswers = 0;
     questions.forEach(question => {
-      if (answers[question.id] === question.correct_answer) {
-        correctAnswers++;
+      if ((question.type || 'mcq') !== 'qa') {
+        if (answers[question.id] === question.correct_answer) {
+          correctAnswers++;
+        }
+      } else {
+        const expected = (question.expected_answer || '').trim().toLowerCase();
+        const given = (answers[question.id] || '').toString().trim().toLowerCase();
+        if (expected && given && expected === given) correctAnswers++;
       }
     });
 
@@ -101,7 +127,20 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     const passed = finalScore >= quiz.passing_score;
 
     try {
-      const { error } = await supabase
+      // enforce max 3 attempts
+      const { data: prevAttempts } = await supabase
+        .from('quiz_attempts')
+        .select('id')
+        .eq('quiz_id', quiz.id)
+        .eq('student_id', user.id);
+      if ((prevAttempts?.length || 0) >= 3) {
+        toast({ title: 'Attempt limit reached', description: 'You have used all 3 attempts for this quiz.', variant: 'destructive' });
+        setSubmitted(false);
+        return;
+      }
+
+      // First attempt row compatible with current schema
+      const { data: attempt, error: attemptErr } = await supabase
         .from('quiz_attempts')
         .insert({
           quiz_id: quiz.id,
@@ -111,9 +150,23 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           total_questions: questions.length,
           answers: answers,
           completed_at: new Date().toISOString()
-        });
+        })
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (attemptErr) throw attemptErr;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('quiz_attempt_answers').insert(
+        questions.map(q => ({
+          quiz_attempt_id: attempt.id,
+          question_id: q.id,
+          answer_text: (q.type === 'qa') ? String(answers[q.id] || '') : null,
+          selected_index: (q.type !== 'qa') ? Number(answers[q.id]) : null,
+          is_correct: (q.type !== 'qa') ? (answers[q.id] === q.correct_answer) : null,
+          requires_review: q.type === 'qa'
+        }))
+      );
 
       setScore(finalScore);
       setShowResults(true);
@@ -138,20 +191,10 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     }
   };
 
-  const nextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-  };
-
-  const previousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
+  // One-page quiz, so we do not need next/previous navigation anymore
 
   const isAllAnswered = () => {
-    return questions.every(question => answers[question.id] !== undefined);
+    return questions.every(question => answers[question.id] !== undefined && answers[question.id] !== "");
   };
 
   if (loading) {
@@ -252,7 +295,13 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             </Button>
             <div className="space-x-2">
               {!passed && (
-                <Button variant="outline" onClick={() => window.location.reload()}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowResults(false);
+                    setAnswers({});
+                  }}
+                >
                   Retake Quiz
                 </Button>
               )}
@@ -266,19 +315,19 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const answeredCount = questions.filter(q => answers[q.id] !== undefined && answers[q.id] !== "").length;
+  const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
 
   return (
     <Card className="h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-xl">
             <HelpCircle className="h-5 w-5" />
             <span>{quiz.title}</span>
           </CardTitle>
           <Badge variant="outline">
-            Question {currentQuestionIndex + 1} of {questions.length}
+            {answeredCount} / {questions.length} answered
           </Badge>
         </div>
         <div className="space-y-2">
@@ -286,67 +335,61 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <span>Progress</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <Progress value={progress} />
+          <Progress value={progress} className="h-2" />
         </div>
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {currentQuestion && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">{currentQuestion.question}</h3>
-              <p className="text-sm text-muted-foreground flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                Passing score: {quiz.passing_score}%
-              </p>
-            </div>
-
-            <RadioGroup
-              value={answers[currentQuestion.id]?.toString() || ""}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, parseInt(value))}
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                    {option}
-                  </Label>
+        <div className="space-y-6">
+          {questions.map((q, idx) => (
+            <div key={q.id} className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-medium">Question {idx + 1}</h3>
+                <Badge variant="outline">{(q.type || 'mcq') === 'qa' ? 'Q&A' : 'MCQ'}</Badge>
+              </div>
+              <div className="text-sm">{q.question}</div>
+              {(q.type || 'mcq') !== 'qa' ? (
+                <RadioGroup
+                  value={answers[q.id]?.toString() || ""}
+                  onValueChange={(value) => handleAnswerChange(q.id, parseInt(value))}
+                >
+                  {q.options.map((option: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
+                      <RadioGroupItem value={index.toString()} id={`q-${q.id}-opt-${index}`} />
+                      <Label htmlFor={`q-${q.id}-opt-${index}`} className="flex-1 cursor-pointer">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              ) : (
+                <div>
+                  <Label htmlFor={`answer-${q.id}`}>Your Answer</Label>
+                  <Textarea
+                    id={`answer-${q.id}`}
+                    value={(answers[q.id] as string) || ''}
+                    onChange={(e) => handleTextAnswerChange(q.id, e.target.value)}
+                    placeholder="Type your answer here..."
+                    rows={4}
+                  />
                 </div>
-              ))}
-            </RadioGroup>
-          </div>
-        )}
+              )}
+            </div>
+          ))}
+        </div>
 
         <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={previousQuestion}
-              disabled={currentQuestionIndex === 0}
-            >
-              Previous
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={nextQuestion}
-              disabled={currentQuestionIndex === questions.length - 1}
-            >
-              Next
-            </Button>
-          </div>
-          
+          <div />
           <div className="flex space-x-2">
             <Button variant="outline" onClick={onBack}>
               Exit Quiz
             </Button>
-            {currentQuestionIndex === questions.length - 1 && (
-              <Button 
-                onClick={submitQuiz}
-                disabled={!isAllAnswered() || submitted}
-              >
-                {submitted ? "Submitting..." : "Submit Quiz"}
-              </Button>
-            )}
+            <Button 
+              onClick={submitQuiz}
+              disabled={!isAllAnswered() || submitted}
+            >
+              {submitted ? "Submitting..." : "Submit Quiz"}
+            </Button>
           </div>
         </div>
       </CardContent>

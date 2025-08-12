@@ -15,6 +15,7 @@ import { QuizManagement } from "@/components/instructor/QuizManagement";
 import { CourseInsights } from "@/components/instructor/CourseInsights";
 import { BlogManager } from "@/components/instructor/BlogManager";
 import { NotificationCenter } from "@/components/instructor/NotificationCenter";
+import { SubmittedQuizzes } from "@/components/instructor/SubmittedQuizzes";
 
 const InstructorDashboard = () => {
   const { user, profile, signOut, loading } = useAuth();
@@ -45,6 +46,7 @@ const InstructorDashboard = () => {
       case 'insights': return <CourseInsights />;
       case 'blogs': return <BlogManager />;
       case 'notifications': return <NotificationCenter />;
+      case 'submissions': return <SubmittedQuizzes />;
       default: return <InstructorProfile />;
     }
   };

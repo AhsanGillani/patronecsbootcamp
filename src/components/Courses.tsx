@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, Award, ArrowRight, Play } from "lucide-react";
 import { useCourses } from "@/hooks/useCourses";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 export const Courses = () => {
   const { courses, loading } = useCourses({ limit: 6 });
@@ -33,8 +34,8 @@ export const Courses = () => {
               <Card key={course.id} className={`group relative overflow-hidden bg-gradient-to-br from-card to-card/80 border border-border/50 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-3 animate-fade-in animation-delay-${200 + index * 100}`}>
                 {/* Course Image with Enhanced Overlay */}
                 <div className="relative aspect-video bg-muted overflow-hidden">
-                  <img 
-                    src={course.thumbnail_url || "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop"} 
+                  <ImageWithFallback
+                    src={course.thumbnail_url}
                     alt={course.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -65,16 +66,16 @@ export const Courses = () => {
                     </Badge>
                   </div>
                   
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors duration-300 leading-tight">
+                   <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors duration-300 leading-tight">
                     {course.title}
                   </h3>
                   
-                  <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
+                   <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
                     {course.description?.substring(0, 100)}...
                   </p>
                   
                   {/* Enhanced Rating */}
-                  <div className="flex items-center justify-between mb-4">
+                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <div className="flex text-yellow-400">
                         {"★".repeat(5)}
@@ -88,7 +89,7 @@ export const Courses = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6 border-t pt-4">
+                   <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6 border-t pt-4">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {course.total_duration || 0}h
