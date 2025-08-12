@@ -26,7 +26,7 @@ const menuItems = [
   { id: 'courses', title: 'My Courses', url: '/student?tab=courses', icon: BookOpen },
   { id: 'learning', title: 'Continue Learning', url: '/student?tab=learning', icon: Play },
   { id: 'certificates', title: 'Certificates', url: '/student?tab=certificates', icon: Award },
-  { id: 'feedback', title: 'Course Feedback', url: '/student?tab=feedback', icon: MessageSquare },
+  // Feedback tab removed per request
   { id: 'profile', title: 'Profile & Settings', url: '/student?tab=profile', icon: User },
 ];
 
@@ -44,7 +44,6 @@ export function StudentSidebar({ activeTab, onTabChange, studentName }: StudentS
     activeTab === itemId 
       ? "bg-primary text-primary-foreground font-medium shadow-sm" 
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
-
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">

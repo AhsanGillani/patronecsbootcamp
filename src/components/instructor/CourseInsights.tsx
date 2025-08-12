@@ -40,7 +40,7 @@ export const CourseInsights = () => {
 
   const fetchInsights = async () => {
     try {
-      // Fetch course metrics
+      // Fetch instructor courses
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
         .select(`
@@ -54,39 +54,68 @@ export const CourseInsights = () => {
 
       if (coursesError) throw coursesError;
 
-      // Fetch feedback - simplified to avoid relationship issues
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from("course_feedback")
-        .select(`
-          *,
-          course:courses(title)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(10);
+      const courseIds = (coursesData || []).map(c => c.id);
 
-      if (feedbackError) {
-        console.error('Error fetching feedback:', feedbackError);
-        // Don't throw, just continue without feedback
-      }
+      // Fetch enrollments progress for these courses
+      const { data: enrollments } = courseIds.length > 0 ? await supabase
+        .from('enrollments')
+        .select('course_id, progress')
+        .in('course_id', courseIds)
+        : { data: [], error: null } as any;
 
-      // Transform courses data to include calculated metrics
-      const metricsData: CourseMetrics[] = (coursesData || []).map(course => ({
-        ...course,
-        completion_rate: Math.random() * 100, // Mock data
-        average_rating: 4 + Math.random(), // Mock data
-        total_revenue: course.price * course.total_enrollments,
-        total_views: course.total_enrollments * (2 + Math.random() * 3) // Mock data
-      }));
+      // Fetch feedback and student names
+      const { data: feedbackRows } = courseIds.length > 0 ? await supabase
+        .from('course_feedback')
+        .select('id, course_id, student_id, rating, comment, created_at')
+        .in('course_id', courseIds)
+        .order('created_at', { ascending: false })
+        .limit(20)
+        : { data: [], error: null } as any;
+
+      const studentIds = Array.from(new Set((feedbackRows || []).map((f: any) => f.student_id).filter(Boolean)));
+      const { data: profileRows } = studentIds.length > 0 ? await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', studentIds)
+        : { data: [], error: null } as any;
+      const userIdToName: Record<string, string> = {};
+      (profileRows || []).forEach((p: any) => { userIdToName[p.user_id] = p.full_name; });
+
+      // Compute per-course average rating
+      const ratingsByCourse: Record<string, { sum: number; count: number }> = {};
+      (feedbackRows || []).forEach((f: any) => {
+        if (!ratingsByCourse[f.course_id]) ratingsByCourse[f.course_id] = { sum: 0, count: 0 };
+        ratingsByCourse[f.course_id].sum += f.rating || 0;
+        ratingsByCourse[f.course_id].count += 1;
+      });
+
+      const metricsData: CourseMetrics[] = (coursesData || []).map(course => {
+        const progresses = (enrollments || []).filter((e: any) => e.course_id === course.id).map((e: any) => e.progress || 0);
+        const completion_rate = progresses.length > 0 ? (progresses.reduce((a: number, b: number) => a + b, 0) / progresses.length) : 0;
+        const ratingAgg = ratingsByCourse[course.id];
+        const average_rating = ratingAgg && ratingAgg.count > 0 ? ratingAgg.sum / ratingAgg.count : 0;
+        return {
+          id: course.id,
+          title: course.title,
+          total_enrollments: course.total_enrollments || 0,
+          completion_rate,
+          average_rating,
+          total_revenue: (course.price || 0) * (course.total_enrollments || 0),
+          total_views: (course.total_enrollments || 0) * 3,
+        };
+      });
 
       setMetrics(metricsData);
-      // Transform feedback data with anonymous student names
-      const transformedFeedback: Feedback[] = (feedbackData || []).map((item: any) => ({
-        id: item.id,
-        student_name: "Anonymous Student",
-        course_title: item.course?.title || "Unknown Course",
-        rating: item.rating,
-        comment: item.comment,
-        created_at: item.created_at
+
+      const courseIdToTitle: Record<string, string> = {};
+      (coursesData || []).forEach(c => { courseIdToTitle[c.id] = c.title; });
+      const transformedFeedback: Feedback[] = (feedbackRows || []).map((f: any) => ({
+        id: f.id,
+        rating: f.rating,
+        comment: f.comment,
+        student_name: userIdToName[f.student_id] || 'Student',
+        course_title: courseIdToTitle[f.course_id] || 'Unknown Course',
+        created_at: f.created_at,
       }));
       setFeedback(transformedFeedback);
     } catch (error) {

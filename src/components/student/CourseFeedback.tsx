@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ interface CourseFeedbackProps {
 export const CourseFeedback = ({ courseId, courseName }: CourseFeedbackProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -93,6 +95,9 @@ export const CourseFeedback = ({ courseId, courseName }: CourseFeedbackProps) =>
       }
 
       fetchExistingFeedback();
+
+      // Redirect student to the dashboard feedback tab so they can view their submission
+      navigate('/student?tab=feedback');
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast({

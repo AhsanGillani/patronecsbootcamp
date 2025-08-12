@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Star, Play, Download, Award, ArrowLeft, Video, FileText, Lock } from "lucide-react";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import { CourseAccessModal } from "@/components/student/CourseAccessModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,16 +27,30 @@ interface Course {
   profile?: { full_name: string };
 }
 
+interface LessonSummary {
+  id: string;
+  title: string;
+  type: string;
+  duration: number | null;
+  order_index: number;
+  is_published: boolean;
+  video_url?: string | null;
+  content?: string | null;
+  pdf_url?: string | null;
+}
+
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [course, setCourse] = useState<any>(null);
-  const [firstLesson, setFirstLesson] = useState<any>(null);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [firstLesson, setFirstLesson] = useState<LessonSummary | null>(null);
+  const [lessonsOverview, setLessonsOverview] = useState<LessonSummary[]>([]);
   const [showEnrollPrompt, setShowEnrollPrompt] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [showAccessModal, setShowAccessModal] = useState(false);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -49,10 +65,10 @@ const CourseDetail = () => {
             profile:profiles!courses_instructor_id_fkey(full_name)
           `;
 
-        let courseData: any = null;
+        let courseData: Course | null = null;
 
         // Try by slug first (since we may receive a slug in the URL param), then fallback to ID
-        const { data: bySlug } = await (supabase as any)
+        const { data: bySlug } = await supabase
           .from('courses')
           .select(baseSelect)
           .eq('slug', id)
@@ -63,7 +79,7 @@ const CourseDetail = () => {
         if (bySlug) {
           courseData = bySlug;
         } else {
-          const { data: byId, error: idErr } = await (supabase as any)
+          const { data: byId, error: idErr } = await supabase
             .from('courses')
             .select(baseSelect)
             .eq('id', id)
@@ -71,7 +87,7 @@ const CourseDetail = () => {
             .eq('soft_deleted', false)
             .maybeSingle();
           
-          if (idErr && (idErr as any).code !== 'PGRST116') {
+          if (idErr && (idErr as { code?: string }).code !== 'PGRST116') {
             throw idErr;
           }
           courseData = byId;
@@ -85,7 +101,7 @@ const CourseDetail = () => {
 
         // Fetch first lesson
         const fetchFirstLesson = async () => {
-          return await (supabase as any)
+          return await supabase
             .from('lessons')
             .select('*')
             .eq('course_id', courseData.id)
@@ -101,10 +117,19 @@ const CourseDetail = () => {
           setFirstLesson(lessonsData);
         }
 
+        // Fetch lessons overview for curriculum display
+        const { data: lessonsList } = await supabase
+          .from('lessons')
+          .select('id,title,type,duration,order_index,is_published')
+          .eq('course_id', courseData.id)
+          .eq('is_published', true)
+          .order('order_index');
+        setLessonsOverview((lessonsList as unknown as LessonSummary[]) || []);
+
         // Check if user is enrolled
         if (user) {
           const fetchEnrollment = async () => {
-            return await (supabase as any)
+            return await supabase
               .from('enrollments')
               .select('id')
               .eq('course_id', courseData.id)
@@ -153,7 +178,7 @@ const CourseDetail = () => {
     setEnrolling(true);
     try {
       const createEnrollment = async () => {
-        return await (supabase as any)
+        return await supabase
           .from('enrollments')
           .insert({
             course_id: course.id,
@@ -189,6 +214,22 @@ const CourseDetail = () => {
       case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default: return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch ((type || '').toLowerCase()) {
+      case 'video': return <Video className="h-4 w-4" />;
+      case 'text': return <FileText className="h-4 w-4" />;
+      case 'pdf': return <FileText className="h-4 w-4" />;
+      default: return <BookOpen className="h-4 w-4" />;
+    }
+  };
+
+  const getLessonThumb = (type?: string) => {
+    if ((type || '').toLowerCase() === 'video') {
+      return course?.thumbnail_url || "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=1200&auto=format&fit=crop&q=60";
+    }
+    return course?.thumbnail_url || "https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=1200&auto=format&fit=crop&q=60";
   };
 
   const renderFirstLessonContent = () => {
@@ -262,12 +303,9 @@ const CourseDetail = () => {
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
             <Lock className="h-8 w-8 mx-auto mb-3 text-primary" />
             <h4 className="font-semibold mb-2">Want to continue learning?</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Enroll in this course to access all {course?.lesson_count} lessons and get your certificate upon completion.
+            <p className="text-sm text-muted-foreground">
+              Enroll to unlock all lessons. Use the Enroll Now button above.
             </p>
-            <Button onClick={handleEnroll} disabled={enrolling}>
-              {enrolling ? "Enrolling..." : "Enroll Free Now"}
-            </Button>
           </div>
         )}
       </Card>
@@ -348,11 +386,9 @@ const CourseDetail = () => {
                 
                 <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
                 
-                {course.profile && (
-                  <p className="text-lg text-muted-foreground mb-6">
-                    by <span className="font-medium text-foreground">{course.profile.full_name}</span>
-                  </p>
-                )}
+                <p className="text-lg text-muted-foreground mb-6">
+                  by <span className="font-medium text-foreground">{course.profile?.full_name || 'Patronecs'}</span>
+                </p>
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground mb-6">
                   <div className="flex items-center gap-1">
@@ -381,8 +417,8 @@ const CourseDetail = () => {
               {(!firstLesson || (firstLesson.type !== 'video' || !firstLesson.video_url)) && (
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-8">
                   {course.thumbnail_url ? (
-                    <img 
-                      src={course.thumbnail_url} 
+                    <ImageWithFallback
+                      src={course.thumbnail_url}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />
@@ -400,6 +436,82 @@ const CourseDetail = () => {
                 <p className="text-muted-foreground leading-relaxed">
                   {course.description || "No description available for this course."}
                 </p>
+              </Card>
+
+              {/* Curriculum (Locked until enroll) */}
+              <Card className="p-6 mb-8">
+                <h2 className="text-2xl font-semibold mb-4 flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2" />
+                  Curriculum
+                </h2>
+                {lessonsOverview.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No lessons available yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Some Chapters Included */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      {lessonsOverview.slice(0, 3).map((lesson: LessonSummary, idx: number) => (
+                        <div
+                          key={`preview-${lesson.id}`}
+                          className="rounded-lg overflow-hidden border hover:shadow-md transition cursor-pointer"
+                          onClick={() => (!isEnrolled ? setShowAccessModal(true) : (window.location.href = `/course-learning/${course.id}`))}
+                        >
+                          <div className="relative aspect-video bg-muted">
+                            <ImageWithFallback
+                              src={getLessonThumb(lesson.type)}
+                              alt={lesson.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <div className="text-xs text-muted-foreground mb-1">Lesson {idx + 1}</div>
+                            <div className="font-medium line-clamp-2">{lesson.title}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Explore Every Course Chapter */}
+                    <div className="hidden md:grid grid-cols-12 px-3 py-2 text-xs text-muted-foreground">
+                      <div className="col-span-6">Chapter</div>
+                      <div className="col-span-3">Type</div>
+                      <div className="col-span-2">Duration</div>
+                      <div className="col-span-1 text-right">Status</div>
+                    </div>
+                    {lessonsOverview.map((lesson: LessonSummary, idx: number) => (
+                      <div
+                        key={lesson.id}
+                        className="grid grid-cols-12 items-center px-3 py-3 rounded-lg border hover:bg-muted/40 transition cursor-pointer"
+                        onClick={() => (!isEnrolled ? setShowAccessModal(true) : (window.location.href = `/course-learning/${course.id}`))}
+                      >
+                        <div className="col-span-12 md:col-span-6 flex items-center gap-3">
+                          {getTypeIcon(lesson.type)}
+                          <span className="text-sm font-medium">L{idx + 1}: {lesson.title}</span>
+                        </div>
+                        <div className="col-span-6 md:col-span-3 mt-2 md:mt-0 text-xs md:text-sm text-muted-foreground capitalize">
+                          {lesson.type}
+                        </div>
+                        <div className="col-span-3 md:col-span-2 mt-2 md:mt-0 text-xs md:text-sm text-muted-foreground">
+                          {lesson.duration || 0} min
+                        </div>
+                        <div className="col-span-3 md:col-span-1 mt-2 md:mt-0 flex justify-end">
+                          {!isEnrolled ? (
+                            <Badge variant="outline" className="border-dashed">
+                              <Lock className="h-3 w-3 mr-1" /> Locked
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Unlocked</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!isEnrolled && (
+                  <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-md text-center">
+                    <p className="text-sm">Enroll to unlock all lessons and start learning.</p>
+                  </div>
+                )}
               </Card>
 
               {/* What you'll learn */}
@@ -455,7 +567,7 @@ const CourseDetail = () => {
                         onClick={handleEnroll}
                         disabled={enrolling}
                       >
-                        {enrolling ? "Enrolling..." : "Enroll Free"}
+                        {enrolling ? "Enrolling..." : "Enroll Now"}
                       </Button>
                     )
                   ) : (
@@ -500,10 +612,24 @@ const CourseDetail = () => {
           </div>
         </div>
       </main>
-
+      {/* Access modal for locked content */}
+      <CourseAccessModal
+        open={showAccessModal}
+        onOpenChange={setShowAccessModal}
+        isSignedIn={!!user}
+        isEnrolled={isEnrolled}
+        price={course?.price}
+        onEnroll={handleEnroll}
+        enrolling={enrolling}
+        backgroundUrl={course?.thumbnail_url}
+        headerTitle={firstLesson?.title}
+        headerSubtitle={`Lesson preview • ${firstLesson?.duration || 0} min`}
+      />
       <Footer />
     </div>
   );
 };
 
 export default CourseDetail;
+// Render access modal at root of page
+// Note: Keeping outside main return would require portals; we include it above footer instead

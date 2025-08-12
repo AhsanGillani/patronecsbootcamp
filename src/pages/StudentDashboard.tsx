@@ -54,7 +54,6 @@ const StudentDashboard = () => {
       case 'courses': return <StudentCourses />;
       case 'learning': return <StudentLearning />;
       case 'certificates': return <StudentCertificates />;
-      case 'feedback': return <StudentFeedback />;
       case 'profile': return <StudentProfile />;
       default: return <StudentHome />;
     }
@@ -66,7 +65,6 @@ const StudentDashboard = () => {
       case 'courses': return 'My Courses';
       case 'learning': return 'Continue Learning';
       case 'certificates': return 'My Certificates';
-      case 'feedback': return 'Course Feedback';
       case 'profile': return 'Profile & Settings';
       default: return 'Dashboard';
     }

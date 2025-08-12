@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,58 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  const fetchUserRole = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      setUserRole(data?.role || null);
+    } catch (e) {
+      console.error('Error fetching user role:', e);
+    }
+  }, [user]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user || !userRole) return;
+    try {
+      const { data: userNotifications } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const { data: announcements } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_published', true)
+        .or(`target_role.is.null,target_role.eq.${userRole}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const announcementNotifications = (announcements || []).map(announcement => ({
+        id: `announcement_${announcement.id}`,
+        title: announcement.title,
+        message: announcement.content,
+        type: 'announcement',
+        is_read: false,
+        created_at: announcement.created_at,
+        user_id: user.id
+      }));
+
+      const allNotifications = [...(userNotifications || []), ...announcementNotifications]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 20);
+
+      setNotifications(allNotifications);
+      setUnreadCount(allNotifications.filter(n => !n.is_read && n.type !== 'announcement').length);
+    } catch (e) {
+      console.error('Error fetching notifications:', e);
+    }
+  }, [user, userRole]);
+
   useEffect(() => {
     if (user) {
       fetchUserRole();
@@ -49,78 +101,14 @@ export function NotificationBell() {
         subscription.unsubscribe();
       };
     }
-  }, [user]);
-
-  const fetchUserRole = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      setUserRole(data?.role || null);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    if (!user || !userRole) return;
-
-    try {
-      // First, fetch notifications directly assigned to this user
-      const { data: userNotifications, error: userError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (userError) throw userError;
-
-      // Then, fetch announcements for this user's role and general announcements
-      const { data: announcements, error: announcementError } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('is_published', true)
-        .or(`target_role.is.null,target_role.eq.${userRole}`)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (announcementError) throw announcementError;
-
-      // Convert announcements to notification format
-      const announcementNotifications = (announcements || []).map(announcement => ({
-        id: `announcement_${announcement.id}`,
-        title: announcement.title,
-        message: announcement.content,
-        type: 'announcement',
-        is_read: false, // Announcements are always shown as unread initially
-        created_at: announcement.created_at,
-        user_id: user.id
-      }));
-
-      // Combine and sort all notifications
-      const allNotifications = [...(userNotifications || []), ...announcementNotifications]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 20); // Limit to 20 most recent
-
-      setNotifications(allNotifications);
-      setUnreadCount(allNotifications.filter(n => !n.is_read).length);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
+  }, [user, fetchUserRole, fetchNotifications]);
 
   // Re-fetch notifications when userRole changes
   useEffect(() => {
     if (userRole) {
       fetchNotifications();
     }
-  }, [userRole]);
+  }, [userRole, fetchNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     // Skip marking announcements as read in database (they're not user-specific)
@@ -161,8 +149,9 @@ export function NotificationBell() {
 
       if (error) throw error;
 
-      // Mark all notifications as read in state (including announcements)
+      // Mark all in state
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      // Recalculate unread count ignoring announcements
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -210,6 +199,8 @@ export function NotificationBell() {
       case 'certificate_earned':
         return '🏆';
       case 'quiz_passed':
+        return '🎯';
+      case 'quiz_graded':
         return '🎯';
       case 'announcement':
         return '📢';
@@ -275,58 +266,82 @@ export function NotificationBell() {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors ${
-                        !notification.is_read ? 'bg-blue-50/50' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between space-x-3">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-lg">
-                              {getNotificationIcon(notification.type)}
-                            </span>
-                            <h4 className={`text-sm font-medium ${
-                              !notification.is_read ? 'font-semibold' : ''
-                            }`}>
-                              {notification.title}
-                            </h4>
-                            {!notification.is_read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                            )}
+                  {notifications.map((notification) => {
+                    let parsed: { path?: string; text?: string } | null = null;
+                    try {
+                      const maybe = JSON.parse(notification.message);
+                      if (maybe && typeof maybe === 'object') parsed = maybe;
+                    } catch (e) {
+                      // ignore non-JSON messages
+                    }
+
+                    const goTo = async () => {
+                      if (parsed?.path) {
+                        await markAsRead(notification.id);
+                        window.location.href = parsed.path;
+                        setOpen(false);
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-b last:border-b-0 transition-colors ${
+                          !notification.is_read ? 'bg-blue-50/50 hover:bg-blue-100/50' : 'hover:bg-muted/50'
+                        } ${parsed?.path ? 'cursor-pointer' : ''}`}
+                        onClick={parsed?.path ? goTo : undefined}
+                      >
+                        <div className="flex items-start justify-between space-x-3">
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg">
+                                {getNotificationIcon(notification.type)}
+                              </span>
+                              <h4 className={`text-sm font-medium ${
+                                !notification.is_read ? 'font-semibold' : ''
+                              }`}>
+                                {notification.title}
+                              </h4>
+                              {!notification.is_read && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {parsed?.text || notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </p>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          {!notification.is_read && (
+                          <div className="flex items-center space-x-1">
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); markAsRead(notification.id); }}
+                                className="h-6 w-6 p-0"
+                              >
+                                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => markAsRead(notification.id)}
-                              className="h-6 w-6 p-0"
+                              onClick={(e) => { e.stopPropagation(); deleteNotification(notification.id); }}
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                             >
-                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                              <X className="h-3 w-3" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteNotification(notification.id)}
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                            {parsed?.path && (
+                              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); goTo(); }}>
+                                Open
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>

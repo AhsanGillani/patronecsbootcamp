@@ -13,8 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 interface Question {
   id: string;
   question: string;
-  options: string[];
-  correct_answer: number;
+  type?: 'mcq' | 'qa';
+  options: string[] | null;
+  correct_answer: number | null;
+  expected_answer?: string | null;
   difficulty: string;
   explanation: string | null;
   order_index: number;
@@ -34,8 +36,10 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
     question: question.question,
     explanation: question.explanation || "",
     difficulty: question.difficulty,
-    correct_answer: question.correct_answer,
-    options: [...question.options]
+    type: (question.type as 'mcq' | 'qa') || 'mcq',
+    correct_answer: question.correct_answer ?? 0,
+    options: Array.isArray(question.options) ? [...question.options] : ["", ""],
+    expected_answer: question.expected_answer || ""
   });
 
   useEffect(() => {
@@ -44,8 +48,10 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
         question: question.question,
         explanation: question.explanation || "",
         difficulty: question.difficulty,
-        correct_answer: question.correct_answer,
-        options: [...question.options]
+        type: (question.type as 'mcq' | 'qa') || 'mcq',
+        correct_answer: question.correct_answer ?? 0,
+        options: Array.isArray(question.options) ? [...question.options] : ["", ""],
+        expected_answer: question.expected_answer || ""
       });
     }
   }, [open, question]);
@@ -78,10 +84,18 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
     e.preventDefault();
 
     const filledOptions = formData.options.filter(option => option.trim() !== "");
-    if (filledOptions.length < 2) {
+    if (formData.type === 'mcq' && filledOptions.length < 2) {
       toast({
         title: "Error",
         description: "Please provide at least 2 options",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (formData.type === 'qa' && !formData.expected_answer.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide the expected answer",
         variant: "destructive",
       });
       return;
@@ -93,8 +107,10 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
         .from('quiz_questions')
         .update({
           question: formData.question,
-          options: filledOptions,
-          correct_answer: formData.correct_answer,
+          type: formData.type,
+          options: formData.type === 'mcq' ? filledOptions : [],
+          expected_answer: formData.type === 'qa' ? formData.expected_answer : null,
+          correct_answer: formData.type === 'mcq' ? (formData.correct_answer ?? 0) : 0,
           explanation: formData.explanation || null,
           difficulty: formData.difficulty
         })
@@ -145,7 +161,24 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
           <div>
             <Label>Answer Options *</Label>
             <div className="space-y-3 mt-2">
-              {formData.options.map((option, index) => (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Question Type</Label>
+                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as 'mcq' | 'qa' })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mcq">Multiple Choice</SelectItem>
+                      <SelectItem value="qa">Question & Answer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.type === 'mcq' && (
+                <>
+                {formData.options.map((option, index) => (
                 <Card key={index} className={`p-3 ${formData.correct_answer === index ? 'ring-2 ring-green-500' : ''}`}>
                   <CardContent className="p-0">
                     <div className="flex items-center space-x-3">
@@ -179,9 +212,23 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))}
+                </>
+              )}
+
+              {formData.type === 'qa' && (
+                <div className="space-y-2">
+                  <Label>Expected Answer</Label>
+                  <Textarea
+                    value={formData.expected_answer}
+                    onChange={(e) => setFormData({ ...formData, expected_answer: e.target.value })}
+                    placeholder="Provide the reference answer students should write"
+                    rows={3}
+                  />
+                </div>
+              )}
               
-              {formData.options.length < 6 && (
+              {formData.type === 'mcq' && formData.options.length < 6 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -194,7 +241,7 @@ export const EditQuestionDialog = ({ question, open, onOpenChange, onQuestionUpd
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Select the correct answer by clicking the radio button next to it
+              {formData.type === 'mcq' ? 'Select the correct answer by clicking the radio button next to it' : 'Students will type an answer; compare with expected answer during review.'}
             </p>
           </div>
 

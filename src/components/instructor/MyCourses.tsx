@@ -167,6 +167,60 @@ export const MyCourses = () => {
     }
   };
 
+  const handleHardDelete = async (courseId: string) => {
+    try {
+      if (!window.confirm('Delete this course and all its lessons and quizzes? This cannot be undone.')) return;
+
+      // 1) Gather lesson ids
+      const { data: lessons } = await supabase
+        .from('lessons')
+        .select('id')
+        .eq('course_id', courseId);
+      const lessonIds: string[] = (lessons || []).map((l: { id: string }) => l.id);
+
+      // 2) Gather quiz ids
+      const { data: quizzes } = lessonIds.length ? await supabase
+        .from('quizzes')
+        .select('id')
+        .in('lesson_id', lessonIds) : { data: [] as { id: string }[] };
+      const quizIds: string[] = (quizzes || []).map((q: { id: string }) => q.id);
+
+      // 3) Gather attempt ids
+      const { data: attempts } = quizIds.length ? await supabase
+        .from('quiz_attempts')
+        .select('id')
+        .in('quiz_id', quizIds) : { data: [] as { id: string }[] };
+      const attemptIds: string[] = (attempts || []).map((a: { id: string }) => a.id);
+
+      // 4) Delete quiz_attempt_answers -> quiz_attempts -> quiz_questions -> quizzes
+      if (attemptIds.length) {
+        await (supabase.from('quiz_attempt_answers') as unknown as { delete: () => { in: (col: string, ids: string[]) => Promise<unknown> } })
+          .delete()
+          .in('quiz_attempt_id', attemptIds);
+        await supabase.from('quiz_attempts').delete().in('id', attemptIds);
+      }
+      if (quizIds.length) {
+        await supabase.from('quiz_questions').delete().in('quiz_id', quizIds);
+        await supabase.from('quizzes').delete().in('id', quizIds);
+      }
+
+      // 5) Delete lesson_progress -> lessons
+      if (lessonIds.length) {
+        await supabase.from('lesson_progress').delete().in('lesson_id', lessonIds);
+        await supabase.from('lessons').delete().in('id', lessonIds);
+      }
+
+      // 6) Finally delete course
+      await supabase.from('courses').delete().eq('id', courseId);
+
+      toast({ title: 'Course permanently deleted', description: 'All lessons and quizzes were removed.' });
+      fetchCourses();
+    } catch (error) {
+      console.error('Error permanently deleting course:', error);
+      toast({ title: 'Error', description: 'Failed to permanently delete course', variant: 'destructive' });
+    }
+  };
+
   const CourseCard = ({ course }: { course: Course }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -239,6 +293,14 @@ export const MyCourses = () => {
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Delete
+            </Button>
+            <Button 
+              size="sm" 
+              variant="destructive"
+              onClick={() => handleHardDelete(course.id)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete Permanently
             </Button>
           </div>
         </div>

@@ -171,11 +171,11 @@ export const CourseLearning = () => {
       setQuizzes(quizzesData || []);
 
       // Calculate progress
-      const completedLessons = mappedLessons.filter(lesson => 
-        lesson.lesson_progress && lesson.lesson_progress.some(progress => 
-          progress.student_id === user?.id && progress.is_completed
-        )
-      ).length;
+      const completedLessons = mappedLessons.filter(lesson => {
+        const lp = lesson.lesson_progress?.find(p => p.student_id === user?.id);
+        // Count lesson complete only when marked completed (prevents pending Q&A from finishing course)
+        return !!lp?.is_completed;
+      }).length;
       const totalLessons = mappedLessons.length;
       const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
       setProgress(progressPercentage);
@@ -412,113 +412,77 @@ export const CourseLearning = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b">
+      {/* Top header with single progress bar */}
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-secondary/40 to-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <Link to="/student">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  Dashboard
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold">{course.title}</h1>
-                <p className="text-muted-foreground">by {course.instructor?.full_name}</p>
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-xl font-semibold truncate">{course.title}</h1>
+                <p className="text-xs md:text-sm text-muted-foreground truncate">by {course.instructor?.full_name || 'Patronecs'}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Progress</p>
-                <div className="flex items-center space-x-2">
-                  <Progress value={progress} className="w-32" />
-                  <span className="text-sm font-medium">{Math.round(progress)}%</span>
-                </div>
-              </div>
-              {progress === 100 && (
-                <Badge variant="default" className="bg-green-500">
-                  <Award className="h-3 w-3 mr-1" />
-                  Completed
-                </Badge>
-              )}
-            </div>
+            {progress === 100 && (
+              <Badge variant="default" className="bg-green-500 whitespace-nowrap">
+                <Award className="h-3 w-3 mr-1" /> Completed
+              </Badge>
+            )}
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <Progress value={progress} className="h-2" />
+            <span className="text-sm font-medium w-12 text-right">{Math.round(progress)}%</span>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Sidebar - Navigation */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Course Navigation</CardTitle>
+            <Card className="sticky top-24">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Lessons</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  variant={showCourseContent ? "default" : "outline"} 
-                  className="w-full justify-start"
-                  onClick={backToCourseContent}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Course Content
-                </Button>
-                
-                <Button 
-                  variant={showFeedback ? "default" : "outline"} 
-                  className="w-full justify-start"
-                  onClick={showCourseFeedback}
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Give Feedback
-                </Button>
-
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-3">Lessons</h4>
-                  <div className="space-y-2">
-                    {lessons.map((lesson, index) => {
-                      const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
-                      const isCurrent = currentLesson?.id === lesson.id;
-                      
-                      return (
-                        <Button
-                          key={lesson.id}
-                          variant={isCurrent ? "default" : "ghost"}
-                          size="sm"
-                          className={`w-full justify-start text-left ${isCompleted ? 'text-green-600' : ''}`}
-                          onClick={() => startLesson(lesson)}
-                        >
-                          <div className="flex items-center space-x-2">
-                            {isCompleted ? (
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <div className="h-3 w-3 border border-gray-300 rounded-full" />
-                            )}
-                            {getTypeIcon(lesson.type)}
-                            <span className="truncate">L{index + 1}: {lesson.title}</span>
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Progress</span>
-                    <span className="text-sm font-medium">{Math.round(progress)}%</span>
-                  </div>
-                  <Progress value={progress} />
-                </div>
-
-                {progress === 100 && (
-                  <div className="pt-4 border-t">
-                    <Button  className="w-full" variant="default">
-                      <Award className="h-4 w-4 mr-2" />
-                      Get Certificate
+              <CardContent className="space-y-1">
+                {lessons.map((lesson, index) => {
+                  const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
+                  const isCurrent = currentLesson?.id === lesson.id;
+                  return (
+                    <Button
+                      key={lesson.id}
+                      variant={isCurrent ? "default" : "ghost"}
+                      size="sm"
+                      className={`w-full justify-start text-left ${isCompleted ? 'text-green-600' : ''}`}
+                      onClick={() => startLesson(lesson)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {isCompleted ? (
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <div className="h-3 w-3 border border-gray-300 rounded-full" />
+                        )}
+                        {getTypeIcon(lesson.type)}
+                        <span className="truncate">L{index + 1}: {lesson.title}</span>
+                      </div>
                     </Button>
-                  </div>
-                )}
+                  );
+                })}
+                <div className="pt-2">
+                  <Button 
+                    variant={showFeedback ? "default" : "outline"} 
+                    className="w-full justify-start"
+                    onClick={showCourseFeedback}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Give Feedback
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -537,7 +501,7 @@ export const CourseLearning = () => {
               />
             )}
 
-            {showFeedback && (
+            {showFeedback && progress === 100 && (
               <CourseFeedback 
                 courseId={courseId!} 
                 courseName={course.title} 
@@ -657,7 +621,7 @@ export const CourseLearning = () => {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => startLesson(lesson)}
+                                        onClick={() => startLesson({ ...lesson, type: 'quiz' })}
                                         className="w-full border-blue-200 hover:bg-blue-100"
                                       >
                                         <HelpCircle className="h-3 w-3 mr-2" />

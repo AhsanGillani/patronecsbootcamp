@@ -32,7 +32,8 @@ export const CreateQuiz = ({ onQuizCreated }: CreateQuizProps) => {
     title: "",
     description: "",
     lesson_id: "",
-    passing_score: "70"
+    passing_score: "70",
+    question_mode: "mcq" // 'mcq' or 'qa'
   });
 
   const handleOpenChange = async (isOpen: boolean) => {
@@ -201,6 +202,23 @@ export const CreateQuiz = ({ onQuizCreated }: CreateQuizProps) => {
                 onChange={(e) => setFormData({ ...formData, passing_score: e.target.value })}
                 placeholder="70"
               />
+            </div>
+
+            <div>
+              <Label>Default Question Mode</Label>
+              <Select
+                value={formData.question_mode}
+                onValueChange={(value) => setFormData({ ...formData, question_mode: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mcq">Multiple Choice</SelectItem>
+                  <SelectItem value="qa">Question & Answer</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Instructors can still mix both types when adding questions.</p>
             </div>
           </div>
 

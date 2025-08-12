@@ -113,7 +113,7 @@ export const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full group">
                       <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-300">
-                        <AvatarImage src="" alt={profile?.full_name} />
+                        <AvatarImage src={(profile as any)?.avatar_url || ""} alt={profile?.full_name} />
                         <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white font-semibold">
                           {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
@@ -124,7 +124,7 @@ export const Header = () => {
                   <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
                     <div className="flex items-center space-x-3 p-2 mb-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src="" alt={profile?.full_name} />
+                        <AvatarImage src={(profile as any)?.avatar_url || ""} alt={profile?.full_name} />
                         <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
                           {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
