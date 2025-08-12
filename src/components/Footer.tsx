@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import logo from "@/assets/patronecs-logo.png";
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Send, Heart, Shield, Award, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-
+ 
 export const Footer = () => {
   const footerLinks = {
     "Quick Links": [
