@@ -194,7 +194,8 @@ export const MyCourses = () => {
 
       // 4) Delete quiz_attempt_answers -> quiz_attempts -> quiz_questions -> quizzes
       if (attemptIds.length) {
-        await (supabase.from('quiz_attempt_answers') as unknown as { delete: () => { in: (col: string, ids: string[]) => Promise<unknown> } })
+        await (supabase as any)
+          .from('quiz_attempt_answers')
           .delete()
           .in('quiz_attempt_id', attemptIds);
         await supabase.from('quiz_attempts').delete().in('id', attemptIds);

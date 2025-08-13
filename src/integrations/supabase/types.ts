@@ -1,38 +1,3 @@
-// YouTube Player API types
-declare global {
-  interface Window {
-    YT: {
-      Player: {
-        new (elementId: string, config: {
-          height: string | number;
-          width: string | number;
-          playerVars?: Record<string, string | number>;
-        }): {
-          getCurrentTime(): number;
-          getDuration(): number;
-          playVideo(): void;
-          pauseVideo(): void;
-          stopVideo(): void;
-          seekTo(seconds: number, allowSeekAhead: boolean): void;
-          loadVideoById(videoId: string): void;
-          cueVideoById(videoId: string): void;
-          destroy(): void;
-        };
-      };
-      PlayerState: {
-        UNSTARTED: -1;
-        ENDED: 0;
-        PLAYING: 1;
-        PAUSED: 2;
-        BUFFERING: 3;
-        CUED: 5;
-      };
-    };
-  }
-}
-
-export {};
-
 export type Json =
   | string
   | number
@@ -170,6 +135,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          slug: string | null
         }
         Insert: {
           created_at?: string
@@ -177,6 +143,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          slug?: string | null
         }
         Update: {
           created_at?: string
@@ -184,6 +151,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          slug?: string | null
         }
         Relationships: []
       }
@@ -436,27 +404,45 @@ export type Database = {
           created_at: string | null
           id: string
           is_completed: boolean | null
+          last_accessed_at: string | null
           lesson_id: string
+          pdf_viewed: boolean | null
+          quiz_passed: boolean | null
           student_id: string
+          text_read: boolean | null
           updated_at: string | null
+          video_watch_progress: number | null
+          video_watched_seconds: number | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          last_accessed_at?: string | null
           lesson_id: string
+          pdf_viewed?: boolean | null
+          quiz_passed?: boolean | null
           student_id: string
+          text_read?: boolean | null
           updated_at?: string | null
+          video_watch_progress?: number | null
+          video_watched_seconds?: number | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          last_accessed_at?: string | null
           lesson_id?: string
+          pdf_viewed?: boolean | null
+          quiz_passed?: boolean | null
           student_id?: string
+          text_read?: boolean | null
           updated_at?: string | null
+          video_watch_progress?: number | null
+          video_watched_seconds?: number | null
         }
         Relationships: [
           {
@@ -603,40 +589,103 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_attempt_answers: {
+        Row: {
+          answer_text: string | null
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          question_id: string
+          quiz_attempt_id: string
+          requires_review: boolean
+          selected_index: number | null
+        }
+        Insert: {
+          answer_text?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id: string
+          quiz_attempt_id: string
+          requires_review?: boolean
+          selected_index?: number | null
+        }
+        Update: {
+          answer_text?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string
+          quiz_attempt_id?: string
+          requires_review?: boolean
+          selected_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempt_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempt_answers_quiz_attempt_id_fkey"
+            columns: ["quiz_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_attempts: {
         Row: {
           answers: Json
+          attempt_number: number
           completed_at: string | null
           created_at: string | null
+          feedback: string | null
           id: string
           passed: boolean | null
           quiz_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           score: number
           started_at: string | null
+          status: Database["public"]["Enums"]["attempt_status"]
           student_id: string
           total_questions: number
         }
         Insert: {
           answers?: Json
+          attempt_number?: number
           completed_at?: string | null
           created_at?: string | null
+          feedback?: string | null
           id?: string
           passed?: boolean | null
           quiz_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           score?: number
           started_at?: string | null
+          status?: Database["public"]["Enums"]["attempt_status"]
           student_id: string
           total_questions?: number
         }
         Update: {
           answers?: Json
+          attempt_number?: number
           completed_at?: string | null
           created_at?: string | null
+          feedback?: string | null
           id?: string
           passed?: boolean | null
           quiz_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           score?: number
           started_at?: string | null
+          status?: Database["public"]["Enums"]["attempt_status"]
           student_id?: string
           total_questions?: number
         }
@@ -662,34 +711,40 @@ export type Database = {
           correct_answer: number
           created_at: string
           difficulty: string
+          expected_answer: string | null
           explanation: string | null
           id: string
           options: Json
           order_index: number
           question: string
           quiz_id: string
+          type: string
         }
         Insert: {
           correct_answer: number
           created_at?: string
           difficulty?: string
+          expected_answer?: string | null
           explanation?: string | null
           id?: string
           options: Json
           order_index?: number
           question: string
           quiz_id: string
+          type?: string
         }
         Update: {
           correct_answer?: number
           created_at?: string
           difficulty?: string
+          expected_answer?: string | null
           explanation?: string | null
           id?: string
           options?: Json
           order_index?: number
           question?: string
           quiz_id?: string
+          type?: string
         }
         Relationships: [
           {
@@ -744,8 +799,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_course_progress: {
+        Args: { p_student_id: string; p_course_id: string }
+        Returns: number
+      }
+      calculate_lesson_completion: {
+        Args: { p_student_id: string; p_lesson_id: string }
+        Returns: number
+      }
       generate_blog_slug: {
         Args: { title: string }
+        Returns: string
+      }
+      generate_category_slug: {
+        Args: { name: string }
         Returns: string
       }
       generate_certificate_number: {
@@ -764,6 +831,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_lesson_unlocked: {
+        Args: { p_student_id: string; p_lesson_id: string }
+        Returns: boolean
+      }
       slugify: {
         Args: { txt: string }
         Returns: string
@@ -771,6 +842,7 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "inactive" | "suspended"
+      attempt_status: "auto_graded" | "pending_review" | "reviewed"
       blog_status: "draft" | "pending" | "approved" | "rejected"
       course_level: "beginner" | "intermediate" | "advanced"
       course_status: "draft" | "pending" | "approved" | "rejected"
@@ -903,6 +975,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "inactive", "suspended"],
+      attempt_status: ["auto_graded", "pending_review", "reviewed"],
       blog_status: ["draft", "pending", "approved", "rejected"],
       course_level: ["beginner", "intermediate", "advanced"],
       course_status: ["draft", "pending", "approved", "rejected"],

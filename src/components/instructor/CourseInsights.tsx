@@ -72,7 +72,7 @@ export const CourseInsights = () => {
         .limit(20)
         : { data: [], error: null } as any;
 
-      const studentIds = Array.from(new Set((feedbackRows || []).map((f: any) => f.student_id).filter(Boolean)));
+      const studentIds = Array.from(new Set((feedbackRows || []).map((f: any) => f.student_id).filter(Boolean))) as string[];
       const { data: profileRows } = studentIds.length > 0 ? await supabase
         .from('profiles')
         .select('user_id, full_name')
