@@ -117,7 +117,8 @@ export const CreateQuiz = ({ onQuizCreated }: CreateQuizProps) => {
         title: "",
         description: "",
         lesson_id: "",
-        passing_score: "70"
+        passing_score: "70",
+        question_mode: "mcq"
       });
       setOpen(false);
       onQuizCreated();
