@@ -1,11 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { 
-  Users, 
-  BookOpen, 
-  FileText, 
-  BarChart3, 
-  Megaphone, 
-  FolderOpen, 
+import {
+  Users,
+  BookOpen,
+  FileText,
+  BarChart3,
+  Megaphone,
+  FolderOpen,
   Settings,
   Shield
 } from "lucide-react";
@@ -42,8 +42,8 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
   const isCollapsed = state === "collapsed";
 
   const getNavClass = (itemId: string) =>
-    activeTab === itemId 
-      ? "bg-primary text-primary-foreground font-medium shadow-sm" 
+    activeTab === itemId
+      ? "bg-primary text-primary-foreground font-medium shadow-sm"
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
   return (
@@ -71,8 +71,8 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
             <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     className={`${getNavClass(item.id)} rounded-lg transition-all duration-200`}
                   >
                     <button
@@ -90,5 +90,6 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+    // dd
   );
 }
