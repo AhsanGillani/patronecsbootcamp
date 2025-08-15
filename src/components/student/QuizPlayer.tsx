@@ -56,7 +56,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
         .order('order_index');
 
       if (error) throw error;
-      
+
       // Parse the options JSON for each question
       const parsedQuestions = (data || []).map(question => {
         let opts: unknown = question.options;
@@ -73,7 +73,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           options: qType === 'qa' ? [] : (Array.isArray(opts) ? (opts as string[]) : []),
         } as Question;
       });
-      
+
       setQuestions(parsedQuestions);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -124,7 +124,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     if (!user) return;
 
     setSubmitted(true);
-    
+
     // Calculate score
     let correctAnswers = 0;
     questions.forEach(question => {
@@ -140,7 +140,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     });
 
     const finalScore = Math.round((correctAnswers / questions.length) * 100);
-    
+
     // Check if there are Q&A questions that need manual review
     const hasQAQuestions = questions.some(q => (q.type || 'mcq') === 'qa');
     const status = hasQAQuestions ? 'pending_review' : 'auto_graded';
@@ -152,20 +152,20 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
         // Reset lesson progress to force re-learning
         await supabase
           .from('lesson_progress')
-          .update({ 
+          .update({
             video_watch_progress: 0,
             pdf_viewed: false,
             text_read: false,
             quiz_passed: false,
-            is_completed: false 
+            is_completed: false
           })
           .eq('lesson_id', quiz.lesson_id)
           .eq('student_id', user.id);
-          
-        toast({ 
-          title: 'Attempt limit reached', 
+
+        toast({
+          title: 'Attempt limit reached',
           description: 'You have used all 3 attempts. Complete the lesson again to retry the quiz.',
-          variant: 'destructive' 
+          variant: 'destructive'
         });
         setSubmitted(false);
         onBack();
@@ -207,10 +207,10 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
 
       toast({
         title: hasQAQuestions ? "Quiz Submitted" : (passed ? "Quiz Passed!" : "Quiz Completed"),
-        description: hasQAQuestions 
-          ? "Your quiz has been submitted and is pending instructor review" 
-          : (passed 
-            ? `Great job! You scored ${finalScore}%` 
+        description: hasQAQuestions
+          ? "Your quiz has been submitted and is pending instructor review"
+          : (passed
+            ? `Great job! You scored ${finalScore}%`
             : `You scored ${finalScore}%. Passing score is ${quiz.passing_score}%`),
         variant: hasQAQuestions ? "default" : (passed ? "default" : "destructive"),
       });
@@ -256,7 +256,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     const hasQAQuestions = questions.some(q => (q.type || 'mcq') === 'qa');
     const passed = hasQAQuestions ? false : score >= quiz.passing_score;
     const status = hasQAQuestions ? 'pending' : (passed ? 'passed' : 'failed');
-    
+
     return (
       <Card className="h-full">
         <CardHeader>
@@ -271,7 +271,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <span>Quiz Results</span>
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="text-center space-y-4">
             <div className="text-4xl font-bold text-primary">{score}%</div>
@@ -279,8 +279,8 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
               {status === 'pending' ? "Pending Review" : (passed ? "Passed" : "Failed")}
             </Badge>
             <p className="text-muted-foreground">
-              {hasQAQuestions 
-                ? "Your quiz has been submitted for instructor review" 
+              {hasQAQuestions
+                ? "Your quiz has been submitted for instructor review"
                 : `You answered ${questions.filter(q => answers[q.id] === q.correct_answer).length} out of ${questions.length} questions correctly`
               }
             </p>
@@ -307,7 +307,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
               const userAnswer = answers[question.id];
               const isQA = (question.type || 'mcq') === 'qa';
               const isCorrect = !isQA && userAnswer === question.correct_answer;
-              
+
               return (
                 <div key={question.id} className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-start space-x-2">
@@ -351,14 +351,14 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             </Button>
             <div className="space-x-2">
               {status !== 'pending' && !passed && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     if (attemptsUsed >= 3) {
-                      toast({ 
-                        title: 'No attempts remaining', 
+                      toast({
+                        title: 'No attempts remaining',
                         description: 'Complete the lesson again to retry the quiz.',
-                        variant: 'destructive' 
+                        variant: 'destructive'
                       });
                       return;
                     }
@@ -409,7 +409,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           <Progress value={progress} className="h-2" />
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         <div className="space-y-6">
           {questions.map((q, idx) => (
@@ -455,7 +455,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <Button variant="outline" onClick={onBack}>
               Exit Quiz
             </Button>
-            <Button 
+            <Button
               onClick={submitQuiz}
               disabled={!isAllAnswered() || submitted}
             >
