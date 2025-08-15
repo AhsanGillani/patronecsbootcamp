@@ -7,13 +7,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-type Attempt = { 
-  id: string; 
-  created_at: string; 
-  quiz_id: string; 
-  student_id: string; 
-  score: number | null; 
-  passed: boolean | null; 
+type Attempt = {
+  id: string;
+  created_at: string;
+  quiz_id: string;
+  student_id: string;
+  score: number | null;
+  passed: boolean | null;
   status: string;
   attempt_number: number;
 };
@@ -23,8 +23,8 @@ type LessonRow = { id: string; title: string; course_id: string };
 type CourseRow = { id: string; title: string };
 type EnrollmentRow = { student_id: string; course_id: string; enrolled_at: string; progress: number };
 
-type AttemptWithStudent = Attempt & { 
-  studentName: string; 
+type AttemptWithStudent = Attempt & {
+  studentName: string;
   studentEmail: string;
   courseTitle: string;
   enrollmentDate: string;
@@ -82,20 +82,20 @@ export function SubmittedQuizzes() {
         // 2) lookups
         const studentIds: string[] = Array.from(new Set(a.map(x => x.student_id)));
         const quizIds: string[] = Array.from(new Set(a.map(x => x.quiz_id)));
-        
+
         const { data: profsData } = studentIds.length
           ? await supabase.from('profiles').select('user_id, full_name, email').in('user_id', studentIds)
           : { data: [] as ProfileRow[] };
-        
+
         const { data: quizzesData } = quizIds.length
           ? await supabase.from('quizzes').select('id, title, lesson_id').in('id', quizIds)
           : { data: [] as QuizRow[] };
-        
+
         const lessonIds: string[] = Array.from(new Set((quizzesData || []).map((q) => (q as QuizRow).lesson_id)));
         const { data: lessonsData } = lessonIds.length
           ? await supabase.from('lessons').select('id, title, course_id').in('id', lessonIds)
           : { data: [] as LessonRow[] };
-        
+
         const courseIds: string[] = Array.from(new Set((lessonsData || []).map((l) => (l as LessonRow).course_id)));
         const { data: coursesData } = courseIds.length
           ? await supabase.from('courses').select('id, title').in('id', courseIds)
@@ -104,9 +104,9 @@ export function SubmittedQuizzes() {
         // Get enrollment data for student details
         const { data: enrollmentsData } = studentIds.length && courseIds.length
           ? await supabase.from('enrollments')
-              .select('student_id, course_id, enrolled_at, progress')
-              .in('student_id', studentIds)
-              .in('course_id', courseIds)
+            .select('student_id, course_id, enrolled_at, progress')
+            .in('student_id', studentIds)
+            .in('course_id', courseIds)
           : { data: [] as EnrollmentRow[] };
 
         const quizMap: Record<string, { title: string; lesson_id: string }> = {};
@@ -123,13 +123,13 @@ export function SubmittedQuizzes() {
 
         // Build student details map with course info
         const studentDetailsMap: Record<string, { name: string; email: string; courseTitle: string; enrollmentDate: string; courseProgress: number }> = {};
-        
+
         a.forEach(attempt => {
           const profile = ((profsData || []) as ProfileRow[]).find(p => p.user_id === attempt.student_id);
           const quiz = quizMap[attempt.quiz_id];
           const lesson = quiz ? lessonMap[quiz.lesson_id] : undefined;
           const course = lesson ? courseMap[lesson.course_id] : undefined;
-          const enrollment = ((enrollmentsData || []) as EnrollmentRow[]).find(e => 
+          const enrollment = ((enrollmentsData || []) as EnrollmentRow[]).find(e =>
             e.student_id === attempt.student_id && e.course_id === lesson?.course_id
           );
 
@@ -222,14 +222,14 @@ export function SubmittedQuizzes() {
     setGradingAttempt(attemptWithStudent);
     await loadAnswers(att.id);
     await fetchQuizMeta(att.quiz_id);
-    
+
     // Wait for answers to load before setting QA marks
     setTimeout(() => {
       const init: Record<string, boolean> = {};
       answers.forEach(a => { if (a.answer_text !== null && a.answer_text !== undefined) init[a.id] = false; });
       setQaMarks(init);
     }, 100);
-    
+
     setGradeOpen(true);
   };
 
@@ -251,13 +251,13 @@ export function SubmittedQuizzes() {
     setSaving(true);
     try {
       const passed = computedScore >= quizMeta.passing_score;
-      
+
       // Update quiz attempt with final grade and status
       await supabase
         .from('quiz_attempts')
-        .update({ 
-          score: computedScore, 
-          passed, 
+        .update({
+          score: computedScore,
+          passed,
           status: 'reviewed',
           reviewed_at: new Date().toISOString()
         })
@@ -268,10 +268,10 @@ export function SubmittedQuizzes() {
       if (passed && lessonId) {
         await (supabase.from('lesson_progress') as unknown as {
           upsert: (val: { lesson_id: string; student_id: string; quiz_passed: boolean }, opts: { onConflict: string }) => Promise<unknown>
-        }).upsert({ 
-          lesson_id: lessonId, 
-          student_id: gradingAttempt.student_id, 
-          quiz_passed: true 
+        }).upsert({
+          lesson_id: lessonId,
+          student_id: gradingAttempt.student_id,
+          quiz_passed: true
         }, { onConflict: 'lesson_id,student_id' });
       }
 
@@ -284,9 +284,9 @@ export function SubmittedQuizzes() {
         user_id: gradingAttempt.student_id,
         title: 'Quiz Graded',
         type: 'quiz_graded',
-        message: JSON.stringify({ 
-          text: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}% - ${passed ? 'Passed' : 'Failed'}`, 
-          path 
+        message: JSON.stringify({
+          text: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}% - ${passed ? 'Passed' : 'Failed'}`,
+          path
         })
       });
 
@@ -321,12 +321,12 @@ export function SubmittedQuizzes() {
     const lessonKey = lesson?.title || 'Unknown Lesson';
     const quizKey = quiz?.title || 'Quiz';
     const studentDetails = studentDetailsById[att.student_id];
-    
+
     tree[courseKey] = tree[courseKey] || {};
     tree[courseKey][lessonKey] = tree[courseKey][lessonKey] || {};
     tree[courseKey][lessonKey][quizKey] = tree[courseKey][lessonKey][quizKey] || [];
-    tree[courseKey][lessonKey][quizKey].push({ 
-      ...att, 
+    tree[courseKey][lessonKey][quizKey].push({
+      ...att,
       studentName: studentDetails?.name || 'Unknown Student',
       studentEmail: studentDetails?.email || '',
       courseTitle: studentDetails?.courseTitle || '',
