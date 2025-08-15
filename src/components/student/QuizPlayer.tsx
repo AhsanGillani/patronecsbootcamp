@@ -45,6 +45,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [attemptsUsed, setAttemptsUsed] = useState(0);
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -88,7 +89,22 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
 
   useEffect(() => {
     fetchQuestions();
+    fetchAttempts();
   }, [fetchQuestions]);
+
+  const fetchAttempts = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('quiz_attempts')
+        .select('id')
+        .eq('quiz_id', quiz.id)
+        .eq('student_id', user.id);
+      setAttemptsUsed(data?.length || 0);
+    } catch (error) {
+      console.error('Error fetching attempts:', error);
+    }
+  };
 
   const handleAnswerChange = (questionId: string, answerIndex: number) => {
     setAnswers(prev => ({
@@ -132,14 +148,27 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
 
     try {
       // enforce max 3 attempts
-      const { data: prevAttempts } = await supabase
-        .from('quiz_attempts')
-        .select('id')
-        .eq('quiz_id', quiz.id)
-        .eq('student_id', user.id);
-      if ((prevAttempts?.length || 0) >= 3) {
-        toast({ title: 'Attempt limit reached', description: 'You have used all 3 attempts for this quiz.', variant: 'destructive' });
+      if (attemptsUsed >= 3) {
+        // Reset lesson progress to force re-learning
+        await supabase
+          .from('lesson_progress')
+          .update({ 
+            video_watch_progress: 0,
+            pdf_viewed: false,
+            text_read: false,
+            quiz_passed: false,
+            is_completed: false 
+          })
+          .eq('lesson_id', quiz.lesson_id)
+          .eq('student_id', user.id);
+          
+        toast({ 
+          title: 'Attempt limit reached', 
+          description: 'You have used all 3 attempts. Complete the lesson again to retry the quiz.',
+          variant: 'destructive' 
+        });
         setSubmitted(false);
+        onBack();
         return;
       }
 
@@ -325,11 +354,21 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
                 <Button 
                   variant="outline" 
                   onClick={() => {
+                    if (attemptsUsed >= 3) {
+                      toast({ 
+                        title: 'No attempts remaining', 
+                        description: 'Complete the lesson again to retry the quiz.',
+                        variant: 'destructive' 
+                      });
+                      return;
+                    }
                     setShowResults(false);
                     setAnswers({});
+                    fetchAttempts();
                   }}
+                  disabled={attemptsUsed >= 3}
                 >
-                  Retake Quiz
+                  Retake Quiz ({3 - attemptsUsed} attempts left)
                 </Button>
               )}
               <Button onClick={() => onComplete(passed)}>
@@ -353,9 +392,14 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <HelpCircle className="h-5 w-5" />
             <span>{quiz.title}</span>
           </CardTitle>
-          <Badge variant="outline">
-            {answeredCount} / {questions.length} answered
-          </Badge>
+          <div className="flex items-center space-x-3">
+            <Badge variant="secondary">
+              Attempts: {attemptsUsed}/3
+            </Badge>
+            <Badge variant="outline">
+              {answeredCount} / {questions.length} answered
+            </Badge>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
