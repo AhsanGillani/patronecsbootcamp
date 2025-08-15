@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
-
+// hello
 interface Category {
   id: string;
   name: string;
@@ -236,7 +236,7 @@ export default function CategoryManagement() {
                   placeholder="e.g., code, book, video"
                 />
               </div>
-              <Button 
+              <Button
                 onClick={editingCategory ? handleUpdateCategory : handleCreateCategory}
                 className="w-full"
               >
