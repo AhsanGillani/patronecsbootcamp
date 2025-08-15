@@ -45,6 +45,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [attemptsUsed, setAttemptsUsed] = useState(0);
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -88,7 +89,22 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
 
   useEffect(() => {
     fetchQuestions();
+    fetchAttempts();
   }, [fetchQuestions]);
+
+  const fetchAttempts = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('quiz_attempts')
+        .select('id')
+        .eq('quiz_id', quiz.id)
+        .eq('student_id', user.id);
+      setAttemptsUsed(data?.length || 0);
+    } catch (error) {
+      console.error('Error fetching attempts:', error);
+    }
+  };
 
   const handleAnswerChange = (questionId: string, answerIndex: number) => {
     setAnswers(prev => ({
@@ -124,18 +140,35 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
     });
 
     const finalScore = Math.round((correctAnswers / questions.length) * 100);
-    const passed = finalScore >= quiz.passing_score;
+    
+    // Check if there are Q&A questions that need manual review
+    const hasQAQuestions = questions.some(q => (q.type || 'mcq') === 'qa');
+    const status = hasQAQuestions ? 'pending_review' : 'auto_graded';
+    const passed = hasQAQuestions ? false : finalScore >= quiz.passing_score;
 
     try {
       // enforce max 3 attempts
-      const { data: prevAttempts } = await supabase
-        .from('quiz_attempts')
-        .select('id')
-        .eq('quiz_id', quiz.id)
-        .eq('student_id', user.id);
-      if ((prevAttempts?.length || 0) >= 3) {
-        toast({ title: 'Attempt limit reached', description: 'You have used all 3 attempts for this quiz.', variant: 'destructive' });
+      if (attemptsUsed >= 3) {
+        // Reset lesson progress to force re-learning
+        await supabase
+          .from('lesson_progress')
+          .update({ 
+            video_watch_progress: 0,
+            pdf_viewed: false,
+            text_read: false,
+            quiz_passed: false,
+            is_completed: false 
+          })
+          .eq('lesson_id', quiz.lesson_id)
+          .eq('student_id', user.id);
+          
+        toast({ 
+          title: 'Attempt limit reached', 
+          description: 'You have used all 3 attempts. Complete the lesson again to retry the quiz.',
+          variant: 'destructive' 
+        });
         setSubmitted(false);
+        onBack();
         return;
       }
 
@@ -149,7 +182,8 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           passed,
           total_questions: questions.length,
           answers: answers,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          status: status as any
         })
         .select('id')
         .single();
@@ -172,11 +206,13 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
       setShowResults(true);
 
       toast({
-        title: passed ? "Quiz Passed!" : "Quiz Completed",
-        description: passed 
-          ? `Great job! You scored ${finalScore}%` 
-          : `You scored ${finalScore}%. Passing score is ${quiz.passing_score}%`,
-        variant: passed ? "default" : "destructive",
+        title: hasQAQuestions ? "Quiz Submitted" : (passed ? "Quiz Passed!" : "Quiz Completed"),
+        description: hasQAQuestions 
+          ? "Your quiz has been submitted and is pending instructor review" 
+          : (passed 
+            ? `Great job! You scored ${finalScore}%` 
+            : `You scored ${finalScore}%. Passing score is ${quiz.passing_score}%`),
+        variant: hasQAQuestions ? "default" : (passed ? "default" : "destructive"),
       });
 
     } catch (error) {
@@ -217,13 +253,17 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
   }
 
   if (showResults) {
-    const passed = score >= quiz.passing_score;
+    const hasQAQuestions = questions.some(q => (q.type || 'mcq') === 'qa');
+    const passed = hasQAQuestions ? false : score >= quiz.passing_score;
+    const status = hasQAQuestions ? 'pending' : (passed ? 'passed' : 'failed');
     
     return (
       <Card className="h-full">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            {passed ? (
+            {status === 'pending' ? (
+              <Clock className="h-5 w-5 text-yellow-500" />
+            ) : passed ? (
               <CheckCircle className="h-5 w-5 text-green-500" />
             ) : (
               <XCircle className="h-5 w-5 text-red-500" />
@@ -235,18 +275,26 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
         <CardContent className="space-y-6">
           <div className="text-center space-y-4">
             <div className="text-4xl font-bold text-primary">{score}%</div>
-            <Badge variant={passed ? "default" : "destructive"} className="text-sm">
-              {passed ? "Passed" : "Failed"}
+            <Badge variant={status === 'pending' ? "secondary" : (passed ? "default" : "destructive")} className="text-sm">
+              {status === 'pending' ? "Pending Review" : (passed ? "Passed" : "Failed")}
             </Badge>
             <p className="text-muted-foreground">
-              You answered {questions.filter(q => answers[q.id] === q.correct_answer).length} out of {questions.length} questions correctly
+              {hasQAQuestions 
+                ? "Your quiz has been submitted for instructor review" 
+                : `You answered ${questions.filter(q => answers[q.id] === q.correct_answer).length} out of ${questions.length} questions correctly`
+              }
             </p>
             <p className="text-sm text-muted-foreground">
               Passing score: {quiz.passing_score}%
             </p>
           </div>
 
-          {passed && (
+          {status === 'pending' ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              <Clock className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+              <p className="text-yellow-800 font-medium">Your quiz is being reviewed by the instructor.</p>
+            </div>
+          ) : passed && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
               <Award className="h-8 w-8 mx-auto mb-2 text-green-600" />
               <p className="text-green-800 font-medium">Congratulations! You've passed the quiz.</p>
@@ -257,12 +305,15 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <h4 className="font-semibold">Question Review:</h4>
             {questions.map((question, index) => {
               const userAnswer = answers[question.id];
-              const isCorrect = userAnswer === question.correct_answer;
+              const isQA = (question.type || 'mcq') === 'qa';
+              const isCorrect = !isQA && userAnswer === question.correct_answer;
               
               return (
                 <div key={question.id} className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-start space-x-2">
-                    {isCorrect ? (
+                    {isQA ? (
+                      <Clock className="h-4 w-4 text-yellow-500 mt-0.5" />
+                    ) : isCorrect ? (
                       <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-500 mt-0.5" />
@@ -270,11 +321,16 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
                     <div className="flex-1">
                       <p className="text-sm font-medium">Question {index + 1}: {question.question}</p>
                       <p className="text-xs text-muted-foreground">
-                        Your answer: {question.options[userAnswer] || 'Not answered'}
+                        Your answer: {isQA ? userAnswer || 'Not answered' : (question.options[userAnswer] || 'Not answered')}
                       </p>
-                      {!isCorrect && (
+                      {!isQA && !isCorrect && (
                         <p className="text-xs text-green-600">
                           Correct answer: {question.options[question.correct_answer]}
+                        </p>
+                      )}
+                      {isQA && (
+                        <p className="text-xs text-yellow-600">
+                          Pending instructor review
                         </p>
                       )}
                       {question.explanation && (
@@ -294,15 +350,25 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
               Back to Lesson
             </Button>
             <div className="space-x-2">
-              {!passed && (
+              {status !== 'pending' && !passed && (
                 <Button 
                   variant="outline" 
                   onClick={() => {
+                    if (attemptsUsed >= 3) {
+                      toast({ 
+                        title: 'No attempts remaining', 
+                        description: 'Complete the lesson again to retry the quiz.',
+                        variant: 'destructive' 
+                      });
+                      return;
+                    }
                     setShowResults(false);
                     setAnswers({});
+                    fetchAttempts();
                   }}
+                  disabled={attemptsUsed >= 3}
                 >
-                  Retake Quiz
+                  Retake Quiz ({3 - attemptsUsed} attempts left)
                 </Button>
               )}
               <Button onClick={() => onComplete(passed)}>
@@ -326,9 +392,14 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
             <HelpCircle className="h-5 w-5" />
             <span>{quiz.title}</span>
           </CardTitle>
-          <Badge variant="outline">
-            {answeredCount} / {questions.length} answered
-          </Badge>
+          <div className="flex items-center space-x-3">
+            <Badge variant="secondary">
+              Attempts: {attemptsUsed}/3
+            </Badge>
+            <Badge variant="outline">
+              {answeredCount} / {questions.length} answered
+            </Badge>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">

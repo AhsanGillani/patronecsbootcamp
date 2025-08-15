@@ -7,13 +7,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-type Attempt = { id: string; created_at: string; quiz_id: string; student_id: string; score: number | null; passed: boolean | null };
-type ProfileRow = { user_id: string; full_name: string };
+type Attempt = { 
+  id: string; 
+  created_at: string; 
+  quiz_id: string; 
+  student_id: string; 
+  score: number | null; 
+  passed: boolean | null; 
+  status: string;
+  attempt_number: number;
+};
+type ProfileRow = { user_id: string; full_name: string; email: string; };
 type QuizRow = { id: string; title: string; lesson_id: string };
 type LessonRow = { id: string; title: string; course_id: string };
 type CourseRow = { id: string; title: string };
+type EnrollmentRow = { student_id: string; course_id: string; enrolled_at: string; progress: number };
 
-type AttemptWithStudent = Attempt & { studentName: string };
+type AttemptWithStudent = Attempt & { 
+  studentName: string; 
+  studentEmail: string;
+  courseTitle: string;
+  enrollmentDate: string;
+  courseProgress: number;
+};
 type Tree = Record<string, Record<string, Record<string, AttemptWithStudent[]>>>;
 
 type AnswerRow = {
@@ -37,7 +53,7 @@ type QuizFull = { id: string; title: string; passing_score: number };
 
 export function SubmittedQuizzes() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [studentNameById, setStudentNameById] = useState<Record<string, string>>({});
+  const [studentDetailsById, setStudentDetailsById] = useState<Record<string, { name: string; email: string; courseTitle: string; enrollmentDate: string; courseProgress: number }>>({});
   const [quizById, setQuizById] = useState<Record<string, { title: string; lesson_id: string }>>({});
   const [lessonById, setLessonById] = useState<Record<string, { title: string; course_id: string }>>({});
   const [courseById, setCourseById] = useState<Record<string, { title: string }>>({});
@@ -45,7 +61,7 @@ export function SubmittedQuizzes() {
   const [answers, setAnswers] = useState<AnswerWithQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [gradingAttempt, setGradingAttempt] = useState<Attempt | null>(null);
+  const [gradingAttempt, setGradingAttempt] = useState<AttemptWithStudent | null>(null);
   const [quizMeta, setQuizMeta] = useState<QuizFull | null>(null);
   const [qaMarks, setQaMarks] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -53,10 +69,11 @@ export function SubmittedQuizzes() {
   useEffect(() => {
     (async () => {
       try {
-        // 1) attempts
+        // 1) attempts - only pending review status
         const { data: atts } = await supabase
           .from('quiz_attempts')
-          .select('id, created_at, quiz_id, student_id, score, passed')
+          .select('id, created_at, quiz_id, student_id, score, passed, status, attempt_number')
+          .eq('status', 'pending_review')
           .order('created_at', { ascending: false })
           .limit(100);
         const a = (atts as Attempt[]) || [];
@@ -65,24 +82,32 @@ export function SubmittedQuizzes() {
         // 2) lookups
         const studentIds: string[] = Array.from(new Set(a.map(x => x.student_id)));
         const quizIds: string[] = Array.from(new Set(a.map(x => x.quiz_id)));
+        
         const { data: profsData } = studentIds.length
-          ? await supabase.from('profiles').select('user_id, full_name').in('user_id', studentIds)
+          ? await supabase.from('profiles').select('user_id, full_name, email').in('user_id', studentIds)
           : { data: [] as ProfileRow[] };
+        
         const { data: quizzesData } = quizIds.length
           ? await supabase.from('quizzes').select('id, title, lesson_id').in('id', quizIds)
           : { data: [] as QuizRow[] };
+        
         const lessonIds: string[] = Array.from(new Set((quizzesData || []).map((q) => (q as QuizRow).lesson_id)));
         const { data: lessonsData } = lessonIds.length
           ? await supabase.from('lessons').select('id, title, course_id').in('id', lessonIds)
           : { data: [] as LessonRow[] };
+        
         const courseIds: string[] = Array.from(new Set((lessonsData || []).map((l) => (l as LessonRow).course_id)));
         const { data: coursesData } = courseIds.length
           ? await supabase.from('courses').select('id, title').in('id', courseIds)
           : { data: [] as CourseRow[] };
 
-        const nameMap: Record<string, string> = {};
-        ((profsData || []) as ProfileRow[]).forEach((p) => { nameMap[p.user_id] = p.full_name; });
-        setStudentNameById(nameMap);
+        // Get enrollment data for student details
+        const { data: enrollmentsData } = studentIds.length && courseIds.length
+          ? await supabase.from('enrollments')
+              .select('student_id, course_id, enrolled_at, progress')
+              .in('student_id', studentIds)
+              .in('course_id', courseIds)
+          : { data: [] as EnrollmentRow[] };
 
         const quizMap: Record<string, { title: string; lesson_id: string }> = {};
         ((quizzesData || []) as QuizRow[]).forEach((q) => { quizMap[q.id] = { title: q.title, lesson_id: q.lesson_id }; });
@@ -95,6 +120,31 @@ export function SubmittedQuizzes() {
         const courseMap: Record<string, { title: string }> = {};
         ((coursesData || []) as CourseRow[]).forEach((c) => { courseMap[c.id] = { title: c.title }; });
         setCourseById(courseMap);
+
+        // Build student details map with course info
+        const studentDetailsMap: Record<string, { name: string; email: string; courseTitle: string; enrollmentDate: string; courseProgress: number }> = {};
+        
+        a.forEach(attempt => {
+          const profile = ((profsData || []) as ProfileRow[]).find(p => p.user_id === attempt.student_id);
+          const quiz = quizMap[attempt.quiz_id];
+          const lesson = quiz ? lessonMap[quiz.lesson_id] : undefined;
+          const course = lesson ? courseMap[lesson.course_id] : undefined;
+          const enrollment = ((enrollmentsData || []) as EnrollmentRow[]).find(e => 
+            e.student_id === attempt.student_id && e.course_id === lesson?.course_id
+          );
+
+          if (profile) {
+            studentDetailsMap[attempt.student_id] = {
+              name: profile.full_name,
+              email: profile.email,
+              courseTitle: course?.title || 'Unknown Course',
+              enrollmentDate: enrollment?.enrolled_at ? new Date(enrollment.enrolled_at).toLocaleDateString() : 'Unknown',
+              courseProgress: enrollment?.progress || 0
+            };
+          }
+        });
+
+        setStudentDetailsById(studentDetailsMap);
       } finally {
         setLoading(false);
       }
@@ -160,12 +210,26 @@ export function SubmittedQuizzes() {
   };
 
   const openGradeDialog = async (att: Attempt) => {
-    setGradingAttempt(att);
+    const studentDetails = studentDetailsById[att.student_id];
+    const attemptWithStudent: AttemptWithStudent = {
+      ...att,
+      studentName: studentDetails?.name || 'Unknown Student',
+      studentEmail: studentDetails?.email || '',
+      courseTitle: studentDetails?.courseTitle || '',
+      enrollmentDate: studentDetails?.enrollmentDate || '',
+      courseProgress: studentDetails?.courseProgress || 0
+    };
+    setGradingAttempt(attemptWithStudent);
     await loadAnswers(att.id);
     await fetchQuizMeta(att.quiz_id);
-    const init: Record<string, boolean> = {};
-    (answers || []).forEach(a => { if (a.answer_text !== null && a.answer_text !== undefined) init[a.id] = false; });
-    setQaMarks(init);
+    
+    // Wait for answers to load before setting QA marks
+    setTimeout(() => {
+      const init: Record<string, boolean> = {};
+      answers.forEach(a => { if (a.answer_text !== null && a.answer_text !== undefined) init[a.id] = false; });
+      setQaMarks(init);
+    }, 100);
+    
     setGradeOpen(true);
   };
 
@@ -187,38 +251,56 @@ export function SubmittedQuizzes() {
     setSaving(true);
     try {
       const passed = computedScore >= quizMeta.passing_score;
+      
+      // Update quiz attempt with final grade and status
       await supabase
         .from('quiz_attempts')
-        .update({ score: computedScore, passed })
+        .update({ 
+          score: computedScore, 
+          passed, 
+          status: 'reviewed',
+          reviewed_at: new Date().toISOString()
+        })
         .eq('id', gradingAttempt.id);
 
+      // Update lesson progress if passed
       const lessonId = quizById[gradingAttempt.quiz_id]?.lesson_id;
       if (passed && lessonId) {
-        // Note: onConflict typed field not in generated types; cast to unknown then specific minimal shape
         await (supabase.from('lesson_progress') as unknown as {
-          upsert: (val: { lesson_id: string; student_id: string; is_completed: boolean }, opts: { onConflict: string }) => Promise<unknown>
-        }).upsert({ lesson_id: lessonId, student_id: gradingAttempt.student_id, is_completed: true }, { onConflict: 'lesson_id,student_id' });
+          upsert: (val: { lesson_id: string; student_id: string; quiz_passed: boolean }, opts: { onConflict: string }) => Promise<unknown>
+        }).upsert({ 
+          lesson_id: lessonId, 
+          student_id: gradingAttempt.student_id, 
+          quiz_passed: true 
+        }, { onConflict: 'lesson_id,student_id' });
       }
 
+      // Send notification to student
       const courseId = lessonId ? lessonById[lessonId]?.course_id : undefined;
       const path = courseId ? `/course-learning/${courseId}` : '/student?tab=learning';
       await (supabase.from('notifications') as unknown as {
         insert: (val: { user_id: string; title: string; type: string; message: string }) => Promise<unknown>
       }).insert({
         user_id: gradingAttempt.student_id,
-        title: 'Quiz graded',
+        title: 'Quiz Graded',
         type: 'quiz_graded',
-        message: JSON.stringify({ text: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}%`, path })
+        message: JSON.stringify({ 
+          text: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}% - ${passed ? 'Passed' : 'Failed'}`, 
+          path 
+        })
       });
 
       setGradeOpen(false);
       setGradingAttempt(null);
       setAnswers([]);
       setQuizMeta(null);
+      setQaMarks({});
 
+      // Refresh attempts list
       const { data: atts } = await supabase
         .from('quiz_attempts')
-        .select('id, created_at, quiz_id, student_id, score, passed')
+        .select('id, created_at, quiz_id, student_id, score, passed, status, attempt_number')
+        .eq('status', 'pending_review')
         .order('created_at', { ascending: false })
         .limit(100);
       setAttempts((atts as Attempt[]) || []);
@@ -238,11 +320,19 @@ export function SubmittedQuizzes() {
     const courseKey = course?.title || 'Unknown Course';
     const lessonKey = lesson?.title || 'Unknown Lesson';
     const quizKey = quiz?.title || 'Quiz';
-    const studentName = studentNameById[att.student_id] || 'Student';
+    const studentDetails = studentDetailsById[att.student_id];
+    
     tree[courseKey] = tree[courseKey] || {};
     tree[courseKey][lessonKey] = tree[courseKey][lessonKey] || {};
     tree[courseKey][lessonKey][quizKey] = tree[courseKey][lessonKey][quizKey] || [];
-    tree[courseKey][lessonKey][quizKey].push({ ...att, studentName });
+    tree[courseKey][lessonKey][quizKey].push({ 
+      ...att, 
+      studentName: studentDetails?.name || 'Unknown Student',
+      studentEmail: studentDetails?.email || '',
+      courseTitle: studentDetails?.courseTitle || '',
+      enrollmentDate: studentDetails?.enrollmentDate || '',
+      courseProgress: studentDetails?.courseProgress || 0
+    });
   });
 
   return (
@@ -271,18 +361,33 @@ export function SubmittedQuizzes() {
                         <div className="p-3 space-y-2">
                           {atts.map((s) => (
                             <Card key={s.id}>
-                              <CardHeader className="flex items-center justify-between">
-                                <CardTitle className="text-base">
-                                  {s.studentName}
-                                </CardTitle>
-                                <Badge variant={s.passed ? 'default' : 'outline'}>
-                                  {s.passed ? 'passed/graded' : 'pending/failed'}
-                                </Badge>
+                              <CardHeader>
+                                <div className="flex items-center justify-between">
+                                  <div className="space-y-1">
+                                    <CardTitle className="text-base">{s.studentName}</CardTitle>
+                                    <div className="text-sm text-muted-foreground">{s.studentEmail}</div>
+                                  </div>
+                                  <Badge variant="secondary">Pending Review</Badge>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                                  <div>
+                                    <span className="font-medium">Course:</span> {s.courseTitle}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Enrolled:</span> {s.enrollmentDate}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Course Progress:</span> {s.courseProgress}%
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Attempt:</span> #{s.attempt_number}
+                                  </div>
+                                </div>
                               </CardHeader>
                               <CardContent className="flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground">Submitted on {new Date(s.created_at).toLocaleString()}</div>
-                                <Button size="sm" onClick={async () => { setOpenAttemptId(s.id === openAttemptId ? null : s.id); if (s.id !== openAttemptId) await loadAnswers(s.id); }}>
-                                  {openAttemptId === s.id ? 'Close' : 'Review'}
+                                <Button size="sm" onClick={() => openGradeDialog(s)}>
+                                  Grade Quiz
                                 </Button>
                               </CardContent>
                               {openAttemptId === s.id && (
@@ -340,9 +445,21 @@ export function SubmittedQuizzes() {
       )}
 
       <Dialog open={gradeOpen} onOpenChange={setGradeOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Grade Quiz{quizMeta ? ` • ${quizMeta.title}` : ''}</DialogTitle>
+            {gradingAttempt && (
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><span className="font-medium">Student:</span> {gradingAttempt.studentName}</div>
+                  <div><span className="font-medium">Email:</span> {gradingAttempt.studentEmail}</div>
+                  <div><span className="font-medium">Course:</span> {gradingAttempt.courseTitle}</div>
+                  <div><span className="font-medium">Attempt:</span> #{gradingAttempt.attempt_number}</div>
+                  <div><span className="font-medium">Course Progress:</span> {gradingAttempt.courseProgress}%</div>
+                  <div><span className="font-medium">Submitted:</span> {new Date(gradingAttempt.created_at).toLocaleString()}</div>
+                </div>
+              </div>
+            )}
           </DialogHeader>
           <div className="space-y-4">
             {answers.length === 0 ? (

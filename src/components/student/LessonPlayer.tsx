@@ -81,7 +81,7 @@ export const LessonPlayer = ({
   const [textRead, setTextRead] = useState(false);
   
   // YouTube player state
-  const [youtubePlayer, setYoutubePlayer] = useState<InstanceType<Window['YT']['Player']> | null>(null);
+  const [youtubePlayer, setYoutubePlayer] = useState<any | null>(null);
   const [youtubeProgress, setYoutubeProgress] = useState(0);
   const [youtubeWatched, setYoutubeWatched] = useState(false);
   const [youtubeTrackingInterval, setYoutubeTrackingInterval] = useState<NodeJS.Timeout | null>(null);
@@ -253,7 +253,7 @@ export const LessonPlayer = ({
   };
 
   // YouTube Player Event Handlers
-  const onYouTubeReady = (event: { target: InstanceType<Window['YT']['Player']> }) => {
+  const onYouTubeReady = (event: { target: any }) => {
     const player = event.target;
     setYoutubePlayer(player);
     try { player.seekTo(0, true); } catch (_) {}
@@ -287,7 +287,7 @@ export const LessonPlayer = ({
     setYoutubeTrackingInterval(interval);
   };
 
-  const onYouTubeStateChange = (event: { target: InstanceType<Window['YT']['Player']>; data: number }) => {
+  const onYouTubeStateChange = (event: { target: any; data: number }) => {
     const player = event.target;
     const state = event.data;
     
@@ -306,7 +306,7 @@ export const LessonPlayer = ({
     }
   };
 
-  const onYouTubeError = (event: { target: InstanceType<Window['YT']['Player']>; data: number }) => {
+  const onYouTubeError = (event: { target: any; data: number }) => {
     console.error('YouTube player error:', event.data);
     toast({
       title: "Video Error",
