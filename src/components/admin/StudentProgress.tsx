@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -58,6 +57,7 @@ export default function StudentProgress() {
   const [detailsOverall, setDetailsOverall] = useState<number>(0);
 
   useEffect(() => {
+    console.log('StudentProgress component mounted - no startDate should exist');
     fetchFilters();
     fetchEnrollments();
   }, []);
@@ -151,7 +151,7 @@ export default function StudentProgress() {
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Narrow results by course, date, or progress</CardDescription>
+          <CardDescription>Narrow results by course or progress</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
