@@ -15,6 +15,8 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log('Header render:', { user: !!user, profile: !!profile, profileRole: profile?.role });
+
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
@@ -44,6 +46,7 @@ export const Header = () => {
   };
 
   const getDashboardLink = () => {
+    console.log('Getting dashboard link for profile:', profile);
     if (!profile) return "/";
     switch (profile.role) {
       case "admin": return "/admin";

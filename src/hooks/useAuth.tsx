@@ -41,9 +41,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
+    console.log('Auth useEffect triggered');
+    
+    // Set up auth state listener - CRITICAL: Never use async functions directly
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
+        
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
@@ -57,60 +61,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           setLoading(true);
-          try {
-            // Fetch profile with retry logic
-            let profileData = null;
-            let retries = 0;
-            const maxRetries = 3;
-            
-            while (retries < maxRetries && !profileData) {
-              const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single();
-              
-              if (data && !error) {
-                profileData = data;
-                break;
-              }
-              
-              if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-                console.error('Error fetching profile:', error);
-                break;
-              }
-              
-              // If profile not found and this is the first attempt, try to create one
-              if (retries === 0 && error?.code === 'PGRST116') {
-                const userMetaData = session.user.user_metadata;
-                const fullName = userMetaData?.full_name || userMetaData?.name || session.user.email?.split('@')[0] || 'User';
-                const role = userMetaData?.role || 'student';
-                
-                const createdProfile = await createProfileIfNotExists(
-                  session.user.id,
-                  session.user.email || '',
-                  fullName,
-                  role
-                );
-                
-                if (createdProfile) {
-                  profileData = createdProfile;
-                  break;
-                }
-              }
-              
-              // Wait a bit before retrying
-              await new Promise(resolve => setTimeout(resolve, 500));
-              retries++;
-            }
-            
-            setProfile(profileData);
-          } catch (err) {
-            console.error('Error in profile fetching:', err);
-            setProfile(null);
-          } finally {
-            setLoading(false);
-          }
+          // Use setTimeout to defer Supabase calls and prevent deadlocks
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
           setLoading(false);
@@ -121,50 +75,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('Getting initial session...');
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session:', { hasSession: !!session, hasUser: !!session?.user });
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           setLoading(true);
-          try {
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (data && !error) {
-              setProfile(data);
-            } else if (error?.code === 'PGRST116') {
-              // Profile not found, try to create one
-              const userMetaData = session.user.user_metadata;
-              const fullName = userMetaData?.full_name || userMetaData?.name || session.user.email?.split('@')[0] || 'User';
-              const role = userMetaData?.role || 'student';
-              
-              const createdProfile = await createProfileIfNotExists(
-                session.user.id,
-                session.user.email || '',
-                fullName,
-                role
-              );
-              
-              if (createdProfile) {
-                setProfile(createdProfile);
-              } else {
-                console.error('Failed to create profile for initial session');
-                setProfile(null);
-              }
-            } else {
-              console.error('Error fetching initial profile:', error);
-              setProfile(null);
-            }
-          } catch (err) {
-            console.error('Error in initial profile fetching:', err);
-            setProfile(null);
-          } finally {
-            setLoading(false);
-          }
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setLoading(false);
         }
@@ -177,7 +99,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     getInitialSession();
 
     return () => subscription.unsubscribe();
+
   }, []);
+
+  // Separate function to fetch user profile (prevents deadlocks)
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('Fetching profile for user:', userId);
+      
+      // Fetch profile with retry logic
+      let profileData = null;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries && !profileData) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (data && !error) {
+          profileData = data;
+          console.log('Profile fetched successfully:', data);
+          break;
+        }
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+          console.error('Error fetching profile:', error);
+          break;
+        }
+        
+        // If profile not found and this is the first attempt, try to create one
+        if (retries === 0 && error?.code === 'PGRST116') {
+          console.log('Profile not found, creating new profile...');
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            const userMetaData = user.user_metadata;
+            const fullName = userMetaData?.full_name || userMetaData?.name || user.email?.split('@')[0] || 'User';
+            const role = userMetaData?.role || 'student';
+            
+            const createdProfile = await createProfileIfNotExists(
+              userId,
+              user.email || '',
+              fullName,
+              role
+            );
+            
+            if (createdProfile) {
+              profileData = createdProfile;
+              console.log('Profile created successfully:', createdProfile);
+              break;
+            }
+          }
+        }
+        
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries++;
+      }
+      
+      setProfile(profileData);
+    } catch (err) {
+      console.error('Error in profile fetching:', err);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const refreshProfile = async () => {
     if (!user) return;

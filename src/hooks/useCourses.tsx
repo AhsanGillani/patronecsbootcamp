@@ -40,6 +40,7 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
+        setError(null);
         console.log('Fetching courses with options:', options);
         
         let query = supabase
