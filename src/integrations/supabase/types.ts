@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -800,11 +800,11 @@ export type Database = {
     }
     Functions: {
       calculate_course_progress: {
-        Args: { p_student_id: string; p_course_id: string }
+        Args: { p_course_id: string; p_student_id: string }
         Returns: number
       }
       calculate_lesson_completion: {
-        Args: { p_student_id: string; p_lesson_id: string }
+        Args: { p_lesson_id: string; p_student_id: string }
         Returns: number
       }
       generate_blog_slug: {
@@ -832,7 +832,7 @@ export type Database = {
         Returns: boolean
       }
       is_lesson_unlocked: {
-        Args: { p_student_id: string; p_lesson_id: string }
+        Args: { p_lesson_id: string; p_student_id: string }
         Returns: boolean
       }
       slugify: {
