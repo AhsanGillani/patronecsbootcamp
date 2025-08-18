@@ -191,9 +191,9 @@ const AllCourses = () => {
                         
                         <h3 className="font-semibold text-lg mb-3 line-clamp-2 text-slate-900 group-hover:text-blue-600 transition-colors">{course.title}</h3>
                         
-                        {course.profile && (
+                        {course.instructor && (
                           <p className="text-sm text-slate-600 mb-3">
-                            by {course.profile.full_name}
+                            by {course.instructor.full_name}
                           </p>
                         )}
                         
