@@ -63,14 +63,12 @@ export const Header = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-20 rounded-full blur-lg group-hover:blur-xl transition-all duration-300"></div>
             </div>
             <div className="relative z-10">
-              <a href="/" className="footer-brand _1 w-inline-block">
-                <img
-                  src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
-                  loading="lazy"
-                  alt="Company Logo"
-                  className="w-28 h-auto image-8 juio"
-                />
-              </a>
+              <img
+                src="https://cdn.prod.website-files.com/63eb79f4ab031d09e95a842f/6630f0f8c4d054dad1f951d9_Logo%20(7).svg"
+                loading="lazy"
+                alt="Company Logo"
+                className="w-28 h-auto image-8 juio"
+              />
             </div>
           </Link>
 
