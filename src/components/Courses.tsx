@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Clock, Users, Award, ArrowRight, Play, BookOpen, Sparkles } from "lucide-react";
 import { useCourses } from "@/hooks/useCourses";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 export const Courses = () => {
-  const { courses, loading } = useCourses({ limit: 6 });
+  const { courses, loading } = useCourses({ limit: 12 });
 
   return (
     <section id="courses" className="py-24 bg-gradient-to-b from-slate-50 to-white">
@@ -36,96 +37,108 @@ export const Courses = () => {
             <div className="animate-pulse text-purple-600 text-xl">Loading amazing courses...</div>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {courses.map((course, index) => (
-              <Card key={course.id} className="group relative overflow-hidden bg-white border border-slate-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-2 rounded-2xl animate-fade-in" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
-                {/* Course Image */}
-                <div className="relative aspect-video bg-slate-100 overflow-hidden">
-                  <ImageWithFallback
-                    src={course.thumbnail_url}
-                    alt={course.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Expert Badge */}
-                  <div className="absolute top-4 left-4">
-                    <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold px-3 py-1 border-0">
-                      Expert
-                    </Badge>
-                  </div>
-                  
-                  {/* Play Button Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-white/90 rounded-full p-4 hover:bg-white transition-colors shadow-lg">
-                      <Play className="h-6 w-6 text-purple-600" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  {/* Category and Level Badges */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="secondary" className="text-xs font-semibold bg-slate-100 text-slate-700 border-0">
-                      {course.category?.name || "General"}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 bg-purple-50">
-                      {course.level}
-                    </Badge>
-                  </div>
-                  
-                  {/* Course Title */}
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight text-slate-900">
-                    {course.title}
-                  </h3>
-                  
-                  {/* Course Description */}
-                  <p className="text-slate-600 mb-4 text-sm leading-relaxed">
-                    {course.description?.substring(0, 100)}...
-                  </p>
-                  
-                  {/* Rating */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-amber-400">
-                        {"★".repeat(5)}
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {courses.map((course, index) => (
+                <CarouselItem key={course.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <Card className="group relative overflow-hidden bg-white border border-slate-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-2 rounded-2xl animate-fade-in h-full" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+                    {/* Course Image */}
+                    <div className="relative aspect-video bg-slate-100 overflow-hidden">
+                      <ImageWithFallback
+                        src={course.thumbnail_url}
+                        alt={course.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {/* Expert Badge */}
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold px-3 py-1 border-0">
+                          Expert
+                        </Badge>
                       </div>
-                      <span className="text-sm font-semibold text-slate-900">4.8</span>
-                      <span className="text-xs text-slate-500">(2.8k)</span>
+                      
+                      {/* Play Button Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="bg-white/90 rounded-full p-4 hover:bg-white transition-colors shadow-lg">
+                          <Play className="h-6 w-6 text-purple-600" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-600 flex items-center gap-1">
-                      <Award className="h-4 w-4" />
-                      Certificate
+                    
+                    <div className="p-6 flex flex-col flex-1">
+                      {/* Category and Level Badges */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <Badge variant="secondary" className="text-xs font-semibold bg-slate-100 text-slate-700 border-0">
+                          {course.category?.name || "General"}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 bg-purple-50">
+                          {course.level}
+                        </Badge>
+                      </div>
+                      
+                      {/* Course Title */}
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight text-slate-900">
+                        {course.title}
+                      </h3>
+                      
+                      {/* Course Description */}
+                      <p className="text-slate-600 mb-4 text-sm leading-relaxed flex-1">
+                        {course.description?.substring(0, 80)}...
+                      </p>
+                      
+                      {/* Rating */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex text-amber-400">
+                            {"★".repeat(5)}
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900">4.8</span>
+                          <span className="text-xs text-slate-500">(2.8k)</span>
+                        </div>
+                        <div className="text-sm text-slate-600 flex items-center gap-1">
+                          <Award className="h-4 w-4" />
+                          Certificate
+                        </div>
+                      </div>
+                      
+                      {/* Course Meta */}
+                      <div className="flex items-center gap-4 text-xs text-slate-500 mb-6 border-t border-slate-100 pt-4">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {course.total_duration || 0}h
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {course.total_enrollments || 0}
+                        </div>
+                        <div className="text-emerald-600 font-semibold flex items-center gap-1">
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                          Free
+                        </div>
+                      </div>
+                      
+                      {/* CTA Button */}
+                      <Link to={`/course/${course.slug || course.id}`} className="mt-auto">
+                        <Button className="w-full group font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300" variant="default">
+                          Start Learning Free
+                          <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
                     </div>
-                  </div>
-                  
-                  {/* Course Meta */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-6 border-t border-slate-100 pt-4">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {course.total_duration || 0}h
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {course.total_enrollments || 0}
-                    </div>
-                    <div className="text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                      Lifetime Access
-                    </div>
-                  </div>
-                  
-                  {/* CTA Button */}
-                  <Link to={`/course/${course.slug || course.id}`}>
-                    <Button className="w-full group font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300" variant="default">
-                      Start Learning Free
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden lg:flex -left-6 bg-white/80 hover:bg-white border-slate-200 hover:border-purple-300 text-slate-700 hover:text-purple-600" />
+            <CarouselNext className="hidden lg:flex -right-6 bg-white/80 hover:bg-white border-slate-200 hover:border-purple-300 text-slate-700 hover:text-purple-600" />
+          </Carousel>
         )}
 
         {/* CTA Section */}
