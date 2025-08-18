@@ -168,22 +168,22 @@ export default function InstructorControl() {
           .limit(10)
       ]);
 
-      // Transform the data to match the interface
+      // Transform the data to match the interface with proper type safety
       const transformedCourses = (coursesResult.data || []).map((course: any) => ({
         id: course.id,
         title: course.title,
         status: course.status,
         price: course.price,
         level: course.level,
-        categories: course.categories ? { name: course.categories.name } : null,
+        categories: course.categories && !course.categories.error ? { name: course.categories.name } : null,
         enrollments: course.enrollments || []
       }));
 
       const transformedEnrollments = (enrollmentsResult.data || []).map((enrollment: any) => ({
         id: enrollment.id,
         enrolled_at: enrollment.enrolled_at,
-        courses: enrollment.courses ? { title: enrollment.courses.title } : null,
-        profiles: enrollment.profiles ? { full_name: enrollment.profiles.full_name } : null
+        courses: enrollment.courses && !enrollment.courses.error ? { title: enrollment.courses.title } : null,
+        profiles: enrollment.profiles && !enrollment.profiles.error ? { full_name: enrollment.profiles.full_name } : null
       }));
 
       setInstructorActivity({
