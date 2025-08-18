@@ -40,13 +40,14 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
+        console.log('Fetching courses with options:', options);
         
         let query = supabase
           .from('courses')
           .select(`
             *,
-            category:categories!courses_category_id_fkey(name),
-            profile:profiles!courses_instructor_id_fkey(full_name)
+            categories!courses_category_id_fkey(name),
+            profiles!courses_instructor_id_fkey(full_name)
           `)
           .eq('status', 'approved')
           .eq('soft_deleted', false)
@@ -66,10 +67,27 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
 
         const { data, error } = await query;
 
-        if (error) throw error;
+        if (error) {
+          console.error('Course query error:', error);
+          throw error;
+        }
 
-        setCourses(data || []);
+        console.log('Courses fetched successfully:', data?.length);
+        
+        // Transform data to match interface with proper type safety
+        const transformedCourses = (data || []).map((course: any) => ({
+          ...course,
+          category: course.categories && typeof course.categories === 'object' && 'name' in course.categories 
+            ? { name: course.categories.name } 
+            : undefined,
+          profile: course.profiles && typeof course.profiles === 'object' && 'full_name' in course.profiles 
+            ? { full_name: course.profiles.full_name } 
+            : undefined
+        }));
+
+        setCourses(transformedCourses);
       } catch (err) {
+        console.error('Error fetching courses:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch courses');
       } finally {
         setLoading(false);
