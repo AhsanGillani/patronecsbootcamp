@@ -31,7 +31,7 @@ interface InstructorActivity {
     status: string;
     price: number;
     level: string;
-    categories?: { name: string };
+    categories?: { name: string } | null;
     enrollments?: Array<{ id: string }>;
   }>;
   blogs: Array<{
@@ -43,8 +43,8 @@ interface InstructorActivity {
   recent_enrollments: Array<{
     id: string;
     enrolled_at: string;
-    courses?: { title: string };
-    profiles?: { full_name: string };
+    courses?: { title: string } | null;
+    profiles?: { full_name: string } | null;
   }>;
 }
 
