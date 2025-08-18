@@ -143,13 +143,15 @@ export function StudentCourses() {
       }
       
       // Recalculate course progress from lesson completions if server-side value is stale
-      const recalculated = (data || []).map((enrollment: any) => {
-        const lessons = enrollment.courses?.lessons || [];
-        const completed = lessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
-        const total = lessons.length || 1;
-        const computed = Math.round((completed / total) * 100);
-        return { ...enrollment, progress: Math.max(enrollment.progress || 0, computed) } as EnrolledCourse;
-      });
+      const recalculated = (data || [])
+        .filter((enrollment: any) => enrollment.courses) // Filter out enrollments with null courses
+        .map((enrollment: any) => {
+          const lessons = enrollment.courses?.lessons || [];
+          const completed = lessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
+          const total = lessons.length || 1;
+          const computed = Math.round((completed / total) * 100);
+          return { ...enrollment, progress: Math.max(enrollment.progress || 0, computed) } as EnrolledCourse;
+        });
       setEnrolledCourses(recalculated);
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
@@ -436,177 +438,220 @@ export function StudentCourses() {
     );
   }
 
+  // Stats
+  const totalCourses = enrolledCourses.filter((e) => e.courses).length;
+  const inProgressCount = enrolledCourses.filter((e) => e.progress > 0 && e.progress < 100).length;
+  const completedCount = enrolledCourses.filter((e) => e.progress >= 100).length;
+
   return (
-    <div className="space-y-6">
-      {/* Debug Information */}
-      <div className="bg-muted p-4 rounded-lg text-sm">
-        <h4 className="font-semibold mb-2">Debug Info:</h4>
-        <p>User ID: {user?.id || 'Not authenticated'}</p>
-        <p>Profile ID: {profile?.id || 'No profile'}</p>
-        <p>Profile Role: {profile?.role || 'No role'}</p>
-        <p>Enrolled Courses Count: {enrolledCourses.length}</p>
-        <div className="mt-2 space-x-2">
-          <Button size="sm" variant="outline" onClick={checkPermissions}>
-            Check Permissions
-          </Button>
-          <Button size="sm" variant="outline" onClick={createTestData}>
-            Create Test Data
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">My Courses</h2>
-          <p className="text-muted-foreground">Track your learning progress</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {enrolledCourses.map((enrollment) => (
-          <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{enrollment.courses.title}</CardTitle>
-                  <CardDescription className="mt-1">
-                    by {enrollment.courses.profiles?.full_name}
-                  </CardDescription>
-                </div>
-                {getStatusBadge(enrollment.progress)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {enrollment.courses.description}
-              </p>
-              
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{enrollment.courses.lesson_count} lessons</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{enrollment.courses.total_duration || 0}min</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header Section */}
+        <div className="relative overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h1 className="text-3xl font-bold">My Courses</h1>
+                  <p className="text-blue-100 text-lg">Track your learning progress and continue where you left off</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Course Content - Collapsible Lessons */}
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                    <span className="text-sm font-medium">Course Content</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
-                  {enrollment.courses.lessons
-                    ?.sort((a, b) => a.order_index - b.order_index)
-                    .map((lesson, index) => {
-                      const isUnlocked = isLessonUnlocked(enrollment.courses.lessons, index);
-                      const lessonProgress = getLessonProgress(lesson);
-                      const isCompleted = lesson.lesson_progress && 
-                                        lesson.lesson_progress.length > 0 && 
-                                        lesson.lesson_progress[0].is_completed;
-                      
-                      return (
-                        <div key={lesson.id} className={`border rounded p-3 space-y-2 ${
-                          !isUnlocked ? 'opacity-50 bg-muted/30' : ''
-                        } ${isCompleted ? 'border-green-200 bg-green-50/30' : ''}`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                isCompleted 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : isUnlocked 
-                                    ? 'bg-primary/10 text-primary' 
-                                    : 'bg-muted text-muted-foreground'
-                              }`}>
-                                {isCompleted ? '✓' : index + 1}
-                              </span>
-                              <span className="text-sm font-medium">{lesson.title}</span>
-                              {!isUnlocked && (
-                                <Lock className="h-3 w-3 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              <span>{lesson.duration}min</span>
-                            </div>
-                          </div>
-                          
-                          {/* Lesson Progress Bar */}
-                          {isUnlocked && (
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Progress</span>
-                                <span>{lessonProgress}%</span>
-                              </div>
-                              <Progress value={lessonProgress} className="h-1" />
-                            </div>
-                          )}
-                          
-                          {/* Show quiz if exists */}
-                          {lesson.quizzes && lesson.quizzes.length > 0 && (
-                            <div className="ml-6 space-y-1">
-                              {lesson.quizzes.map((quiz) => (
-                                <div key={quiz.id} className="flex items-center justify-between bg-secondary/20 p-2 rounded">
-                                  <div className="flex items-center space-x-2">
-                                    <HelpCircle className="h-3 w-3 text-blue-500" />
-                                    <span className="text-xs font-medium">{quiz.title}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                    <Target className="h-3 w-3" />
-                                    <span>{quiz.quiz_questions?.length || 0} questions</span>
-                                    <span>•</span>
-                                    <span>{quiz.passing_score}% to pass</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Lesson Type Indicators */}
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            {lesson.type === 'video' && <Video className="h-3 w-3" />}
-                            {lesson.type === 'pdf' && <FileText className="h-3 w-3" />}
-                            {lesson.type === 'text' && <FileText className="h-3 w-3" />}
-                            {lesson.type === 'quiz' && <HelpCircle className="h-3 w-3" />}
-                            <span className="capitalize">{lesson.type}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </CollapsibleContent>
-              </Collapsible>
-
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                  <BookOpen className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{Math.round(enrollment.progress)}%</span>
-                </div>
-                <Progress value={enrollment.progress} className="h-2" />
-              </div>
-
-              <div className="flex space-x-2">
-                <Button 
-                  className="flex-1" 
-                  size="sm"
-                  onClick={() => window.location.href = `/course-learning/${enrollment.courses.id}`}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  {enrollment.progress === 0 ? 'Start Course' : 'Continue'}
-                </Button>
-                {enrollment.progress >= 100 && (
-                  <Button variant="outline" size="sm">
-                    <Award className="h-4 w-4" />
-                  </Button>
-                )}
+                <p className="text-sm font-medium text-gray-600">Total Enrolled</p>
+                <p className="text-3xl font-bold text-gray-900">{totalCourses}</p>
               </div>
             </CardContent>
           </Card>
-        ))}
+
+          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                  <Play className="w-6 h-6 text-amber-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-600">In Progress</p>
+                <p className="text-3xl font-bold text-gray-900">{inProgressCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-3xl font-bold text-gray-900">{completedCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Courses Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {enrolledCourses.filter(enrollment => enrollment.courses).map((enrollment) => (
+            <Card key={enrollment.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg line-clamp-2">{enrollment.courses.title}</CardTitle>
+                    <CardDescription className="mt-1">
+                      by {enrollment.courses.profiles?.full_name}
+                    </CardDescription>
+                  </div>
+                  {getStatusBadge(enrollment.progress)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {enrollment.courses.description}
+                </p>
+                
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-1">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{enrollment.courses.lesson_count} lessons</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{enrollment.courses.total_duration || 0}min</span>
+                  </div>
+                </div>
+
+                {/* Course Content - Collapsible Lessons */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <span className="text-sm font-medium">Course Content</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-2">
+                    {enrollment.courses.lessons
+                      ?.sort((a, b) => a.order_index - b.order_index)
+                      .map((lesson, index) => {
+                        const isUnlocked = isLessonUnlocked(enrollment.courses.lessons, index);
+                        const lessonProgress = getLessonProgress(lesson);
+                        const isCompleted = lesson.lesson_progress && 
+                                          lesson.lesson_progress.length > 0 && 
+                                          lesson.lesson_progress[0].is_completed;
+                        
+                        return (
+                          <div key={lesson.id} className={`border rounded p-3 space-y-2 ${
+                            !isUnlocked ? 'opacity-50 bg-muted/30' : ''
+                          } ${isCompleted ? 'border-green-200 bg-green-50/30' : ''}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  isCompleted 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : isUnlocked 
+                                      ? 'bg-primary/10 text-primary' 
+                                      : 'bg-muted text-muted-foreground'
+                                }`}>
+                                  {isCompleted ? '✓' : index + 1}
+                                </span>
+                                <span className="text-sm font-medium">{lesson.title}</span>
+                                {!isUnlocked && (
+                                  <Lock className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{lesson.duration}min</span>
+                              </div>
+                            </div>
+                            
+                            {isUnlocked && (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>Progress</span>
+                                  <span>{lessonProgress}%</span>
+                                </div>
+                                <Progress value={lessonProgress} className="h-1" />
+                              </div>
+                            )}
+                            
+                            {lesson.quizzes && lesson.quizzes.length > 0 && (
+                              <div className="ml-6 space-y-1">
+                                {lesson.quizzes.map((quiz) => (
+                                  <div key={quiz.id} className="flex items-center justify-between bg-secondary/20 p-2 rounded">
+                                    <div className="flex items-center space-x-2">
+                                      <HelpCircle className="h-3 w-3 text-blue-500" />
+                                      <span className="text-xs font-medium">{quiz.title}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                      <Target className="h-3 w-3" />
+                                      <span>{quiz.quiz_questions?.length || 0} questions</span>
+                                      <span>•</span>
+                                      <span>{quiz.passing_score}% to pass</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                              {lesson.type === 'video' && <Video className="h-3 w-3" />}
+                              {lesson.type === 'pdf' && <FileText className="h-3 w-3" />}
+                              {lesson.type === 'text' && <FileText className="h-3 w-3" />}
+                              {lesson.type === 'quiz' && <HelpCircle className="h-3 w-3" />}
+                              <span className="capitalize">{lesson.type}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Progress</span>
+                    <span>{Math.round(enrollment.progress)}%</span>
+                  </div>
+                  <Progress value={enrollment.progress} className="h-2" />
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button 
+                    className="flex-1" 
+                    size="sm"
+                    onClick={() => window.location.href = `/course-learning/${enrollment.courses.id}`}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    {enrollment.progress === 0 ? 'Start Course' : 'Continue'}
+                  </Button>
+                  {enrollment.progress >= 100 && (
+                    <Button variant="outline" size="sm">
+                      <Award className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

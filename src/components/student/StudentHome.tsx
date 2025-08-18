@@ -84,11 +84,12 @@ export function StudentHome() {
 
       if (certError) throw certError;
 
-      // Calculate stats
-      const completedCount = enrollments?.filter(e => e.progress >= 100).length || 0;
+      // Calculate stats - only count enrollments with valid course data
+      const validEnrollments = enrollments?.filter(e => e.courses) || [];
+      const completedCount = validEnrollments.filter(e => e.progress >= 100).length || 0;
       
       setStats({
-        totalEnrolled: enrollments?.length || 0,
+        totalEnrolled: validEnrollments.length || 0,
         completedCourses: completedCount,
         certificates: certificates?.length || 0,
         totalLearningTime: 0, // TODO: Calculate from lesson progress
@@ -96,8 +97,8 @@ export function StudentHome() {
         averageScore: 85 // TODO: Calculate actual average
       });
 
-      // Set recent courses (in progress)
-      setRecentCourses(enrollments?.filter(e => e.progress > 0 && e.progress < 100).slice(0, 3) || []);
+      // Set recent courses (in progress) - only include enrollments with valid course data
+      setRecentCourses(validEnrollments.filter(e => e.progress > 0 && e.progress < 100).slice(0, 3) || []);
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -290,44 +291,46 @@ export function StudentHome() {
             {recentCourses.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {recentCourses.map((enrollment) => (
-                  <Card key={enrollment.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                    <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                            {enrollment.courses.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            by {enrollment.courses.profiles?.full_name || 'Unknown Instructor'}
-                          </p>
+                  enrollment.courses && (
+                    <Card key={enrollment.id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
+                      <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
+                              {enrollment.courses.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              by {enrollment.courses.profiles?.full_name || 'Unknown Instructor'}
+                            </p>
+                          </div>
+                          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center ml-4">
+                            <BookOpen className="w-6 h-6 text-blue-600" />
+                          </div>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center ml-4">
-                          <BookOpen className="w-6 h-6 text-blue-600" />
+                        
+                        <div className="space-y-3 mb-6">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Progress</span>
+                            <span className="font-semibold text-gray-900">{Math.round(enrollment.progress)}%</span>
                         </div>
+                          <Progress 
+                            value={enrollment.progress} 
+                            className="h-2 bg-gray-200"
+                          />
                       </div>
-                      
-                      <div className="space-y-3 mb-6">
-                      <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Progress</span>
-                          <span className="font-semibold text-gray-900">{Math.round(enrollment.progress)}%</span>
-                      </div>
-                        <Progress 
-                          value={enrollment.progress} 
-                          className="h-2 bg-gray-200"
-                        />
-                    </div>
-                      
-                      <Button 
-                        size="lg" 
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
-                        onClick={() => navigate(`/course/${enrollment.courses.id}/learn`)}
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                      Continue Learning
-                    </Button>
-                  </CardContent>
-                </Card>
+                        
+                        <Button 
+                          size="lg" 
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                          onClick={() => navigate(`/course/${enrollment.courses.id}/learn`)}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                        Continue Learning
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  )
               ))}
             </div>
             ) : (

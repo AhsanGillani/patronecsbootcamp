@@ -41,23 +41,25 @@ export function StudentLearning() {
 
       if (error) throw error;
 
-      const computed = (data || []).map((enrollment: any) => {
-        const lessons = enrollment.courses?.lessons || [];
-        const filteredLessons = lessons.map((l: any) => ({
-          ...l,
-          lesson_progress: (l.lesson_progress || []).filter((p: any) => p.student_id === (profile?.id || user?.id))
-        }));
-        const completed = filteredLessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
-        const total = filteredLessons.length || 1;
-        const progress = Math.round((completed / total) * 100);
-        const latestAccess = filteredLessons
-          .flatMap((l: any) => l.lesson_progress || [])
-          .map((p: any) => p.last_accessed_at)
-          .filter(Boolean)
-          .sort()
-          .slice(-1)[0] || enrollment.updated_at;
-        return { ...enrollment, computedProgress: progress, latestAccess };
-      });
+      const computed = (data || [])
+        .filter((enrollment: any) => enrollment.courses) // Filter out enrollments with null courses
+        .map((enrollment: any) => {
+          const lessons = enrollment.courses?.lessons || [];
+          const filteredLessons = lessons.map((l: any) => ({
+            ...l,
+            lesson_progress: (l.lesson_progress || []).filter((p: any) => p.student_id === (profile?.id || user?.id))
+          }));
+          const completed = filteredLessons.filter((l: any) => l.lesson_progress?.[0]?.is_completed).length;
+          const total = filteredLessons.length || 1;
+          const progress = Math.round((completed / total) * 100);
+          const latestAccess = filteredLessons
+            .flatMap((l: any) => l.lesson_progress || [])
+            .map((p: any) => p.last_accessed_at)
+            .filter(Boolean)
+            .sort()
+            .slice(-1)[0] || enrollment.updated_at;
+          return { ...enrollment, computedProgress: progress, latestAccess };
+        });
 
       const inProgress = computed
         .filter((e: any) => e.computedProgress > 0 && e.computedProgress < 100)
@@ -109,7 +111,7 @@ export function StudentLearning() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {recentCourses.map((enrollment) => (
+        {recentCourses.filter(enrollment => enrollment.courses).map((enrollment) => (
           <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">{enrollment.courses.title}</CardTitle>

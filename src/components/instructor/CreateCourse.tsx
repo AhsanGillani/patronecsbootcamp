@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CreateCourseProps {
   onCourseCreated: () => void;
+  open?: boolean; // allow controlled open from parent
+  onOpenChange?: (open: boolean) => void; // controlled handler
+  hideTrigger?: boolean; // optionally hide internal trigger button
 }
 
 interface Category {
@@ -20,10 +23,10 @@ interface Category {
   name: string;
 }
 
-export const CreateCourse = ({ onCourseCreated }: CreateCourseProps) => {
+export const CreateCourse = ({ onCourseCreated, open: controlledOpen, onOpenChange: controlledOnOpenChange, hideTrigger }: CreateCourseProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
@@ -34,6 +37,14 @@ export const CreateCourse = ({ onCourseCreated }: CreateCourseProps) => {
     price: "0",
     thumbnail_url: ""
   });
+
+  const isControlled = typeof controlledOpen === 'boolean';
+  const open = isControlled ? controlledOpen as boolean : uncontrolledOpen;
+
+  const setOpen = (isOpen: boolean) => {
+    if (controlledOnOpenChange) controlledOnOpenChange(isOpen);
+    if (!isControlled) setUncontrolledOpen(isOpen);
+  };
 
   const handleOpenChange = async (isOpen: boolean) => {
     setOpen(isOpen);
@@ -111,12 +122,14 @@ export const CreateCourse = ({ onCourseCreated }: CreateCourseProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Create Course</span>
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button className="flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>Create Course</span>
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create New Course</DialogTitle>

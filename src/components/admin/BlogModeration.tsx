@@ -184,7 +184,7 @@ export default function BlogModeration() {
               <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center">
                 <XCircle className="w-6 h-6 text-white" />
               </div>
-              <div>
+      <div>
                 <p className="text-sm font-medium text-red-600">Rejected</p>
                 <p className="text-2xl font-bold text-red-900">{blogs.filter(b => b.status === 'rejected').length}</p>
               </div>
@@ -303,13 +303,13 @@ export default function BlogModeration() {
                           </DialogHeader>
                           <div className="space-y-6">
                             <div className="grid md:grid-cols-2 gap-6">
-                              <div className="space-y-4">
+                          <div className="space-y-4">
                                 <div className="bg-slate-50 rounded-xl p-4">
                                   <h4 className="font-semibold text-slate-900 mb-2">Content</h4>
                                   <div className="text-slate-600 text-sm leading-relaxed bg-white p-4 rounded-lg border border-slate-200 max-h-60 overflow-y-auto">
-                                    {blog.content}
-                                  </div>
-                                </div>
+                                {blog.content}
+                              </div>
+                            </div>
                               </div>
                               <div className="space-y-4">
                                 <div className="bg-slate-50 rounded-xl p-4">

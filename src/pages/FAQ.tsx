@@ -220,7 +220,7 @@ const FAQ = () => {
                 {category.title}
               </div>
             ))}
-          </div>
+            </div>
           </div>
         </section>
 

@@ -62,6 +62,12 @@ const menuItems = [
     description: 'Platform insights'
   },
   { 
+    id: 'student-progress', 
+    title: 'Student Progress', 
+    icon: TrendingUp,
+    description: 'Track course progress'
+  },
+  { 
     id: 'announcements', 
     title: 'Announcements', 
     icon: Megaphone,
@@ -104,7 +110,7 @@ export function AdminSidebar({
         ${isCollapsed ? 'w-20' : 'w-80'} bg-white border-r border-slate-200 shadow-xl
         transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      flex flex-col`}>
         {/* Header */}
         <div className="p-6 border-b border-slate-200 bg-gradient-to-br from-red-50 to-orange-50">
           <div className="flex items-center justify-between mb-4">
@@ -150,8 +156,9 @@ export function AdminSidebar({
           )}
         </div>
 
-        {/* Navigation Menu */}
-        <div className="p-4">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
           <div className="mb-6">
             {!isCollapsed && (
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">
@@ -241,6 +248,7 @@ export function AdminSidebar({
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </>

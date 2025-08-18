@@ -77,10 +77,12 @@ export function StudentFeedback() {
         });
       }
 
-      const coursesWithFeedback = (data || []).map((enrollment: any) => ({
-        ...enrollment,
-        feedbacks: feedbackByCourse[enrollment.course_id] || []
-      }));
+      const coursesWithFeedback = (data || [])
+        .filter((enrollment: any) => enrollment.courses) // Filter out enrollments with null courses
+        .map((enrollment: any) => ({
+          ...enrollment,
+          feedbacks: feedbackByCourse[enrollment.course_id] || []
+        }));
       
       setCompletedCourses(coursesWithFeedback as CompletedCourse[]);
     } catch (error) {
@@ -198,7 +200,7 @@ export function StudentFeedback() {
       </div>
 
       <div className="space-y-6">
-        {completedCourses.map((course) => (
+        {completedCourses.filter(course => course.courses).map((course) => (
           <Card key={course.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
