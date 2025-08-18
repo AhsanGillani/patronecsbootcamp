@@ -126,7 +126,19 @@ export default function InstructorControl() {
 
   const fetchInstructorActivity = async (instructor: Instructor) => {
     try {
+      console.log('Fetching activity for instructor:', instructor.user_id);
+      
+      // Get instructor's course IDs first
+      const { data: instructorCourses } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('instructor_id', instructor.user_id);
+      
+      const courseIds = instructorCourses?.map(c => c.id) || [];
+      console.log('Found course IDs:', courseIds);
+
       const [coursesResult, blogsResult, enrollmentsResult] = await Promise.all([
+        // Fetch courses with left joins to avoid filtering out courses without categories
         supabase
           .from('courses')
           .select(`
@@ -135,63 +147,96 @@ export default function InstructorControl() {
             status,
             price,
             level,
-            admin_comments,
             created_at,
-            updated_at,
-            categories!inner(name),
-            enrollments(id)
+            category_id,
+            categories(name)
           `)
           .eq('instructor_id', instructor.user_id)
           .order('created_at', { ascending: false }),
+        
+        // Fetch blogs
         supabase
           .from('blogs')
-          .select('*')
+          .select('id, title, status, created_at')
           .eq('author_id', instructor.user_id)
           .order('created_at', { ascending: false }),
-        supabase
-          .from('enrollments')
-          .select(`
-            id,
-            enrolled_at,
-            course_id,
-            courses!inner(title),
-            profiles!student_id(full_name)
-          `)
-          .in('course_id', 
-            await supabase
-              .from('courses')
-              .select('id')
-              .eq('instructor_id', instructor.user_id)
-              .then(({ data }) => data?.map(c => c.id) || [])
-          )
-          .order('enrolled_at', { ascending: false })
-          .limit(10)
+        
+        // Fetch enrollments only if there are courses
+        courseIds.length > 0 
+          ? supabase
+              .from('enrollments')
+              .select(`
+                id,
+                enrolled_at,
+                course_id,
+                student_id
+              `)
+              .in('course_id', courseIds)
+              .order('enrolled_at', { ascending: false })
+              .limit(20)
+          : { data: [], error: null }
       ]);
 
-      // Transform the data to match the interface with proper type safety
+      console.log('Courses result:', coursesResult);
+      console.log('Blogs result:', blogsResult);
+      console.log('Enrollments result:', enrollmentsResult);
+
+      // Get student profiles and course details for enrollments
+      let enrollmentDetails: any[] = [];
+      if (enrollmentsResult.data && enrollmentsResult.data.length > 0) {
+        const studentIds = enrollmentsResult.data.map(e => e.student_id);
+        const enrollmentCourseIds = enrollmentsResult.data.map(e => e.course_id);
+        
+        const [studentsResult, courseTitlesResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('user_id, full_name, email')
+            .in('user_id', studentIds),
+          supabase
+            .from('courses')
+            .select('id, title')
+            .in('id', enrollmentCourseIds)
+        ]);
+
+        // Combine enrollment data with student and course details
+        enrollmentDetails = enrollmentsResult.data.map(enrollment => {
+          const student = studentsResult.data?.find(s => s.user_id === enrollment.student_id);
+          const course = courseTitlesResult.data?.find(c => c.id === enrollment.course_id);
+          
+          return {
+            id: enrollment.id,
+            enrolled_at: enrollment.enrolled_at,
+            courses: course ? { title: course.title } : null,
+            profiles: student ? { full_name: student.full_name, email: student.email } : null
+          };
+        });
+      }
+
+      // Transform courses data
       const transformedCourses = (coursesResult.data || []).map((course: any) => ({
         id: course.id,
         title: course.title,
         status: course.status,
         price: course.price,
         level: course.level,
-        categories: course.categories && !course.categories.error ? { name: course.categories.name } : null,
-        enrollments: course.enrollments || []
+        categories: course.categories ? { name: course.categories.name } : null,
+        enrollments: enrollmentDetails.filter(e => e.courses?.title && 
+          enrollmentsResult.data?.find(en => en.course_id === course.id)).map(e => ({ id: e.id }))
       }));
 
-      const transformedEnrollments = (enrollmentsResult.data || []).map((enrollment: any) => ({
-        id: enrollment.id,
-        enrolled_at: enrollment.enrolled_at,
-        courses: enrollment.courses && !enrollment.courses.error ? { title: enrollment.courses.title } : null,
-        profiles: enrollment.profiles && !enrollment.profiles.error ? { full_name: enrollment.profiles.full_name } : null
-      }));
+      console.log('Final transformed data:', {
+        courses: transformedCourses,
+        blogs: blogsResult.data || [],
+        enrollments: enrollmentDetails
+      });
 
       setInstructorActivity({
         courses: transformedCourses,
         blogs: blogsResult.data || [],
-        recent_enrollments: transformedEnrollments,
+        recent_enrollments: enrollmentDetails,
       });
     } catch (error: unknown) {
+      console.error('Error fetching instructor activity:', error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       toast({
         title: 'Error',
