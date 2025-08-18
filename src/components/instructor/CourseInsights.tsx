@@ -4,7 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Star, TrendingUp, DollarSign, Eye, Clock } from "lucide-react";
+import { Users, Star, TrendingUp, DollarSign } from "lucide-react";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LineChart,
+  Line,
+  ResponsiveContainer,
+} from "recharts";
 
 interface CourseMetrics {
   id: string;
@@ -143,8 +158,8 @@ export const CourseInsights = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Course Insights</h2>
-        <p className="text-muted-foreground">Track your course performance and student feedback</p>
+        <h2 className="text-2xl font-bold">Instructor Dashboard</h2>
+        <p className="text-muted-foreground">Student engagement, course completion, and performance</p>
       </div>
 
       {/* Overview Stats */}
@@ -201,6 +216,58 @@ export const CourseInsights = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts: Enrollments per Course */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Enrollments per Course</CardTitle>
+          <CardDescription>Distribution of students across your courses</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {metrics.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">No data</p>
+          ) : (
+            <ChartContainer
+              config={{ enrollments: { label: "Enrollments", color: "hsl(221, 83%, 53%)" } }}
+              className="h-72"
+            >
+              <BarChart data={metrics.map(m => ({ name: m.title, enrollments: m.total_enrollments }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" hide />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="enrollments" fill="var(--color-enrollments)" radius={[4,4,0,0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Charts: Completion Rate per Course */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Completion Rate by Course</CardTitle>
+          <CardDescription>Average progress across enrollments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {metrics.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">No data</p>
+          ) : (
+            <ChartContainer
+              config={{ completion: { label: "Completion %", color: "hsl(262, 83%, 58%)" } }}
+              className="h-72"
+            >
+              <LineChart data={metrics.map(m => ({ name: m.title, completion: Math.round(m.completion_rate) }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" hide />
+                <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="completion" stroke="var(--color-completion)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Course Performance */}
       <Card>

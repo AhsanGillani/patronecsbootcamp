@@ -15,6 +15,7 @@ import CategoryManagement from '@/components/admin/CategoryManagement';
 import CMSControl from '@/components/admin/CMSControl';
 import Analytics from '@/components/admin/Analytics';
 import Announcements from '@/components/admin/Announcements';
+import StudentProgress from '@/components/admin/StudentProgress';
 
 export default function AdminDashboard() {
   const { isAdmin, signOut, profile, loading } = useAuth();
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
       case 'categories': return <CategoryManagement />;
       case 'cms': return <CMSControl />;
       case 'analytics': return <Analytics />;
+      case 'student-progress': return <StudentProgress />;
       case 'announcements': return <Announcements />;
       default: return <UserManagement />;
     }
@@ -60,6 +62,7 @@ export default function AdminDashboard() {
       case 'categories': return 'Category Management';
       case 'cms': return 'CMS Control';
       case 'analytics': return 'Analytics Dashboard';
+      case 'student-progress': return 'Student Progress';
       case 'announcements': return 'Announcements';
       default: return 'Dashboard';
     }

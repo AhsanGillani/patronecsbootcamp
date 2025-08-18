@@ -412,67 +412,143 @@ export const CourseLearning = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top header with single progress bar */}
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-secondary/40 to-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 min-w-0">
-              <Link to="/student">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <div className="min-w-0">
-                <h1 className="text-lg md:text-xl font-semibold truncate">{course.title}</h1>
-                <p className="text-xs md:text-sm text-muted-foreground truncate">by {course.instructor?.full_name || 'Patronecs'}</p>
+      {/* Top header with single progress bar (modern gradient) */}
+      <header className="sticky top-0 z-30 border-b">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <Link to="/student">
+                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <div className="min-w-0">
+                  <h1 className="text-lg md:text-xl font-semibold truncate">{course.title}</h1>
+                  <p className="text-xs md:text-sm text-white/80 truncate">by {course.instructor?.full_name || 'Patronecs'}</p>
+                </div>
               </div>
+              {progress === 100 && (
+                <Badge variant="default" className="bg-green-500 whitespace-nowrap">
+                  <Award className="h-3 w-3 mr-1" /> Completed
+                </Badge>
+              )}
             </div>
-            {progress === 100 && (
-              <Badge variant="default" className="bg-green-500 whitespace-nowrap">
-                <Award className="h-3 w-3 mr-1" /> Completed
-              </Badge>
-            )}
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <Progress value={progress} className="h-2" />
-            <span className="text-sm font-medium w-12 text-right">{Math.round(progress)}%</span>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="w-full bg-white/20 rounded-full h-2">
+                <div className="bg-white h-2 rounded-full" style={{ width: `${Math.round(progress)}%` }}></div>
+              </div>
+              <span className="text-sm font-medium w-12 text-right">{Math.round(progress)}%</span>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Sidebar - Navigation */}
+          {/* Left Sidebar - Course Content (collapsible-style list with tracking) */}
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Lessons</CardTitle>
+                <CardTitle className="text-base">Course Content</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1">
-                {lessons.map((lesson, index) => {
-                  const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
-                  const isCurrent = currentLesson?.id === lesson.id;
-                  return (
-                    <Button
-                      key={lesson.id}
-                      variant={isCurrent ? "default" : "ghost"}
-                      size="sm"
-                      className={`w-full justify-start text-left ${isCompleted ? 'text-green-600' : ''}`}
-                      onClick={() => startLesson(lesson)}
-                    >
-                      <div className="flex items-center space-x-2">
-                        {isCompleted ? (
-                          <CheckCircle className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <div className="h-3 w-3 border border-gray-300 rounded-full" />
-                        )}
-                        {getTypeIcon(lesson.type)}
-                        <span className="truncate">L{index + 1}: {lesson.title}</span>
-                      </div>
-                    </Button>
-                  );
-                })}
+              <CardContent className="space-y-3 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+                {/* Progress Summary */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Completed</span>
+                    <span>
+                      {lessons.filter(l => l.lesson_progress && l.lesson_progress.length > 0 && l.lesson_progress[0].is_completed).length}
+                      /{lessons.length}
+                    </span>
+                  </div>
+                  <Progress
+                    value={lessons.length > 0 ? (lessons.filter(l => l.lesson_progress && l.lesson_progress.length > 0 && l.lesson_progress[0].is_completed).length / lessons.length) * 100 : 0}
+                    className="h-2"
+                  />
+                </div>
+
+                {/* Lessons list (collapsible per lesson) */}
+                <div className="space-y-2">
+                  {lessons.map((lesson, index) => {
+                    const isCompleted = !!(lesson.lesson_progress && lesson.lesson_progress[0]?.is_completed);
+                    const isCurrent = currentLesson?.id === lesson.id;
+                    const lp = lesson.lesson_progress?.[0];
+                    const videoDone = (lp?.video_watch_progress || 0) >= 90;
+                    const pdfDone = !!lp?.pdf_viewed;
+                    const textDone = !!lp?.text_read;
+                    const lessonQuiz = quizzes.find(q => q.lesson_id === lesson.id);
+                    const quizPassed = !!lessonQuiz?.quiz_attempts?.[0]?.passed || !!lp?.quiz_passed;
+
+                    return (
+                      <Collapsible key={lesson.id}>
+                        <CollapsibleTrigger asChild>
+                          <div
+                            className={`rounded-lg border p-3 cursor-pointer transition-colors ${
+                              isCurrent ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/40'
+                            }`}
+                            title={lesson.title}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {isCompleted ? (
+                                  <CheckCircle className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <div className="h-3 w-3 border border-gray-300 rounded-full" />
+                                )}
+                                {getTypeIcon(lesson.type)}
+                                <span className="text-sm font-medium truncate">L{index + 1}: {lesson.title}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{lesson.duration || 0}m</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 ml-2 space-y-2">
+                          {/* Primary content row */}
+                          <div className={`flex items-center justify-between rounded border p-2 text-xs ${isCurrent && currentLesson?.type !== 'quiz' ? 'bg-blue-50 border-blue-200' : ''}`}>
+                            <div className="flex items-center gap-2">
+                              {getTypeIcon(lesson.type)}
+                              <span className="capitalize">{lesson.type}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <span>{lesson.duration || 0} minutes</span>
+                              {isCompleted || videoDone || pdfDone || textDone ? (
+                                <Badge variant="outline" className="ml-2">Done</Badge>
+                              ) : null}
+                            </div>
+                            <Button size="xs" variant="outline" onClick={() => startLesson(lesson)}>Open</Button>
+                          </div>
+
+                          {/* Quiz row if exists */}
+                          {lessonQuiz && (
+                            <div className={`flex items-center justify-between rounded border p-2 text-xs ${isCurrent && currentLesson?.type === 'quiz' ? 'bg-blue-50 border-blue-200' : ''}`}>
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-3 w-3" />
+                                <span>Quiz</span>
+                                <span className="text-muted-foreground">•</span>
+                                <span>Pass {lessonQuiz.passing_score}%</span>
+                                <Badge variant={quizPassed ? 'default' : 'outline'} className={`ml-2 ${quizPassed ? 'bg-green-600 text-white' : ''}`}>
+                                  {quizPassed ? 'Passed' : 'Not passed'}
+                                </Badge>
+                              </div>
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => startLesson({ ...lesson, type: 'quiz' })}
+                              >
+                                {quizPassed ? 'Retake' : 'Start'}
+                              </Button>
+                            </div>
+                          )}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+
                 <div className="pt-2">
                   <Button 
                     variant={showFeedback ? "default" : "outline"} 
@@ -488,17 +564,50 @@ export const CourseLearning = () => {
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-6">
             {currentLesson && !showCourseContent && !showFeedback && (
-              <LessonPlayer
-                key={currentLesson.id}
-                lesson={currentLesson}
-                onComplete={markLessonComplete}
-                onNext={goToNext}
-                onPrevious={goToPrevious}
-                hasNext={getCurrentLessonIndex() < lessons.length - 1}
-                hasPrevious={getCurrentLessonIndex() > 0}
-              />
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {getTypeIcon(currentLesson.type)}
+                        <span className="truncate">{currentLesson.title}</span>
+                      </CardTitle>
+                      <CardDescription className="mt-1 flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-xs"><Clock className="h-3 w-3" /> {currentLesson.duration || 0} min</span>
+                        <Badge variant="outline" className="text-xs capitalize">{currentLesson.type}</Badge>
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={backToCourseContent}>Back to content</Button>
+                      <Button variant="outline" size="sm" onClick={() => currentLesson && markLessonComplete(currentLesson.id)}>Mark complete</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <LessonPlayer
+                    key={currentLesson.id}
+                    lesson={currentLesson}
+                    onComplete={markLessonComplete}
+                    onNext={goToNext}
+                    onPrevious={goToPrevious}
+                    hasNext={getCurrentLessonIndex() < lessons.length - 1}
+                    hasPrevious={getCurrentLessonIndex() > 0}
+                  />
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" onClick={goToPrevious} disabled={getCurrentLessonIndex() <= 0}>Previous</Button>
+                      <Button onClick={goToNext} disabled={getCurrentLessonIndex() >= lessons.length - 1}>Next</Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" onClick={showCourseFeedback}>
+                        <MessageSquare className="h-4 w-4 mr-2" /> Feedback
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {showFeedback && progress === 100 && (

@@ -163,8 +163,8 @@ export default function InstructorControl() {
         // Fetch enrollments only if there are courses
         courseIds.length > 0 
           ? supabase
-              .from('enrollments')
-              .select(`
+          .from('enrollments')
+          .select(`
                 id,
                 enrolled_at,
                 course_id,
@@ -220,7 +220,7 @@ export default function InstructorControl() {
             .select('user_id, full_name, email')
             .in('user_id', studentIds),
           supabase
-            .from('courses')
+              .from('courses')
             .select('id, title')
             .in('id', enrollmentCourseIds)
         ]);
@@ -665,8 +665,8 @@ export default function InstructorControl() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-slate-500">
-                          {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                        </p>
+                        {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                      </p>
                       </div>
                     </div>
                   ))}

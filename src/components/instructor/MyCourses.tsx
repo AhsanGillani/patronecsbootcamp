@@ -450,7 +450,7 @@ export const MyCourses = () => {
               variant="outline"
               size="sm" 
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => setEditingCourse(course)}
+                            onClick={() => { setEditingCourse(course); setEditOpen(true); }}
             >
                             <Edit className="w-4 h-4" />
             </Button>
@@ -476,6 +476,9 @@ export const MyCourses = () => {
       {/* Modals */}
       <CreateCourse
         onCourseCreated={fetchCourses}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        hideTrigger
       />
       
       {editOpen && editingCourse && (

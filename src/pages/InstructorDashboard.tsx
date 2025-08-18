@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InstructorSidebar } from "@/components/instructor/InstructorSidebar";
 import { NotificationBell } from "@/components/ui/NotificationBell";
@@ -18,7 +18,9 @@ import { SubmittedQuizzes } from "@/components/instructor/SubmittedQuizzes";
 
 export default function InstructorDashboard() {
   const { user, profile, signOut, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'courses';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -44,10 +46,12 @@ export default function InstructorDashboard() {
       case 'courses': return <MyCourses />;
       case 'lessons': return <LessonManagement />;
       case 'quizzes': return <QuizManagement />;
-      case 'insights': return <CourseInsights />;
-      case 'blogs': return <BlogManager />;
-      case 'notifications': return <NotificationCenter />;
-      case 'submissions': return <SubmittedQuizzes />;
+      case 'students': return <SubmittedQuizzes />; // Student Progress
+      case 'analytics': return <CourseInsights />;
+      case 'insights': return <CourseInsights />; // backward compatibility
+      case 'blogs': return <BlogManager />; // legacy
+      case 'notifications': return <NotificationCenter />; // legacy
+      case 'submissions': return <SubmittedQuizzes />; // legacy
       default: return <InstructorProfile />;
     }
   };
@@ -58,6 +62,8 @@ export default function InstructorDashboard() {
       case 'courses': return 'My Courses';
       case 'lessons': return 'Lesson Management';
       case 'quizzes': return 'Quiz Management';
+      case 'analytics': return 'Analytics';
+      case 'students': return 'Student Progress';
       case 'insights': return 'Course Insights';
       case 'blogs': return 'Blog Manager';
       case 'notifications': return 'Notification Center';
@@ -71,6 +77,7 @@ export default function InstructorDashboard() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setSearchParams({ tab });
   };
 
   return (

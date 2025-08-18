@@ -87,7 +87,7 @@ const Auth = () => {
           return;
         }
         const { error } = await signUp(formData.email, formData.password, formData.fullName);
-        if (error) {
+      if (error) {
           setError(error.message || "Registration failed");
           setIsLoading(false);
           return;
@@ -174,53 +174,53 @@ const Auth = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
+                <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-slate-700">
                   Email Address
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                     <Input
+                  <Input
                      id="email"
                      name="email"
-                     type="email"
+                    type="email"
                      placeholder="Enter your email"
                      value={formData.email}
                      onChange={handleInputChange}
-                     required
+                    required
                      autoComplete="email"
                      className="pl-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                   />
+                  />
                 </div>
               </div>
 
-              <div className="space-y-2">
+                <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-slate-700">
                   Password
                 </Label>
-                <div className="relative">
+                  <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                     <Input
+                    <Input
                      id="password"
                      name="password"
                      type={showPassword ? "text" : "password"}
                      placeholder="Enter your password"
                      value={formData.password}
                      onChange={handleInputChange}
-                     required
+                      required
                      autoComplete={mode === "login" ? "current-password" : "new-password"}
                      className="pl-10 pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                   />
-                  <button
-                    type="button"
+                    />
+                    <button
+                      type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                    </button>
+                  </div>
                 </div>
-              </div>
-
+            
               {mode === "register" && (
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
@@ -228,17 +228,17 @@ const Auth = () => {
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                         <Input
+                    <Input
                        id="confirmPassword"
                        name="confirmPassword"
                        type={showConfirmPassword ? "text" : "password"}
                        placeholder="Confirm your password"
                        value={formData.confirmPassword}
                        onChange={handleInputChange}
-                       required
+                      required
                        autoComplete="new-password"
                        className="pl-10 pr-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                     />
+                    />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -269,8 +269,8 @@ const Auth = () => {
                 ) : (
                   mode === "login" ? "Sign In" : "Create Account"
                 )}
-              </Button>
-            </form>
+                </Button>
+              </form>
 
             <div className="mt-6 text-center">
               <p className="text-slate-600">
@@ -294,7 +294,7 @@ const Auth = () => {
                 </Link>
               </div>
             )}
-          </Card>
+      </Card>
         </div>
 
         {/* Right Side - Info */}

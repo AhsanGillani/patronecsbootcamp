@@ -455,9 +455,9 @@ export const QuizPlayer = ({ quiz, onComplete, onBack, refreshAttempts }: QuizPl
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="space-y-6">
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1">
           {questions.map((q, idx) => (
-            <div key={q.id} className="space-y-3 p-4 border rounded-lg">
+            <div key={q.id} className="space-y-3 p-4 border rounded-lg hover:bg-muted/30 transition-colors">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-medium">Question {idx + 1}</h3>
                 <Badge variant="outline">{(q.type || 'mcq') === 'qa' ? 'Q&A' : 'MCQ'}</Badge>
@@ -468,14 +468,17 @@ export const QuizPlayer = ({ quiz, onComplete, onBack, refreshAttempts }: QuizPl
                   value={answers[q.id]?.toString() || ""}
                   onValueChange={(value) => handleAnswerChange(q.id, parseInt(value))}
                 >
-                  {q.options.map((option: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <RadioGroupItem value={index.toString()} id={`q-${q.id}-opt-${index}`} />
-                      <Label htmlFor={`q-${q.id}-opt-${index}`} className="flex-1 cursor-pointer">
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
+                  {q.options.map((option: string, index: number) => {
+                    const selected = answers[q.id] === index;
+                    return (
+                      <div key={index} className={`flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors ${selected ? 'border-blue-300 bg-blue-50' : ''}`}>
+                        <RadioGroupItem value={index.toString()} id={`q-${q.id}-opt-${index}`} />
+                        <Label htmlFor={`q-${q.id}-opt-${index}`} className="flex-1 cursor-pointer">
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </RadioGroup>
               ) : (
                 <div>

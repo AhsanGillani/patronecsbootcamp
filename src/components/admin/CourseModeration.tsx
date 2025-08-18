@@ -265,7 +265,7 @@ export default function CourseModeration() {
               <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center">
                 <XCircle className="w-6 h-6 text-white" />
               </div>
-              <div>
+      <div>
                 <p className="text-sm font-medium text-red-600">Rejected</p>
                 <p className="text-2xl font-bold text-red-900">{courses.filter(c => c.status === 'rejected').length}</p>
               </div>
@@ -425,9 +425,9 @@ export default function CourseModeration() {
                                       <Badge variant="outline" className={getStatusColor(course.status)}>
                                         {course.status}
                                       </Badge>
-                                    </div>
-                                  </div>
-                                </div>
+                              </div>
+                              </div>
+                              </div>
                               </div>
                             </div>
                             
