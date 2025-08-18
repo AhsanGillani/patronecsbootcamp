@@ -47,8 +47,6 @@ export default function StudentProgress() {
 
   // Filters
   const [courseFilter, setCourseFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
   const [progressBand, setProgressBand] = useState<string>("all");
 
   // Details dialog
@@ -102,8 +100,6 @@ export default function StudentProgress() {
   const filtered = useMemo(() => {
     return enrollments.filter((e) => {
       if (courseFilter !== 'all' && e.course_id !== courseFilter) return false;
-      if (startDate && new Date(e.enrolled_at) < new Date(startDate)) return false;
-      if (endDate && new Date(e.enrolled_at) > new Date(endDate)) return false;
       if (progressBand !== 'all') {
         const [min, max] = progressBand.split('-').map(Number);
         if (isFinite(min) && e.progress < min) return false;
@@ -111,7 +107,7 @@ export default function StudentProgress() {
       }
       return true;
     });
-  }, [enrollments, courseFilter, startDate, endDate, progressBand]);
+  }, [enrollments, courseFilter, progressBand]);
 
   const openDetails = async (row: EnrollmentRow) => {
     setDetailsOpen(true);
@@ -158,7 +154,7 @@ export default function StudentProgress() {
           <CardDescription>Narrow results by course, date, or progress</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-slate-500">Course</label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
@@ -172,14 +168,6 @@ export default function StudentProgress() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">Start date</label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">End date</label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
             <div>
               <label className="text-xs text-slate-500">Progress</label>
