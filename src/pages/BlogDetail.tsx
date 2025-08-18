@@ -143,12 +143,12 @@ const BlogDetail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-20">
-          <div className="container mx-auto px-4 py-16 text-center">
-            <h1 className="text-3xl font-bold mb-4">Blog post not found</h1>
-            <p className="text-muted-foreground mb-8">The article you're looking for doesn't exist or has been removed.</p>
+          <div className="container mx-auto px-6 py-16 text-center">
+            <h1 className="text-3xl font-bold mb-4 text-slate-900">Blog post not found</h1>
+            <p className="text-slate-600 mb-8">The article you're looking for doesn't exist or has been removed.</p>
             <Link 
               to="/blog"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary/80"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Blog
@@ -165,14 +165,14 @@ const BlogDetail = () => {
       <Header />
       
       <main className="pt-20">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 py-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-            <Link to="/" className="hover:text-primary">Home</Link>
+          <nav className="flex items-center gap-2 text-sm text-slate-600 mb-8">
+            <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
             <span>/</span>
-            <Link to="/blog" className="hover:text-primary">Blog</Link>
+            <Link to="/blog" className="hover:text-blue-600 transition-colors">Blog</Link>
             <span>/</span>
-            <span className="text-foreground">{blog.title}</span>
+            <span className="text-slate-900 font-medium">{blog.title}</span>
           </nav>
 
           <div className="max-w-4xl mx-auto">
@@ -180,16 +180,16 @@ const BlogDetail = () => {
             <article>
               <header className="mb-8">
                 {blog.category && (
-                  <Badge variant="secondary" className="mb-4">
+                  <Badge variant="secondary" className="mb-6 bg-slate-100 text-slate-700 border-slate-200">
                     {blog.category.name}
                   </Badge>
                 )}
                 
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+                <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold mb-8 leading-tight text-slate-900">
                   {blog.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground mb-8">
+                <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 mb-8">
                   {blog.profile && (
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
@@ -206,7 +206,7 @@ const BlogDetail = () => {
                   </div>
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                    className="flex items-center gap-2 hover:text-blue-600 transition-colors"
                   >
                     <Share2 className="h-4 w-4" />
                     <span>Share</span>
@@ -226,19 +226,19 @@ const BlogDetail = () => {
               )}
 
               {/* Article Content */}
-              <Card className="p-8 bg-card-gradient">
+              <Card className="p-8 bg-white border border-slate-200 rounded-2xl shadow-lg">
                 <div 
-                  className="prose prose-lg max-w-none"
+                  className="prose prose-lg max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-strong:text-slate-900 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline"
                   dangerouslySetInnerHTML={{ __html: blog.content }}
                 />
               </Card>
             </article>
 
             {/* Article Footer */}
-            <footer className="mt-12 pt-8 border-t border-border">
+            <footer className="mt-12 pt-8 border-t border-slate-200">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-slate-600">
                     Published on {formatDate(blog.created_at)}
                     {blog.updated_at !== blog.created_at && (
                       <span> • Updated on {formatDate(blog.updated_at)}</span>

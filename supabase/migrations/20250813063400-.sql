@@ -203,3 +203,11 @@ CREATE TRIGGER trg_set_attempt_status
 BEFORE INSERT ON public.quiz_attempts
 FOR EACH ROW
 EXECUTE FUNCTION public.set_attempt_status_from_quiz();
+
+-- 4) Add quiz_graded type to notifications table
+ALTER TABLE public.notifications 
+DROP CONSTRAINT IF EXISTS notifications_type_check;
+
+ALTER TABLE public.notifications 
+ADD CONSTRAINT notifications_type_check 
+CHECK (type IN ('course_approval', 'course_rejection', 'blog_approval', 'blog_rejection', 'enrollment', 'system', 'quiz_graded'));

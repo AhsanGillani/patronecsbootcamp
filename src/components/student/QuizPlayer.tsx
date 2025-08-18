@@ -34,10 +34,11 @@ interface QuizPlayerProps {
   quiz: Quiz;
   onComplete: (passed: boolean) => void;
   onBack: () => void;
+  refreshAttempts?: boolean;
 }
 
-export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
-  const { user } = useAuth();
+export const QuizPlayer = ({ quiz, onComplete, onBack, refreshAttempts }: QuizPlayerProps) => {
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<{ [questionId: string]: number | string }>({});
@@ -95,16 +96,57 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
   const fetchAttempts = async () => {
     if (!user) return;
     try {
+      const userId = profile?.id || user.id;
+      console.log(`Fetching attempts for quiz ${quiz.id} with userId: ${userId}`);
+      
       const { data } = await supabase
         .from('quiz_attempts')
         .select('id')
         .eq('quiz_id', quiz.id)
-        .eq('student_id', user.id);
-      setAttemptsUsed(data?.length || 0);
+        .eq('student_id', userId);
+      const attemptCount = data?.length || 0;
+      console.log(`Quiz attempts for ${quiz.title}: ${attemptCount}/3 (fetched at ${new Date().toLocaleTimeString()})`);
+      setAttemptsUsed(attemptCount);
     } catch (error) {
       console.error('Error fetching attempts:', error);
     }
   };
+
+  // Force refresh attempts - can be called externally
+  const forceRefreshAttempts = useCallback(() => {
+    console.log('Refreshing quiz attempts...');
+    fetchAttempts();
+  }, [fetchAttempts]);
+
+  // Refresh attempts when quiz is shown (in case lesson was completed and attempts were reset)
+  useEffect(() => {
+    fetchAttempts();
+  }, [quiz.id, refreshAttempts]);
+
+  // Force refresh attempts when refreshAttempts prop changes
+  useEffect(() => {
+    if (refreshAttempts) {
+      console.log('Lesson completed, forcing refresh of attempts...');
+      forceRefreshAttempts();
+    }
+  }, [refreshAttempts, forceRefreshAttempts]);
+
+  // Also refresh attempts when the quiz is first shown
+  useEffect(() => {
+    console.log('Quiz shown, refreshing attempts...');
+    fetchAttempts();
+  }, [quiz.id]);
+
+  // Add a manual refresh function that can be called
+  const manualRefreshAttempts = useCallback(() => {
+    console.log('Manual refresh of attempts triggered...');
+    fetchAttempts();
+  }, [fetchAttempts]);
+
+  // Monitor attemptsUsed state changes
+  useEffect(() => {
+    console.log(`Attempts used state changed to: ${attemptsUsed}/3`);
+  }, [attemptsUsed]);
 
   const handleAnswerChange = (questionId: string, answerIndex: number) => {
     setAnswers(prev => ({
@@ -148,7 +190,9 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
 
     try {
       // enforce max 3 attempts
+      console.log(`Current attempts used: ${attemptsUsed}, checking if limit reached...`);
       if (attemptsUsed >= 3) {
+        console.log('Attempt limit reached, resetting lesson progress...');
         // Reset lesson progress to force re-learning
         await supabase
           .from('lesson_progress')
@@ -165,9 +209,8 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
         toast({
           title: 'Attempt limit reached',
           description: 'You have used all 3 attempts. Complete the lesson again to retry the quiz.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
-        setSubmitted(false);
         onBack();
         return;
       }
@@ -183,7 +226,7 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           total_questions: questions.length,
           answers: answers,
           completed_at: new Date().toISOString(),
-          status: status as any
+          status: status as 'auto_graded' | 'pending_review' | 'reviewed'
         })
         .select('id')
         .single();
@@ -206,9 +249,9 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
       setShowResults(true);
 
       toast({
-        title: hasQAQuestions ? "Quiz Submitted" : (passed ? "Quiz Passed!" : "Quiz Completed"),
+        title: hasQAQuestions ? "Quiz Submitted Successfully!" : (passed ? "Quiz Passed!" : "Quiz Completed"),
         description: hasQAQuestions
-          ? "Your quiz has been submitted and is pending instructor review"
+          ? "Thank you for taking the quiz! Your answers have been shared with your instructor. They will review and mark your quiz soon."
           : (passed
             ? `Great job! You scored ${finalScore}%`
             : `You scored ${finalScore}%. Passing score is ${quiz.passing_score}%`),
@@ -292,7 +335,8 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
           {status === 'pending' ? (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
               <Clock className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
-              <p className="text-yellow-800 font-medium">Your quiz is being reviewed by the instructor.</p>
+              <p className="text-yellow-800 font-medium">Thank you for taking the quiz!</p>
+              <p className="text-yellow-700 text-sm">Your answers have been shared with your instructor. They will review and mark your quiz soon.</p>
             </div>
           ) : passed && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
@@ -460,6 +504,14 @@ export const QuizPlayer = ({ quiz, onComplete, onBack }: QuizPlayerProps) => {
               disabled={!isAllAnswered() || submitted}
             >
               {submitted ? "Submitting..." : "Submit Quiz"}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={manualRefreshAttempts}
+              className="text-xs"
+            >
+              Refresh Attempts
             </Button>
           </div>
         </div>

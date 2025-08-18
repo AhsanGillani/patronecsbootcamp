@@ -360,14 +360,14 @@ const CourseDetail = () => {
       <Header />
       
       <main className="pt-20">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 py-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-            <Link to="/" className="hover:text-primary">Home</Link>
+          <nav className="flex items-center gap-2 text-sm text-slate-600 mb-8">
+            <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
             <span>/</span>
-            <Link to="/courses" className="hover:text-primary">Courses</Link>
+            <Link to="/courses" className="hover:text-blue-600 transition-colors">Courses</Link>
             <span>/</span>
-            <span className="text-foreground">{course.title}</span>
+            <span className="text-slate-900 font-medium">{course.title}</span>
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -375,22 +375,24 @@ const CourseDetail = () => {
             <div className="lg:col-span-2">
               {/* Course Header */}
               <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-3 mb-6">
                   {course.category && (
-                    <Badge variant="secondary">{course.category.name}</Badge>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-200">
+                      {course.category.name}
+                    </Badge>
                   )}
                   <Badge className={getLevelColor(course.level)}>
                     {course.level}
                   </Badge>
                 </div>
                 
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
+                <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-900">{course.title}</h1>
                 
-                <p className="text-lg text-muted-foreground mb-6">
-                  by <span className="font-medium text-foreground">{course.profile?.full_name || 'Patronecs'}</span>
+                <p className="text-lg text-slate-600 mb-6">
+                  by <span className="font-medium text-slate-900">{course.profile?.full_name || 'Patronecs'}</span>
                 </p>
 
-                <div className="flex items-center gap-6 text-sm text-muted-foreground mb-6">
+                <div className="flex items-center gap-6 text-sm text-slate-500 mb-6">
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>{course.total_enrollments} students</span>
@@ -431,17 +433,17 @@ const CourseDetail = () => {
               )}
 
               {/* Course Description */}
-              <Card className="p-6 mb-8 bg-card-gradient">
-                <h2 className="text-2xl font-semibold mb-4">About this course</h2>
-                <p className="text-muted-foreground leading-relaxed">
+              <Card className="p-8 mb-8 bg-white border border-slate-200 rounded-2xl shadow-lg">
+                <h2 className="text-2xl font-semibold mb-4 text-slate-900">About this course</h2>
+                <p className="text-slate-600 leading-relaxed text-lg">
                   {course.description || "No description available for this course."}
                 </p>
               </Card>
 
               {/* Curriculum (Locked until enroll) */}
-              <Card className="p-6 mb-8">
-                <h2 className="text-2xl font-semibold mb-4 flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2" />
+              <Card className="p-8 mb-8 bg-white border border-slate-200 rounded-2xl shadow-lg">
+                <h2 className="text-2xl font-semibold mb-6 flex items-center text-slate-900">
+                  <BookOpen className="h-6 w-6 mr-3 text-blue-600" />
                   Curriculum
                 </h2>
                 {lessonsOverview.length === 0 ? (
@@ -453,54 +455,58 @@ const CourseDetail = () => {
                       {lessonsOverview.slice(0, 3).map((lesson: LessonSummary, idx: number) => (
                         <div
                           key={`preview-${lesson.id}`}
-                          className="rounded-lg overflow-hidden border hover:shadow-md transition cursor-pointer"
+                          className="group rounded-xl overflow-hidden border border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1"
                           onClick={() => (!isEnrolled ? setShowAccessModal(true) : (window.location.href = `/course-learning/${course.id}`))}
                         >
-                          <div className="relative aspect-video bg-muted">
+                          <div className="relative aspect-video bg-slate-100">
                             <ImageWithFallback
                               src={getLessonThumb(lesson.type)}
                               alt={lesson.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
-                          <div className="p-3">
-                            <div className="text-xs text-muted-foreground mb-1">Lesson {idx + 1}</div>
-                            <div className="font-medium line-clamp-2">{lesson.title}</div>
+                          <div className="p-4">
+                            <div className="text-xs text-slate-500 mb-2">Lesson {idx + 1}</div>
+                            <div className="font-medium line-clamp-2 text-slate-900 group-hover:text-blue-600 transition-colors">{lesson.title}</div>
                           </div>
                         </div>
                       ))}
                     </div>
 
                     {/* Explore Every Course Chapter */}
-                    <div className="hidden md:grid grid-cols-12 px-3 py-2 text-xs text-muted-foreground">
-                      <div className="col-span-6">Chapter</div>
-                      <div className="col-span-3">Type</div>
-                      <div className="col-span-2">Duration</div>
-                      <div className="col-span-1 text-right">Status</div>
+                    <div className="hidden md:grid grid-cols-12 px-4 py-3 text-xs text-slate-500 bg-slate-50 rounded-lg mb-3">
+                      <div className="col-span-6 font-medium">Chapter</div>
+                      <div className="col-span-3 font-medium">Type</div>
+                      <div className="col-span-2 font-medium">Duration</div>
+                      <div className="col-span-1 text-right font-medium">Status</div>
                     </div>
                     {lessonsOverview.map((lesson: LessonSummary, idx: number) => (
                       <div
                         key={lesson.id}
-                        className="grid grid-cols-12 items-center px-3 py-3 rounded-lg border hover:bg-muted/40 transition cursor-pointer"
+                        className="grid grid-cols-12 items-center px-4 py-4 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 cursor-pointer group"
                         onClick={() => (!isEnrolled ? setShowAccessModal(true) : (window.location.href = `/course-learning/${course.id}`))}
                       >
                         <div className="col-span-12 md:col-span-6 flex items-center gap-3">
-                          {getTypeIcon(lesson.type)}
-                          <span className="text-sm font-medium">L{idx + 1}: {lesson.title}</span>
+                          <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
+                            {getTypeIcon(lesson.type)}
+                          </div>
+                          <span className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition-colors">L{idx + 1}: {lesson.title}</span>
                         </div>
-                        <div className="col-span-6 md:col-span-3 mt-2 md:mt-0 text-xs md:text-sm text-muted-foreground capitalize">
+                        <div className="col-span-6 md:col-span-3 mt-2 md:mt-0 text-xs md:text-sm text-slate-600 capitalize">
                           {lesson.type}
                         </div>
-                        <div className="col-span-3 md:col-span-2 mt-2 md:mt-0 text-xs md:text-sm text-muted-foreground">
+                        <div className="col-span-3 md:col-span-2 mt-2 md:mt-0 text-xs md:text-sm text-slate-600">
                           {lesson.duration || 0} min
                         </div>
                         <div className="col-span-3 md:col-span-1 mt-2 md:mt-0 flex justify-end">
                           {!isEnrolled ? (
-                            <Badge variant="outline" className="border-dashed">
+                            <Badge variant="outline" className="border-dashed border-slate-300 text-slate-600">
                               <Lock className="h-3 w-3 mr-1" /> Locked
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">Unlocked</Badge>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                              <Play className="h-3 w-3 mr-1" /> Available
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -537,33 +543,33 @@ const CourseDetail = () => {
 
             {/* Sidebar */}
             <div>
-              <Card className="p-6 bg-card-gradient sticky top-24">
+              <Card className="p-8 bg-white border border-slate-200 rounded-2xl shadow-xl sticky top-24">
                 <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-primary mb-2">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
                     {course.price === 0 ? 'FREE' : `$${course.price}`}
                   </div>
-                  <p className="text-sm text-muted-foreground">Full lifetime access</p>
+                  <p className="text-sm text-slate-600">Full lifetime access</p>
                 </div>
 
                 {user ? (
                   profile?.role === 'student' ? (
                     isEnrolled ? (
                       <div className="space-y-4">
-                        <Button className="w-full" asChild>
+                        <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300" asChild>
                           <Link to="/student">
                             <Play className="w-4 h-4 mr-2" />
                             Continue Learning
                           </Link>
                         </Button>
                         <div className="text-center">
-                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
                             ✓ Enrolled
                           </Badge>
                         </div>
                       </div>
                     ) : (
                       <Button 
-                        className="w-full" 
+                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                         onClick={handleEnroll}
                         disabled={enrolling}
                       >
@@ -571,39 +577,47 @@ const CourseDetail = () => {
                       </Button>
                     )
                   ) : (
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">
+                    <div className="text-center p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <p className="text-sm text-slate-700 mb-2">
                         Only students can enroll in courses
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-slate-600">
                         Contact support to change your account type
                       </p>
                     </div>
                   )
                 ) : (
-                  <Button className="w-full" asChild>
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300" asChild>
                     <Link to="/auth">Sign up to Enroll</Link>
                   </Button>
                 )}
 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <h3 className="font-semibold mb-4">This course includes:</h3>
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h3 className="font-semibold mb-4 text-slate-900">This course includes:</h3>
                   <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Play className="h-4 w-4 text-primary" />
-                      <span>{course.lesson_count} video lessons</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Play className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <span className="text-slate-700">{course.lesson_count} video lessons</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Download className="h-4 w-4 text-primary" />
-                      <span>Downloadable resources</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <Download className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <span className="text-slate-700">Downloadable resources</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-primary" />
-                      <span>Certificate of completion</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Award className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <span className="text-slate-700">Certificate of completion</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span>Lifetime access</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <span className="text-slate-700">Lifetime access</span>
                     </div>
                   </div>
                 </div>
