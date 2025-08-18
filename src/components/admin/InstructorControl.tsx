@@ -138,7 +138,7 @@ export default function InstructorControl() {
       console.log('Found course IDs:', courseIds);
 
       const [coursesResult, blogsResult, enrollmentsResult] = await Promise.all([
-        // Fetch courses with left joins to avoid filtering out courses without categories
+        // Fetch courses with better error handling and simpler query
         supabase
           .from('courses')
           .select(`
@@ -148,8 +148,7 @@ export default function InstructorControl() {
             price,
             level,
             created_at,
-            category_id,
-            categories(name)
+            category_id
           `)
           .eq('instructor_id', instructor.user_id)
           .order('created_at', { ascending: false }),
@@ -180,6 +179,34 @@ export default function InstructorControl() {
       console.log('Courses result:', coursesResult);
       console.log('Blogs result:', blogsResult);
       console.log('Enrollments result:', enrollmentsResult);
+
+      // Get category names for courses if they have category_id
+      let coursesWithCategories = coursesResult.data || [];
+      if (coursesWithCategories.length > 0) {
+        const categoryIds = coursesWithCategories
+          .map(c => c.category_id)
+          .filter(Boolean);
+        
+        let categoryData: any = {};
+        if (categoryIds.length > 0) {
+          const { data: categories } = await supabase
+            .from('categories')
+            .select('id, name')
+            .in('id', categoryIds);
+          
+          categoryData = categories?.reduce((acc: any, cat: any) => {
+            acc[cat.id] = cat;
+            return acc;
+          }, {}) || {};
+        }
+
+        coursesWithCategories = coursesWithCategories.map(course => ({
+          ...course,
+          categories: course.category_id && categoryData[course.category_id] 
+            ? { name: categoryData[course.category_id].name }
+            : null
+        }));
+      }
 
       // Get student profiles and course details for enrollments
       let enrollmentDetails: any[] = [];
@@ -213,13 +240,13 @@ export default function InstructorControl() {
       }
 
       // Transform courses data
-      const transformedCourses = (coursesResult.data || []).map((course: any) => ({
+      const transformedCourses = coursesWithCategories.map((course: any) => ({
         id: course.id,
         title: course.title,
         status: course.status,
         price: course.price,
         level: course.level,
-        categories: course.categories ? { name: course.categories.name } : null,
+        categories: course.categories,
         enrollments: enrollmentDetails.filter(e => e.courses?.title && 
           enrollmentsResult.data?.find(en => en.course_id === course.id)).map(e => ({ id: e.id }))
       }));
