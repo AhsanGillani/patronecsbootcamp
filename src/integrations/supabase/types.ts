@@ -50,13 +50,6 @@ export type Database = {
             foreignKeyName: "announcements_admin_id_fkey"
             columns: ["admin_id"]
             isOneToOne: false
-            referencedRelation: "instructor_public_profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "announcements_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -112,13 +105,6 @@ export type Database = {
           views?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "blogs_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "instructor_public_profiles"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "blogs_author_id_fkey"
             columns: ["author_id"]
@@ -238,13 +224,6 @@ export type Database = {
             foreignKeyName: "cms_content_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "instructor_public_profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "cms_content_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -355,13 +334,6 @@ export type Database = {
             foreignKeyName: "courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
-            referencedRelation: "instructor_public_profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "courses_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -409,13 +381,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "courses"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enrollments_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "instructor_public_profiles"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "enrollments_student_id_fkey"
@@ -831,33 +796,7 @@ export type Database = {
       }
     }
     Views: {
-      instructor_public_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          full_name: string | null
-          location: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          location?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          location?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calculate_course_progress: {
@@ -883,6 +822,17 @@ export type Database = {
       generate_course_slug: {
         Args: { title: string }
         Returns: string
+      }
+      get_public_instructor_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          full_name: string
+          location: string
+          user_id: string
+        }[]
       }
       get_user_role: {
         Args: Record<PropertyKey, never>
