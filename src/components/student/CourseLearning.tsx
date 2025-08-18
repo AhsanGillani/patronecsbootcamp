@@ -519,7 +519,7 @@ export const CourseLearning = () => {
                                 <Badge variant="outline" className="ml-2">Done</Badge>
                               ) : null}
                             </div>
-                            <Button size="xs" variant="outline" onClick={() => startLesson(lesson)}>Open</Button>
+                            <Button size="sm" variant="outline" onClick={() => startLesson(lesson)}>Open</Button>
                           </div>
 
                           {/* Quiz row if exists */}
@@ -534,10 +534,10 @@ export const CourseLearning = () => {
                                   {quizPassed ? 'Passed' : 'Not passed'}
                                 </Badge>
                               </div>
-                              <Button
-                                size="xs"
-                                variant="outline"
-                                onClick={() => startLesson({ ...lesson, type: 'quiz' })}
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 onClick={() => startLesson({ ...lesson, type: 'quiz' })}
                               >
                                 {quizPassed ? 'Retake' : 'Start'}
                               </Button>

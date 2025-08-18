@@ -23,8 +23,8 @@ interface EnrollmentRow {
   completed_at: string | null;
   student_id: string;
   course_id: string;
-  student: { full_name: string; email: string } | null;
-  course: { title: string } | null;
+  profiles: { full_name: string; email: string } | null;
+  courses: { title: string } | null;
 }
 
 interface LessonProgressRow {
@@ -85,8 +85,8 @@ export default function StudentProgress() {
         .from('enrollments')
         .select(`
           id, enrolled_at, progress, completed_at, student_id, course_id,
-          student:profiles!student_id(full_name, email),
-          course:courses!course_id(title)
+          profiles!enrollments_student_id_fkey(full_name, email),
+          courses!enrollments_course_id_fkey(title)
         `)
         .order('enrolled_at', { ascending: false });
       if (error) throw error;
@@ -116,8 +116,8 @@ export default function StudentProgress() {
   const openDetails = async (row: EnrollmentRow) => {
     setDetailsOpen(true);
     setDetailsLoading(true);
-    setDetailsStudent({ name: row.student?.full_name || 'Student', email: row.student?.email || '' });
-    setDetailsCourse(row.course?.title || 'Course');
+    setDetailsStudent({ name: row.profiles?.full_name || 'Student', email: row.profiles?.email || '' });
+    setDetailsCourse(row.courses?.title || 'Course');
     setDetailsOverall(row.progress || 0);
     try {
       const { data, error } = await supabase
@@ -230,15 +230,15 @@ export default function StudentProgress() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-slate-500" />
                           <div>
-                            <div className="font-medium">{row.student?.full_name || 'Student'}</div>
-                            <div className="text-xs text-slate-500">{row.student?.email}</div>
+                             <div className="font-medium">{row.profiles?.full_name || 'Student'}</div>
+                             <div className="text-xs text-slate-500">{row.profiles?.email}</div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <BookOpen className="h-4 w-4 text-slate-500" />
-                          <span>{row.course?.title || 'Course'}</span>
+                          <span>{row.courses?.title || 'Course'}</span>
                         </div>
                       </TableCell>
                       <TableCell>
