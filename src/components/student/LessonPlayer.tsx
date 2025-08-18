@@ -79,6 +79,7 @@ export const LessonPlayer = ({
   const [loading, setLoading] = useState(false);
   const [pdfViewed, setPdfViewed] = useState(false);
   const [textRead, setTextRead] = useState(false);
+  const [lessonCompletionChanged, setLessonCompletionChanged] = useState(false);
   
   // YouTube player state
   const [youtubePlayer, setYoutubePlayer] = useState<any | null>(null);
@@ -104,6 +105,7 @@ export const LessonPlayer = ({
     setShowQuiz(false);
     setYoutubeProgress(0);
     setYoutubeWatched(false);
+    setLessonCompletionChanged(false);
     if (videoRef.current) {
       try {
         videoRef.current.pause();
@@ -138,11 +140,14 @@ export const LessonPlayer = ({
     if (!user || !lesson.quiz) return;
     
     try {
+      const userId = profile?.id || user.id;
+      console.log('Checking quiz completion for user:', userId);
+      
       const { data, error } = await supabase
         .from('quiz_attempts')
         .select('passed')
         .eq('quiz_id', lesson.quiz.id)
-        .eq('student_id', profile?.id || user.id)
+        .eq('student_id', userId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -183,10 +188,14 @@ export const LessonPlayer = ({
     if (!user) return;
     
     try {
+      console.log('Updating video progress for user:', user.id, 'profile:', profile?.id);
+      const userId = profile?.id || user.id;
+      console.log('Using userId:', userId);
+      
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: (profile?.id || user.id) as string,
+          student_id: userId as string,
           lesson_id: lesson.id,
           video_watch_progress: progress,
           video_watched_seconds: watchedSeconds,
@@ -216,10 +225,13 @@ export const LessonPlayer = ({
     if (!user || pdfViewed) return;
     
     try {
+      const userId = profile?.id || user.id;
+      console.log('Marking PDF as viewed for user:', userId);
+      
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: (profile?.id || user.id) as string,
+          student_id: userId as string,
           lesson_id: lesson.id,
           pdf_viewed: true,
           last_accessed_at: new Date().toISOString()
@@ -236,10 +248,13 @@ export const LessonPlayer = ({
     if (!user || textRead) return;
     
     try {
+      const userId = profile?.id || user.id;
+      console.log('Marking text as read for user:', userId);
+      
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          student_id: (profile?.id || user.id) as string,
+          student_id: userId as string,
           lesson_id: lesson.id,
           text_read: true,
           last_accessed_at: new Date().toISOString()
@@ -378,10 +393,35 @@ export const LessonPlayer = ({
     
     setLoading(true);
     try {
+      console.log('Completing lesson...');
+      // Reset quiz attempts for this lesson when completing it
+      if (lesson.quiz) {
+        console.log('Resetting quiz attempts for lesson:', lesson.id);
+        const userId = profile?.id || user.id;
+        console.log('Using userId for quiz attempts reset:', userId);
+        
+        const { error } = await supabase
+          .from('quiz_attempts')
+          .delete()
+          .eq('quiz_id', lesson.quiz.id)
+          .eq('student_id', userId);
+        
+        if (error) {
+          console.error('Error deleting quiz attempts:', error);
+        } else {
+          console.log('Quiz attempts reset successfully');
+        }
+      }
+      
       await onComplete(lesson.id);
+      console.log('Lesson completed successfully');
+      
+      // Force refresh of attempts by toggling the flag
+      setLessonCompletionChanged(prev => !prev);
+      
       toast({
         title: "Lesson completed!",
-        description: "Great job! You can now move to the next lesson.",
+        description: "Great job! You can now move to the next lesson. Quiz attempts have been reset.",
       });
     } catch (error) {
       console.error('Error completing lesson:', error);
@@ -634,9 +674,11 @@ export const LessonPlayer = ({
   if (showQuiz && lesson.quiz) {
     return (
       <QuizPlayer
+        key={`${lesson.id}-${lessonCompletionChanged ? 'completed' : 'not-completed'}`}
         quiz={lesson.quiz}
         onComplete={(passed: boolean) => handleQuizComplete(passed)}
         onBack={() => setShowQuiz(false)}
+        refreshAttempts={lessonCompletionChanged}
       />
     );
   }

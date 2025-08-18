@@ -284,10 +284,7 @@ export function SubmittedQuizzes() {
         user_id: gradingAttempt.student_id,
         title: 'Quiz Graded',
         type: 'quiz_graded',
-        message: JSON.stringify({
-          text: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}% - ${passed ? 'Passed' : 'Failed'}`,
-          path
-        })
+        message: `Your quiz "${quizMeta.title}" has been graded. Score: ${computedScore}% - ${passed ? 'Passed' : 'Failed'}`
       });
 
       setGradeOpen(false);

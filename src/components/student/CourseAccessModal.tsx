@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -36,6 +36,12 @@ export const CourseAccessModal = ({ open, onOpenChange, isSignedIn, isEnrolled, 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Course Access Required</DialogTitle>
+          <DialogDescription>
+            You need to enroll in this course to access its content.
+          </DialogDescription>
+        </DialogHeader>
         <div className="bg-white">
           {/* Visual area */}
           <div className="relative aspect-video">
@@ -48,7 +54,7 @@ export const CourseAccessModal = ({ open, onOpenChange, isSignedIn, isEnrolled, 
               <div className="text-center text-white max-w-xl px-6">
                 <div className="inline-flex items-center gap-2 bg-orange-500/90 text-white px-4 py-2 rounded-md mb-4 text-sm font-medium">
                   <AlertTriangle className="h-4 w-4" />
-                  You don’t have access to this course
+                  You don't have access to this course
                 </div>
                 <div className="text-2xl md:text-3xl font-bold leading-snug">
                   {showBuy ? (

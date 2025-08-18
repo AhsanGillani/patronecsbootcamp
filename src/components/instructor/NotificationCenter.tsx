@@ -11,7 +11,7 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'course_approval' | 'course_rejection' | 'blog_approval' | 'blog_rejection' | 'enrollment' | 'system';
+  type: 'course_approval' | 'course_rejection' | 'blog_approval' | 'blog_rejection' | 'enrollment' | 'system' | 'quiz_graded';
   is_read: boolean;
   created_at: string;
 }
@@ -181,6 +181,8 @@ export const NotificationCenter = () => {
         return <Users className="h-4 w-4" />;
       case "system":
         return <MessageSquare className="h-4 w-4" />;
+      case "quiz_graded":
+        return <CheckCircle className="h-4 w-4" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
@@ -198,6 +200,8 @@ export const NotificationCenter = () => {
         return "secondary";
       case "system":
         return "outline";
+      case "quiz_graded":
+        return "default";
       default:
         return "secondary";
     }
