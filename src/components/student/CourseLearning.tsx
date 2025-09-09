@@ -2,28 +2,38 @@ import { useState, useEffect, useCallback, type ComponentProps } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { LessonPlayer } from "./LessonPlayer";
 import { CourseFeedback } from "./CourseFeedback";
-import { 
-  LessonCardSkeleton, 
-  QuizCardSkeleton, 
-  CourseOverviewSkeleton, 
+import {
+  LessonCardSkeleton,
+  QuizCardSkeleton,
+  CourseOverviewSkeleton,
   NavigationSkeleton,
-  LessonPlayerSkeleton
+  LessonPlayerSkeleton,
 } from "@/components/ui/skeleton-loader";
-import { 
-  Play, 
-  CheckCircle, 
-  Clock, 
-  FileText, 
-  Video, 
-  HelpCircle, 
+import {
+  Play,
+  CheckCircle,
+  Clock,
+  FileText,
+  Video,
+  HelpCircle,
   BookOpen,
   ArrowLeft,
   Award,
@@ -31,14 +41,14 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronRight,
-  Trophy
+  Trophy,
 } from "lucide-react";
 
 interface Lesson {
   id: string;
   title: string;
   content: string;
-  type: 'video' | 'text' | 'pdf' | 'quiz';
+  type: "video" | "text" | "pdf" | "quiz";
   order_index: number;
   video_url: string;
   pdf_url: string;
@@ -93,26 +103,31 @@ export const CourseLearning = () => {
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [showCourseContent, setShowCourseContent] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(
+    new Set()
+  );
 
   const fetchCourseData = useCallback(async () => {
     try {
       // Fetch course details
       const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .select(`
+        .from("courses")
+        .select(
+          `
           *,
           instructor:profiles!courses_instructor_id_fkey(full_name)
-        `)
-        .eq('id', courseId)
+        `
+        )
+        .eq("id", courseId)
         .single();
 
       if (courseError) throw courseError;
 
       // Fetch lessons with progress
       const { data: lessonsData, error: lessonsError } = await supabase
-        .from('lessons')
-        .select(`
+        .from("lessons")
+        .select(
+          `
           *,
           lesson_progress!fk_lesson_progress_lesson_id(
             id,
@@ -126,101 +141,124 @@ export const CourseLearning = () => {
             quiz_passed,
             last_accessed_at
           )
-        `)
-        .eq('course_id', courseId)
-        .eq('is_published', true)
-        .order('order_index');
+        `
+        )
+        .eq("course_id", courseId)
+        .eq("is_published", true)
+        .order("order_index");
 
       if (lessonsError) throw lessonsError;
 
       // Fetch quizzes with attempts - Fixed RLS handling
-      const lessonIds = (lessonsData || []).map(l => l.id);
+      const lessonIds = (lessonsData || []).map((l) => l.id);
       let quizzesData = [];
-      
+
       if (lessonIds.length > 0) {
         const { data: quizData, error: quizError } = await supabase
-          .from('quizzes')
-          .select(`
+          .from("quizzes")
+          .select(
+            `
             *,
             quiz_attempts!fk_quiz_attempts_quiz_id(id, score, passed, completed_at, student_id)
-          `)
-          .in('lesson_id', lessonIds);
+          `
+          )
+          .in("lesson_id", lessonIds);
 
         if (quizError) {
-          console.error('Error fetching quizzes:', quizError);
+          console.error("Error fetching quizzes:", quizError);
         } else {
           // Filter quiz attempts for current user
-          quizzesData = (quizData || []).map(quiz => ({
+          quizzesData = (quizData || []).map((quiz) => ({
             ...quiz,
-            quiz_attempts: (quiz.quiz_attempts || []).filter(attempt => 
-              attempt.student_id === user?.id
-            )
+            quiz_attempts: (quiz.quiz_attempts || []).filter(
+              (attempt) => attempt.student_id === user?.id
+            ),
           }));
         }
       }
-      
+
       setCourse(courseData);
 
-      const mappedLessons = ((lessonsData || []) as unknown as Lesson[]).map((lesson) => ({
-        ...lesson,
-        lesson_progress: lesson.lesson_progress ? lesson.lesson_progress.filter(progress => 
-          progress.student_id === user?.id
-        ) : []
-      })) as Lesson[];
+      const mappedLessons = ((lessonsData || []) as unknown as Lesson[]).map(
+        (lesson) => ({
+          ...lesson,
+          lesson_progress: lesson.lesson_progress
+            ? lesson.lesson_progress.filter(
+                (progress) => progress.student_id === user?.id
+              )
+            : [],
+        })
+      ) as Lesson[];
       setLessons(mappedLessons);
       setQuizzes(quizzesData || []);
 
       // Calculate progress
-      const completedLessons = mappedLessons.filter(lesson => {
-        const lp = lesson.lesson_progress?.find(p => p.student_id === user?.id);
+      const completedLessons = mappedLessons.filter((lesson) => {
+        const lp = lesson.lesson_progress?.find(
+          (p) => p.student_id === user?.id
+        );
         // Count lesson complete only when marked completed (prevents pending Q&A from finishing course)
         return !!lp?.is_completed;
       }).length;
       const totalLessons = mappedLessons.length;
-      const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+      const progressPercentage =
+        totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
       setProgress(progressPercentage);
 
       // Persist course progress on enrollment so other views (e.g., Continue Learning) reflect it
       if (user && courseId) {
         try {
           await supabase
-            .from('enrollments')
+            .from("enrollments")
             .update({
               progress: Math.round(progressPercentage),
               updated_at: new Date().toISOString(),
               // set completed_at when finished
-              ...(Math.round(progressPercentage) === 100 ? { completed_at: new Date().toISOString() } : {})
+              ...(Math.round(progressPercentage) === 100
+                ? { completed_at: new Date().toISOString() }
+                : {}),
             })
-            .eq('student_id', profile?.id || user.id)
-            .eq('course_id', courseId);
+            .eq("student_id", profile?.id || user.id)
+            .eq("course_id", courseId);
 
           // Issue certificate when course is completed
           if (Math.round(progressPercentage) === 100) {
             // Try to get a generated certificate number from DB, fallback to client-generated
-            let certificateNumber = `CERT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
+            let certificateNumber = `CERT-${new Date().getFullYear()}-${String(
+              Math.floor(Math.random() * 999999)
+            ).padStart(6, "0")}`;
             try {
-              const { data: genNum } = await supabase.rpc('generate_certificate_number');
+              const { data: genNum } = await supabase.rpc(
+                "generate_certificate_number"
+              );
               if (genNum) certificateNumber = genNum as unknown as string;
-            } catch (_) { /* ignore */ }
+            } catch (_) {
+              /* ignore */
+            }
 
-            await supabase
-              .from('certificates')
-              .upsert({
+            await supabase.from("certificates").upsert(
+              {
                 student_id: (profile?.id || user.id) as string,
                 course_id: courseId,
                 certificate_number: certificateNumber,
-                issued_at: new Date().toISOString()
-              } as unknown as { student_id: string; course_id: string; certificate_number: string; issued_at: string }, {
-                onConflict: 'student_id,course_id'
-              });
+                issued_at: new Date().toISOString(),
+              } as unknown as {
+                student_id: string;
+                course_id: string;
+                certificate_number: string;
+                issued_at: string;
+              },
+              {
+                onConflict: "student_id,course_id",
+              }
+            );
           }
         } catch (e) {
-          console.error('Error updating enrollment progress / certificate:', e);
+          console.error("Error updating enrollment progress / certificate:", e);
         }
       }
-
     } catch (error) {
-      console.error('Error fetching course data:', error);
+      console.error("Error fetching course data:", error);
       toast({
         title: "Error",
         description: "Failed to load course content",
@@ -239,16 +277,22 @@ export const CourseLearning = () => {
 
   const markLessonComplete = async (lessonId: string) => {
     if (!user) return;
-    
+
     try {
-      const { error } = await supabase
-        .from('lesson_progress')
-        .upsert({
+      const { error } = await supabase.from("lesson_progress").upsert(
+        {
           student_id: user.id,
           lesson_id: lessonId,
           is_completed: true,
-          completed_at: new Date().toISOString()
-        } as unknown as { student_id: string; lesson_id: string; is_completed: boolean; completed_at: string }, { onConflict: 'student_id,lesson_id' });
+          completed_at: new Date().toISOString(),
+        } as unknown as {
+          student_id: string;
+          lesson_id: string;
+          is_completed: boolean;
+          completed_at: string;
+        },
+        { onConflict: "student_id,lesson_id" }
+      );
 
       if (error) throw error;
 
@@ -260,7 +304,7 @@ export const CourseLearning = () => {
       // Refresh course data to show updated progress
       await fetchCourseData();
     } catch (error) {
-      console.error('Error marking lesson complete:', error);
+      console.error("Error marking lesson complete:", error);
       toast({
         title: "Error",
         description: "Failed to mark lesson as complete. Please try again.",
@@ -271,19 +315,26 @@ export const CourseLearning = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "video": return <Video className="h-4 w-4" />;
-      case "text": return <FileText className="h-4 w-4" />;
-      case "pdf": return <FileText className="h-4 w-4" />;
-      case "quiz": return <HelpCircle className="h-4 w-4" />;
-      default: return <FileText className="h-4 w-4" />;
+      case "video":
+        return <Video className="h-4 w-4" />;
+      case "text":
+        return <FileText className="h-4 w-4" />;
+      case "pdf":
+        return <FileText className="h-4 w-4" />;
+      case "quiz":
+        return <HelpCircle className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
     }
   };
 
   const startLesson = (lesson: Lesson) => {
     // Find and attach quiz to lesson if it exists
-    const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === lesson.id);
-    const lessonWithQuiz = lessonQuiz ? { ...lesson, quiz: lessonQuiz } : lesson;
-    
+    const lessonQuiz = quizzes.find((quiz) => quiz.lesson_id === lesson.id);
+    const lessonWithQuiz = lessonQuiz
+      ? { ...lesson, quiz: lessonQuiz }
+      : lesson;
+
     setCurrentLesson(lessonWithQuiz);
     setShowCourseContent(false);
     setShowFeedback(false);
@@ -291,22 +342,30 @@ export const CourseLearning = () => {
 
   const goToNext = () => {
     if (!currentLesson) return;
-    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    const currentIndex = lessons.findIndex((l) => l.id === currentLesson.id);
     if (currentIndex < lessons.length - 1) {
       const nextLesson = lessons[currentIndex + 1];
-      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === nextLesson.id);
-      const lessonWithQuiz = lessonQuiz ? { ...nextLesson, quiz: lessonQuiz } : nextLesson;
+      const lessonQuiz = quizzes.find(
+        (quiz) => quiz.lesson_id === nextLesson.id
+      );
+      const lessonWithQuiz = lessonQuiz
+        ? { ...nextLesson, quiz: lessonQuiz }
+        : nextLesson;
       setCurrentLesson(lessonWithQuiz);
     }
   };
 
   const goToPrevious = () => {
     if (!currentLesson) return;
-    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    const currentIndex = lessons.findIndex((l) => l.id === currentLesson.id);
     if (currentIndex > 0) {
       const prevLesson = lessons[currentIndex - 1];
-      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === prevLesson.id);
-      const lessonWithQuiz = lessonQuiz ? { ...prevLesson, quiz: lessonQuiz } : prevLesson;
+      const lessonQuiz = quizzes.find(
+        (quiz) => quiz.lesson_id === prevLesson.id
+      );
+      const lessonWithQuiz = lessonQuiz
+        ? { ...prevLesson, quiz: lessonQuiz }
+        : prevLesson;
       setCurrentLesson(lessonWithQuiz);
     }
   };
@@ -325,11 +384,11 @@ export const CourseLearning = () => {
 
   const getCurrentLessonIndex = () => {
     if (!currentLesson) return -1;
-    return lessons.findIndex(l => l.id === currentLesson.id);
+    return lessons.findIndex((l) => l.id === currentLesson.id);
   };
 
   const toggleLessonExpanded = (lessonId: string) => {
-    setExpandedLessons(prev => {
+    setExpandedLessons((prev) => {
       const newExpanded = new Set(prev);
       if (newExpanded.has(lessonId)) {
         newExpanded.delete(lessonId);
@@ -419,27 +478,43 @@ export const CourseLearning = () => {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <Link to="/student">
-                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                  >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Dashboard
                   </Button>
                 </Link>
                 <div className="min-w-0">
-                  <h1 className="text-lg md:text-xl font-semibold truncate">{course.title}</h1>
-                  <p className="text-xs md:text-sm text-white/80 truncate">by {course.instructor?.full_name || 'Patronecs'}</p>
+                  <h1 className="text-lg md:text-xl font-semibold truncate">
+                    {course.title}
+                  </h1>
+                  <p className="text-xs md:text-sm text-white/80 truncate">
+                    by {course.instructor?.full_name || "Patronecs"}
+                  </p>
                 </div>
               </div>
               {progress === 100 && (
-                <Badge variant="default" className="bg-green-500 whitespace-nowrap">
+                <Badge
+                  variant="default"
+                  className="bg-green-500 whitespace-nowrap"
+                >
                   <Award className="h-3 w-3 mr-1" /> Completed
                 </Badge>
               )}
             </div>
             <div className="mt-3 flex items-center gap-3">
               <div className="w-full bg-white/20 rounded-full h-2">
-                <div className="bg-white h-2 rounded-full" style={{ width: `${Math.round(progress)}%` }}></div>
+                <div
+                  className="bg-white h-2 rounded-full"
+                  style={{ width: `${Math.round(progress)}%` }}
+                ></div>
               </div>
-              <span className="text-sm font-medium w-12 text-right">{Math.round(progress)}%</span>
+              <span className="text-sm font-medium w-12 text-right">
+                {Math.round(progress)}%
+              </span>
             </div>
           </div>
         </div>
@@ -459,12 +534,30 @@ export const CourseLearning = () => {
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Completed</span>
                     <span>
-                      {lessons.filter(l => l.lesson_progress && l.lesson_progress.length > 0 && l.lesson_progress[0].is_completed).length}
+                      {
+                        lessons.filter(
+                          (l) =>
+                            l.lesson_progress &&
+                            l.lesson_progress.length > 0 &&
+                            l.lesson_progress[0].is_completed
+                        ).length
+                      }
                       /{lessons.length}
                     </span>
                   </div>
                   <Progress
-                    value={lessons.length > 0 ? (lessons.filter(l => l.lesson_progress && l.lesson_progress.length > 0 && l.lesson_progress[0].is_completed).length / lessons.length) * 100 : 0}
+                    value={
+                      lessons.length > 0
+                        ? (lessons.filter(
+                            (l) =>
+                              l.lesson_progress &&
+                              l.lesson_progress.length > 0 &&
+                              l.lesson_progress[0].is_completed
+                          ).length /
+                            lessons.length) *
+                          100
+                        : 0
+                    }
                     className="h-2"
                   />
                 </div>
@@ -472,21 +565,30 @@ export const CourseLearning = () => {
                 {/* Lessons list (collapsible per lesson) */}
                 <div className="space-y-2">
                   {lessons.map((lesson, index) => {
-                    const isCompleted = !!(lesson.lesson_progress && lesson.lesson_progress[0]?.is_completed);
+                    const isCompleted = !!(
+                      lesson.lesson_progress &&
+                      lesson.lesson_progress[0]?.is_completed
+                    );
                     const isCurrent = currentLesson?.id === lesson.id;
                     const lp = lesson.lesson_progress?.[0];
                     const videoDone = (lp?.video_watch_progress || 0) >= 90;
                     const pdfDone = !!lp?.pdf_viewed;
                     const textDone = !!lp?.text_read;
-                    const lessonQuiz = quizzes.find(q => q.lesson_id === lesson.id);
-                    const quizPassed = !!lessonQuiz?.quiz_attempts?.[0]?.passed || !!lp?.quiz_passed;
+                    const lessonQuiz = quizzes.find(
+                      (q) => q.lesson_id === lesson.id
+                    );
+                    const quizPassed =
+                      !!lessonQuiz?.quiz_attempts?.[0]?.passed ||
+                      !!lp?.quiz_passed;
 
                     return (
                       <Collapsible key={lesson.id}>
                         <CollapsibleTrigger asChild>
                           <div
                             className={`rounded-lg border p-3 cursor-pointer transition-colors ${
-                              isCurrent ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/40'
+                              isCurrent
+                                ? "bg-blue-50 border-blue-200"
+                                : "hover:bg-muted/40"
                             }`}
                             title={lesson.title}
                           >
@@ -498,7 +600,9 @@ export const CourseLearning = () => {
                                   <div className="h-3 w-3 border border-gray-300 rounded-full" />
                                 )}
                                 {getTypeIcon(lesson.type)}
-                                <span className="text-sm font-medium truncate">L{index + 1}: {lesson.title}</span>
+                                <span className="text-sm font-medium truncate">
+                                  L{index + 1}: {lesson.title}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                                 <Clock className="h-3 w-3" />
@@ -509,37 +613,67 @@ export const CourseLearning = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-2 ml-2 space-y-2">
                           {/* Primary content row */}
-                          <div className={`flex items-center justify-between rounded border p-2 text-xs ${isCurrent && currentLesson?.type !== 'quiz' ? 'bg-blue-50 border-blue-200' : ''}`}>
+                          <div
+                            className={`flex items-center justify-between rounded border p-2 text-xs ${
+                              isCurrent && currentLesson?.type !== "quiz"
+                                ? "bg-blue-50 border-blue-200"
+                                : ""
+                            }`}
+                          >
                             <div className="flex items-center gap-2">
                               {getTypeIcon(lesson.type)}
                               <span className="capitalize">{lesson.type}</span>
                               <span className="text-muted-foreground">•</span>
                               <span>{lesson.duration || 0} minutes</span>
-                              {isCompleted || videoDone || pdfDone || textDone ? (
-                                <Badge variant="outline" className="ml-2">Done</Badge>
+                              {isCompleted ||
+                              videoDone ||
+                              pdfDone ||
+                              textDone ? (
+                                <Badge variant="outline" className="ml-2">
+                                  Done
+                                </Badge>
                               ) : null}
                             </div>
-                            <Button size="sm" variant="outline" onClick={() => startLesson(lesson)}>Open</Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => startLesson(lesson)}
+                            >
+                              Open
+                            </Button>
                           </div>
 
                           {/* Quiz row if exists */}
                           {lessonQuiz && (
-                            <div className={`flex items-center justify-between rounded border p-2 text-xs ${isCurrent && currentLesson?.type === 'quiz' ? 'bg-blue-50 border-blue-200' : ''}`}>
+                            <div
+                              className={`flex items-center justify-between rounded border p-2 text-xs ${
+                                isCurrent && currentLesson?.type === "quiz"
+                                  ? "bg-blue-50 border-blue-200"
+                                  : ""
+                              }`}
+                            >
                               <div className="flex items-center gap-2">
                                 <MessageSquare className="h-3 w-3" />
                                 <span>Quiz</span>
                                 <span className="text-muted-foreground">•</span>
                                 <span>Pass {lessonQuiz.passing_score}%</span>
-                                <Badge variant={quizPassed ? 'default' : 'outline'} className={`ml-2 ${quizPassed ? 'bg-green-600 text-white' : ''}`}>
-                                  {quizPassed ? 'Passed' : 'Not passed'}
+                                <Badge
+                                  variant={quizPassed ? "default" : "outline"}
+                                  className={`ml-2 ${
+                                    quizPassed ? "bg-green-600 text-white" : ""
+                                  }`}
+                                >
+                                  {quizPassed ? "Passed" : "Not passed"}
                                 </Badge>
                               </div>
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 onClick={() => startLesson({ ...lesson, type: 'quiz' })}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  startLesson({ ...lesson, type: "quiz" })
+                                }
                               >
-                                {quizPassed ? 'Retake' : 'Start'}
+                                {quizPassed ? "Retake" : "Start"}
                               </Button>
                             </div>
                           )}
@@ -550,8 +684,8 @@ export const CourseLearning = () => {
                 </div>
 
                 <div className="pt-2">
-                  <Button 
-                    variant={showFeedback ? "default" : "outline"} 
+                  <Button
+                    variant={showFeedback ? "default" : "outline"}
                     className="w-full justify-start"
                     onClick={showCourseFeedback}
                   >
@@ -575,13 +709,32 @@ export const CourseLearning = () => {
                         <span className="truncate">{currentLesson.title}</span>
                       </CardTitle>
                       <CardDescription className="mt-1 flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-xs"><Clock className="h-3 w-3" /> {currentLesson.duration || 0} min</span>
-                        <Badge variant="outline" className="text-xs capitalize">{currentLesson.type}</Badge>
+                        <span className="flex items-center gap-1 text-xs">
+                          <Clock className="h-3 w-3" />{" "}
+                          {currentLesson.duration || 0} min
+                        </span>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {currentLesson.type}
+                        </Badge>
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={backToCourseContent}>Back to content</Button>
-                      <Button variant="outline" size="sm" onClick={() => currentLesson && markLessonComplete(currentLesson.id)}>Mark complete</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={backToCourseContent}
+                      >
+                        Back to content
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          currentLesson && markLessonComplete(currentLesson.id)
+                        }
+                      >
+                        Mark complete
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -597,8 +750,19 @@ export const CourseLearning = () => {
                   />
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" onClick={goToPrevious} disabled={getCurrentLessonIndex() <= 0}>Previous</Button>
-                      <Button onClick={goToNext} disabled={getCurrentLessonIndex() >= lessons.length - 1}>Next</Button>
+                      <Button
+                        variant="outline"
+                        onClick={goToPrevious}
+                        disabled={getCurrentLessonIndex() <= 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        onClick={goToNext}
+                        disabled={getCurrentLessonIndex() >= lessons.length - 1}
+                      >
+                        Next
+                      </Button>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" onClick={showCourseFeedback}>
@@ -611,10 +775,7 @@ export const CourseLearning = () => {
             )}
 
             {showFeedback && progress === 100 && (
-              <CourseFeedback 
-                courseId={courseId!} 
-                courseName={course.title} 
-              />
+              <CourseFeedback courseId={courseId!} courseName={course.title} />
             )}
 
             {showCourseContent && (
@@ -626,15 +787,36 @@ export const CourseLearning = () => {
                   </h2>
                   <div className="space-y-3">
                     {lessons.map((lesson, index) => {
-                      const isCompleted = lesson.lesson_progress && lesson.lesson_progress.length > 0 && lesson.lesson_progress[0].is_completed;
-                      const lessonQuiz = quizzes.find(quiz => quiz.lesson_id === lesson.id);
-                      const hasQuizAttempt = lessonQuiz?.quiz_attempts && lessonQuiz.quiz_attempts.length > 0;
-                      const quizPassed = hasQuizAttempt && lessonQuiz.quiz_attempts[lessonQuiz.quiz_attempts.length - 1].passed;
+                      const isCompleted =
+                        lesson.lesson_progress &&
+                        lesson.lesson_progress.length > 0 &&
+                        lesson.lesson_progress[0].is_completed;
+                      const lessonQuiz = quizzes.find(
+                        (quiz) => quiz.lesson_id === lesson.id
+                      );
+                      const hasQuizAttempt =
+                        lessonQuiz?.quiz_attempts &&
+                        lessonQuiz.quiz_attempts.length > 0;
+                      const quizPassed =
+                        hasQuizAttempt &&
+                        lessonQuiz.quiz_attempts[
+                          lessonQuiz.quiz_attempts.length - 1
+                        ].passed;
                       const isExpanded = expandedLessons.has(lesson.id);
-                      
+
                       return (
-                        <Collapsible key={lesson.id} open={isExpanded} onOpenChange={() => toggleLessonExpanded(lesson.id)}>
-                          <Card className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'hover:shadow-md'}`}>
+                        <Collapsible
+                          key={lesson.id}
+                          open={isExpanded}
+                          onOpenChange={() => toggleLessonExpanded(lesson.id)}
+                        >
+                          <Card
+                            className={`transition-all ${
+                              isCompleted
+                                ? "bg-green-50 border-green-200"
+                                : "hover:shadow-md"
+                            }`}
+                          >
                             <CollapsibleTrigger asChild>
                               <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50">
                                 <div className="flex items-center justify-between">
@@ -647,9 +829,14 @@ export const CourseLearning = () => {
                                     <div className="flex-1">
                                       <CardTitle className="text-base flex items-center space-x-2">
                                         {getTypeIcon(lesson.type)}
-                                        <span>Lesson {index + 1}: {lesson.title}</span>
+                                        <span>
+                                          Lesson {index + 1}: {lesson.title}
+                                        </span>
                                         {lessonQuiz && (
-                                          <Badge variant="outline" className="ml-2">
+                                          <Badge
+                                            variant="outline"
+                                            className="ml-2"
+                                          >
                                             <HelpCircle className="h-3 w-3 mr-1" />
                                             Quiz
                                           </Badge>
@@ -657,12 +844,22 @@ export const CourseLearning = () => {
                                       </CardTitle>
                                       <CardDescription className="flex items-center space-x-2 mt-1">
                                         <Clock className="h-3 w-3" />
-                                        <span>{lesson.duration || 0} minutes</span>
+                                        <span>
+                                          {lesson.duration || 0} minutes
+                                        </span>
                                         {lessonQuiz && hasQuizAttempt && (
                                           <>
                                             <span>•</span>
-                                            <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
-                                              Quiz: {quizPassed ? "Passed" : "Failed"}
+                                            <Badge
+                                              variant={
+                                                quizPassed
+                                                  ? "default"
+                                                  : "destructive"
+                                              }
+                                              className="text-xs"
+                                            >
+                                              Quiz:{" "}
+                                              {quizPassed ? "Passed" : "Failed"}
                                             </Badge>
                                           </>
                                         )}
@@ -670,7 +867,9 @@ export const CourseLearning = () => {
                                     </div>
                                   </div>
                                   <div className="flex items-center space-x-2">
-                                    <Badge variant="outline">{lesson.type}</Badge>
+                                    <Badge variant="outline">
+                                      {lesson.type}
+                                    </Badge>
                                     {isExpanded ? (
                                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                     ) : (
@@ -680,7 +879,7 @@ export const CourseLearning = () => {
                                 </div>
                               </CardHeader>
                             </CollapsibleTrigger>
-                            
+
                             <CollapsibleContent>
                               <CardContent className="pt-0">
                                 <div className="space-y-4">
@@ -688,10 +887,17 @@ export const CourseLearning = () => {
                                   <div className="bg-muted/30 rounded-lg p-4">
                                     <h4 className="font-medium mb-2 flex items-center">
                                       {getTypeIcon(lesson.type)}
-                                      <span className="ml-2">Lesson Content</span>
+                                      <span className="ml-2">
+                                        Lesson Content
+                                      </span>
                                     </h4>
                                     <p className="text-sm text-muted-foreground mb-3">
-                                      {lesson.content ? lesson.content.substring(0, 150) + (lesson.content.length > 150 ? '...' : '') : 'No description available'}
+                                      {lesson.content
+                                        ? lesson.content.substring(0, 150) +
+                                          (lesson.content.length > 150
+                                            ? "..."
+                                            : "")
+                                        : "No description available"}
                                     </p>
                                     <Button
                                       size="sm"
@@ -699,7 +905,9 @@ export const CourseLearning = () => {
                                       className="w-full"
                                     >
                                       <Play className="h-3 w-3 mr-2" />
-                                      {isCompleted ? 'Review Lesson' : 'Start Lesson'}
+                                      {isCompleted
+                                        ? "Review Lesson"
+                                        : "Start Lesson"}
                                     </Button>
                                   </div>
 
@@ -708,33 +916,57 @@ export const CourseLearning = () => {
                                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                       <h4 className="font-medium mb-2 flex items-center">
                                         <HelpCircle className="h-4 w-4 text-blue-600" />
-                                        <span className="ml-2">{lessonQuiz.title}</span>
+                                        <span className="ml-2">
+                                          {lessonQuiz.title}
+                                        </span>
                                       </h4>
                                       <p className="text-sm text-muted-foreground mb-3">
-                                        {lessonQuiz.description || 'Test your understanding of this lesson'}
+                                        {lessonQuiz.description ||
+                                          "Test your understanding of this lesson"}
                                       </p>
                                       <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                                           <span className="flex items-center">
                                             <Trophy className="h-3 w-3 mr-1" />
-                                            Passing Score: {lessonQuiz.passing_score}%
+                                            Passing Score:{" "}
+                                            {lessonQuiz.passing_score}%
                                           </span>
                                         </div>
                                         {hasQuizAttempt && (
-                                          <Badge variant={quizPassed ? "default" : "destructive"} className="text-xs">
-                                            {quizPassed ? "Passed" : "Failed"} 
-                                            {lessonQuiz.quiz_attempts && ` (${lessonQuiz.quiz_attempts[lessonQuiz.quiz_attempts.length - 1].score}%)`}
+                                          <Badge
+                                            variant={
+                                              quizPassed
+                                                ? "default"
+                                                : "destructive"
+                                            }
+                                            className="text-xs"
+                                          >
+                                            {quizPassed ? "Passed" : "Failed"}
+                                            {lessonQuiz.quiz_attempts &&
+                                              ` (${
+                                                lessonQuiz.quiz_attempts[
+                                                  lessonQuiz.quiz_attempts
+                                                    .length - 1
+                                                ].score
+                                              }%)`}
                                           </Badge>
                                         )}
                                       </div>
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => startLesson({ ...lesson, type: 'quiz' })}
+                                        onClick={() =>
+                                          startLesson({
+                                            ...lesson,
+                                            type: "quiz",
+                                          })
+                                        }
                                         className="w-full border-blue-200 hover:bg-blue-100"
                                       >
                                         <HelpCircle className="h-3 w-3 mr-2" />
-                                        {hasQuizAttempt ? 'Retake Quiz' : 'Take Quiz'}
+                                        {hasQuizAttempt
+                                          ? "Retake Quiz"
+                                          : "Take Quiz"}
                                       </Button>
                                     </div>
                                   )}
@@ -747,7 +979,6 @@ export const CourseLearning = () => {
                     })}
                   </div>
                 </div>
-
               </div>
             )}
           </div>
