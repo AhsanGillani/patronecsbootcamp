@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,8 +22,8 @@ interface EnrollmentRow {
   completed_at: string | null;
   student_id: string;
   course_id: string;
-  student: { full_name: string; email: string } | null;
-  course: { title: string } | null;
+  profiles: { full_name: string; email: string } | null;
+  courses: { title: string } | null;
 }
 
 interface LessonProgressRow {
@@ -47,8 +46,6 @@ export default function StudentProgress() {
 
   // Filters
   const [courseFilter, setCourseFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
   const [progressBand, setProgressBand] = useState<string>("all");
 
   // Details dialog
@@ -60,6 +57,7 @@ export default function StudentProgress() {
   const [detailsOverall, setDetailsOverall] = useState<number>(0);
 
   useEffect(() => {
+    console.log('StudentProgress component mounted - no startDate should exist');
     fetchFilters();
     fetchEnrollments();
   }, []);
@@ -85,8 +83,8 @@ export default function StudentProgress() {
         .from('enrollments')
         .select(`
           id, enrolled_at, progress, completed_at, student_id, course_id,
-          student:profiles!student_id(full_name, email),
-          course:courses!course_id(title)
+          profiles!enrollments_student_id_fkey(full_name, email),
+          courses!enrollments_course_id_fkey(title)
         `)
         .order('enrolled_at', { ascending: false });
       if (error) throw error;
@@ -102,8 +100,6 @@ export default function StudentProgress() {
   const filtered = useMemo(() => {
     return enrollments.filter((e) => {
       if (courseFilter !== 'all' && e.course_id !== courseFilter) return false;
-      if (startDate && new Date(e.enrolled_at) < new Date(startDate)) return false;
-      if (endDate && new Date(e.enrolled_at) > new Date(endDate)) return false;
       if (progressBand !== 'all') {
         const [min, max] = progressBand.split('-').map(Number);
         if (isFinite(min) && e.progress < min) return false;
@@ -111,13 +107,13 @@ export default function StudentProgress() {
       }
       return true;
     });
-  }, [enrollments, courseFilter, startDate, endDate, progressBand]);
+  }, [enrollments, courseFilter, progressBand]);
 
   const openDetails = async (row: EnrollmentRow) => {
     setDetailsOpen(true);
     setDetailsLoading(true);
-    setDetailsStudent({ name: row.student?.full_name || 'Student', email: row.student?.email || '' });
-    setDetailsCourse(row.course?.title || 'Course');
+    setDetailsStudent({ name: row.profiles?.full_name || 'Student', email: row.profiles?.email || '' });
+    setDetailsCourse(row.courses?.title || 'Course');
     setDetailsOverall(row.progress || 0);
     try {
       const { data, error } = await supabase
@@ -155,10 +151,10 @@ export default function StudentProgress() {
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
-          <CardDescription>Narrow results by course, date, or progress</CardDescription>
+          <CardDescription>Narrow results by course or progress</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-slate-500">Course</label>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
@@ -172,14 +168,6 @@ export default function StudentProgress() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">Start date</label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">End date</label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
             <div>
               <label className="text-xs text-slate-500">Progress</label>
@@ -230,15 +218,15 @@ export default function StudentProgress() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-slate-500" />
                           <div>
-                            <div className="font-medium">{row.student?.full_name || 'Student'}</div>
-                            <div className="text-xs text-slate-500">{row.student?.email}</div>
+                             <div className="font-medium">{row.profiles?.full_name || 'Student'}</div>
+                             <div className="text-xs text-slate-500">{row.profiles?.email}</div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <BookOpen className="h-4 w-4 text-slate-500" />
-                          <span>{row.course?.title || 'Course'}</span>
+                          <span>{row.courses?.title || 'Course'}</span>
                         </div>
                       </TableCell>
                       <TableCell>

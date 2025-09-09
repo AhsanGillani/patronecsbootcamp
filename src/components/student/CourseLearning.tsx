@@ -634,6 +634,7 @@ export const CourseLearning = () => {
                                 </Badge>
                               ) : null}
                             </div>
+<<<<<<< HEAD
                             <Button
                               size="xs"
                               variant="outline"
@@ -641,6 +642,9 @@ export const CourseLearning = () => {
                             >
                               Open
                             </Button>
+=======
+                            <Button size="sm" variant="outline" onClick={() => startLesson(lesson)}>Open</Button>
+>>>>>>> ca4d1332f2cce25d585418346cca27257f774819
                           </div>
 
                           {/* Quiz row if exists */}
@@ -666,12 +670,19 @@ export const CourseLearning = () => {
                                   {quizPassed ? "Passed" : "Not passed"}
                                 </Badge>
                               </div>
+<<<<<<< HEAD
                               <Button
                                 size="xs"
                                 variant="outline"
                                 onClick={() =>
                                   startLesson({ ...lesson, type: "quiz" })
                                 }
+=======
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 onClick={() => startLesson({ ...lesson, type: 'quiz' })}
+>>>>>>> ca4d1332f2cce25d585418346cca27257f774819
                               >
                                 {quizPassed ? "Retake" : "Start"}
                               </Button>

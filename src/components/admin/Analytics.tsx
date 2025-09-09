@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
   BookOpen, 
@@ -35,14 +37,17 @@ interface AnalyticsData {
   topCategories: Array<{ name: string; count: number; growth: number }>;
   recentActivity: Array<{ type: string; description: string; time: string; value: string }>;
   platformStats: {
-    webUsers: number;
-    mobileUsers: number;
-    activeUsers: number;
-    newUsers: number;
+    approvedCourses: number;
+    pendingCourses: number;
+    totalInstructors: number;
+    totalCertificates: number;
+    activeBlogPosts: number;
+    totalFeedbacks: number;
   };
 }
 
 export default function Analytics() {
+  const { toast } = useToast();
   const [data, setData] = useState<AnalyticsData>({
     totalUsers: 0,
     totalCourses: 0,
@@ -55,50 +60,272 @@ export default function Analytics() {
     topCategories: [],
     recentActivity: [],
     platformStats: {
-      webUsers: 0,
-      mobileUsers: 0,
-      activeUsers: 0,
-      newUsers: 0
+      approvedCourses: 0,
+      pendingCourses: 0,
+      totalInstructors: 0,
+      totalCertificates: 0,
+      activeBlogPosts: 0,
+      totalFeedbacks: 0
     }
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
 
-  useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      setData({
-        totalUsers: 1247,
-        totalCourses: 89,
-        totalRevenue: 45678,
-        totalEnrollments: 3456,
-        userGrowth: 12.5,
-        courseGrowth: 8.3,
-        revenueGrowth: 23.7,
-        enrollmentGrowth: 15.2,
-        topCategories: [
-          { name: 'Web Development', count: 23, growth: 15.2 },
-          { name: 'Data Science', count: 18, growth: 22.1 },
-          { name: 'Design', count: 15, growth: 8.7 },
-          { name: 'Business', count: 12, growth: 12.3 },
-          { name: 'Marketing', count: 10, growth: 18.9 }
-        ],
-        recentActivity: [
-          { type: 'user_registration', description: 'New user registered', time: '2 min ago', value: '+1' },
-          { type: 'course_creation', description: 'New course published', time: '15 min ago', value: '+1' },
-          { type: 'enrollment', description: 'Course enrollment', time: '1 hour ago', value: '+5' },
-          { type: 'payment', description: 'Payment received', time: '2 hours ago', value: '$299' },
-          { type: 'certificate', description: 'Certificate issued', time: '3 hours ago', value: '+2' }
-        ],
-        platformStats: {
-          webUsers: 847,
-          mobileUsers: 400,
-          activeUsers: 892,
-          newUsers: 45
-        }
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      
+      // Calculate date range
+      const now = new Date();
+      const daysBack = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 365;
+      const startDate = new Date(now.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+      const previousStartDate = new Date(startDate.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+
+      // Fetch all analytics data in parallel
+      const [
+        profilesResult,
+        coursesResult,
+        enrollmentsResult,
+        categoriesResult,
+        certificatesResult,
+        blogsResult,
+        feedbackResult,
+        recentEnrollmentsResult,
+        recentCoursesResult,
+        recentProfilesResult
+      ] = await Promise.all([
+        // Total users
+        supabase.from('profiles').select('id, created_at, role', { count: 'exact' }),
+        
+        // Total courses
+        supabase.from('courses').select('id, created_at, status, price').eq('soft_deleted', false),
+        
+        // Total enrollments
+        supabase.from('enrollments').select('id, enrolled_at', { count: 'exact' }),
+        
+        // Categories with course counts
+        supabase.from('categories').select(`
+          id, name,
+          courses!inner(id, created_at, category_id)
+        `),
+        
+        // Certificates
+        supabase.from('certificates').select('id, issued_at', { count: 'exact' }),
+        
+        // Active blogs
+        supabase.from('blogs').select('id, created_at').eq('is_published', true).eq('status', 'approved'),
+        
+        // Course feedback
+        supabase.from('course_feedback').select('id, created_at', { count: 'exact' }),
+        
+        // Recent enrollments for activity
+        supabase.from('enrollments')
+          .select('enrolled_at, profiles!student_id(full_name), courses!course_id(title)')
+          .order('enrolled_at', { ascending: false })
+          .limit(5),
+        
+        // Recent courses for activity
+        supabase.from('courses')
+          .select('created_at, title, profiles!instructor_id(full_name)')
+          .eq('soft_deleted', false)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        
+        // Recent user registrations
+        supabase.from('profiles')
+          .select('created_at, full_name')
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      if (profilesResult.error) throw profilesResult.error;
+      if (coursesResult.error) throw coursesResult.error;
+      if (enrollmentsResult.error) throw enrollmentsResult.error;
+
+      const profiles = profilesResult.data || [];
+      const courses = coursesResult.data || [];
+      const enrollments = enrollmentsResult.data || [];
+      const categories = categoriesResult.data || [];
+      const certificates = certificatesResult.data || [];
+      const blogs = blogsResult.data || [];
+      const feedbacks = feedbackResult.data || [];
+
+      // Calculate current period data
+      const currentProfiles = profiles.filter(p => new Date(p.created_at) >= startDate);
+      const currentCourses = courses.filter(c => new Date(c.created_at) >= startDate);
+      const currentEnrollments = enrollments.filter(e => new Date(e.enrolled_at) >= startDate);
+
+      // Calculate previous period data for growth calculation
+      const previousProfiles = profiles.filter(p => {
+        const date = new Date(p.created_at);
+        return date >= previousStartDate && date < startDate;
       });
+      const previousCourses = courses.filter(c => {
+        const date = new Date(c.created_at);
+        return date >= previousStartDate && date < startDate;
+      });
+      const previousEnrollments = enrollments.filter(e => {
+        const date = new Date(e.enrolled_at);
+        return date >= previousStartDate && date < startDate;
+      });
+
+      // Calculate growth percentages
+      const userGrowth = previousProfiles.length > 0 
+        ? ((currentProfiles.length - previousProfiles.length) / previousProfiles.length) * 100 
+        : currentProfiles.length > 0 ? 100 : 0;
+      
+      const courseGrowth = previousCourses.length > 0 
+        ? ((currentCourses.length - previousCourses.length) / previousCourses.length) * 100 
+        : currentCourses.length > 0 ? 100 : 0;
+      
+      const enrollmentGrowth = previousEnrollments.length > 0 
+        ? ((currentEnrollments.length - previousEnrollments.length) / previousEnrollments.length) * 100 
+        : currentEnrollments.length > 0 ? 100 : 0;
+
+      // Calculate revenue (sum of course prices from enrollments)
+      const approvedCourses = courses.filter(c => c.status === 'approved');
+      const totalRevenue = approvedCourses.reduce((sum, course) => sum + (course.price || 0), 0);
+      const currentRevenue = currentCourses
+        .filter(c => c.status === 'approved')
+        .reduce((sum, course) => sum + (course.price || 0), 0);
+      const previousRevenue = previousCourses
+        .filter(c => c.status === 'approved')
+        .reduce((sum, course) => sum + (course.price || 0), 0);
+      
+      const revenueGrowth = previousRevenue > 0 
+        ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 
+        : currentRevenue > 0 ? 100 : 0;
+
+      // Process categories
+      const topCategories = categories
+        .map(category => {
+          const coursesInCategory = category.courses || [];
+          const currentCategoryCount = coursesInCategory.filter(c => 
+            new Date(c.created_at) >= startDate
+          ).length;
+          const previousCategoryCount = coursesInCategory.filter(c => {
+            const date = new Date(c.created_at);
+            return date >= previousStartDate && date < startDate;
+          }).length;
+          
+          const growth = previousCategoryCount > 0 
+            ? ((currentCategoryCount - previousCategoryCount) / previousCategoryCount) * 100 
+            : currentCategoryCount > 0 ? 100 : 0;
+
+          return {
+            name: category.name,
+            count: coursesInCategory.length,
+            growth: Math.round(growth * 10) / 10
+          };
+        })
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Process recent activity
+      const recentActivity = [];
+      
+      // Add recent enrollments
+      if (recentEnrollmentsResult.data) {
+        recentEnrollmentsResult.data.forEach(enrollment => {
+          recentActivity.push({
+            type: 'enrollment',
+            description: `${enrollment.profiles?.full_name || 'Student'} enrolled in ${enrollment.courses?.title || 'a course'}`,
+            time: formatTimeAgo(enrollment.enrolled_at),
+            value: '+1'
+          });
+        });
+      }
+
+      // Add recent courses
+      if (recentCoursesResult.data) {
+        recentCoursesResult.data.forEach(course => {
+          recentActivity.push({
+            type: 'course_creation',
+            description: `${course.profiles?.full_name || 'Instructor'} created "${course.title}"`,
+            time: formatTimeAgo(course.created_at),
+            value: '+1'
+          });
+        });
+      }
+
+      // Add recent registrations
+      if (recentProfilesResult.data) {
+        recentProfilesResult.data.forEach(profile => {
+          recentActivity.push({
+            type: 'user_registration',
+            description: `${profile.full_name || 'New user'} joined the platform`,
+            time: formatTimeAgo(profile.created_at),
+            value: '+1'
+          });
+        });
+      }
+
+      // Sort by time and take first 5
+      recentActivity.sort((a, b) => {
+        const timeA = parseTimeAgo(a.time);
+        const timeB = parseTimeAgo(b.time);
+        return timeA - timeB;
+      });
+
+      const analytics: AnalyticsData = {
+        totalUsers: profiles.length,
+        totalCourses: courses.length,
+        totalRevenue: Math.round(totalRevenue),
+        totalEnrollments: enrollments.length,
+        userGrowth: Math.round(userGrowth * 10) / 10,
+        courseGrowth: Math.round(courseGrowth * 10) / 10,
+        revenueGrowth: Math.round(revenueGrowth * 10) / 10,
+        enrollmentGrowth: Math.round(enrollmentGrowth * 10) / 10,
+        topCategories,
+        recentActivity: recentActivity.slice(0, 5),
+        platformStats: {
+          approvedCourses: courses.filter(c => c.status === 'approved').length,
+          pendingCourses: courses.filter(c => c.status === 'pending').length,
+          totalInstructors: profiles.filter(p => p.role === 'instructor').length,
+          totalCertificates: certificates.length,
+          activeBlogPosts: blogs.length,
+          totalFeedbacks: feedbacks.length
+        }
+      };
+
+      setData(analytics);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load analytics data',
+        variant: 'destructive'
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  };
+
+  const parseTimeAgo = (timeAgo: string) => {
+    const match = timeAgo.match(/(\d+)\s+(min|hour|day)/);
+    if (!match) return 0;
+    const value = parseInt(match[1]);
+    const unit = match[2];
+    if (unit === 'min') return value;
+    if (unit === 'hour') return value * 60;
+    return value * 24 * 60;
+  };
+
+  useEffect(() => {
+    fetchAnalyticsData();
   }, [timeRange]);
 
   if (loading) {
@@ -305,20 +532,28 @@ export default function Analytics() {
           <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Active Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.activeUsers}</span>
+                      <span className="text-sm text-gray-600">Approved Courses</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.approvedCourses}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">New Users (Today)</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.newUsers}</span>
+                      <span className="text-sm text-gray-600">Pending Courses</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.pendingCourses}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Web Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.webUsers}</span>
+                      <span className="text-sm text-gray-600">Total Instructors</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalInstructors}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Mobile Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.mobileUsers}</span>
+                      <span className="text-sm text-gray-600">Certificates Issued</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalCertificates}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Active Blog Posts</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.activeBlogPosts}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Feedbacks</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalFeedbacks}</span>
                     </div>
                   </div>
           </CardContent>
@@ -398,77 +633,59 @@ export default function Analytics() {
           {/* Platform Tab */}
           <TabsContent value="platform" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Device Usage */}
+              {/* System Overview */}
               <Card className="border-0 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Smartphone className="w-5 h-5 text-blue-600" />
-                    <span>Device Usage</span>
+                    <Globe className="w-5 h-5 text-blue-600" />
+                    <span>System Overview</span>
                   </CardTitle>
-                  <CardDescription>Platform access distribution</CardDescription>
+                  <CardDescription>Platform health and status</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Web Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.webUsers}</span>
+                      <span className="text-sm text-gray-600">Approved Courses</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.approvedCourses}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${(data.platformStats.webUsers / data.totalUsers) * 100}%` }}
-                      ></div>
-      </div>
-
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Mobile Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.mobileUsers}</span>
+                      <span className="text-sm text-gray-600">Pending Courses</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.pendingCourses}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${(data.platformStats.mobileUsers / data.totalUsers) * 100}%` }}
-                      ></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Instructors</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalInstructors}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* User Engagement */}
+              {/* Content Stats */}
               <Card className="border-0 bg-white/80 backdrop-blur-sm">
-        <CardHeader>
+                <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Users className="w-5 h-5 text-purple-600" />
-                    <span>User Engagement</span>
+                    <BookOpen className="w-5 h-5 text-purple-600" />
+                    <span>Content Statistics</span>
                   </CardTitle>
-                  <CardDescription>Active user metrics</CardDescription>
-        </CardHeader>
-        <CardContent>
+                  <CardDescription>Platform content metrics</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Active Users</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.activeUsers}</span>
+                      <span className="text-sm text-gray-600">Certificates Issued</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalCertificates}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-500 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${(data.platformStats.activeUsers / data.totalUsers) * 100}%` }}
-                      ></div>
-                    </div>
-                    
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">New Users (Today)</span>
-                      <span className="font-semibold text-gray-900">{data.platformStats.newUsers}</span>
+                      <span className="text-sm text-gray-600">Active Blog Posts</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.activeBlogPosts}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-emerald-500 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${(data.platformStats.newUsers / data.totalUsers) * 100}%` }}
-                      ></div>
-                </div>
-          </div>
-        </CardContent>
-      </Card>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Feedbacks</span>
+                      <span className="font-semibold text-gray-900">{data.platformStats.totalFeedbacks}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

@@ -20,7 +20,7 @@ export interface Course {
   category?: {
     name: string;
   };
-  profile?: {
+  instructor?: {
     full_name: string;
   };
 }
@@ -43,12 +43,12 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
         setError(null);
         console.log('Fetching courses with options:', options);
         
+        // First get courses without instructor data
         let query = supabase
           .from('courses')
           .select(`
             *,
-            categories!courses_category_id_fkey(name),
-            profiles!courses_instructor_id_fkey(full_name)
+            categories!courses_category_id_fkey(name)
           `)
           .eq('status', 'approved')
           .eq('soft_deleted', false)
@@ -66,24 +66,31 @@ export const useCourses = (options: UseCoursesOptions = {}) => {
           query = query.limit(options.limit);
         }
 
-        const { data, error } = await query;
+        const { data: courses, error } = await query;
 
         if (error) {
           console.error('Course query error:', error);
           throw error;
         }
 
-        console.log('Courses fetched successfully:', data?.length);
+        // Then get public instructor profiles separately
+        const { data: instructorProfiles, error: instructorError } = await supabase
+          .rpc('get_public_instructor_profiles');
+
+        if (instructorError) {
+          console.error('Error fetching instructor profiles:', instructorError);
+          // Continue without instructor data rather than failing completely
+        }
+
+        console.log('Courses fetched successfully:', courses?.length);
         
         // Transform data to match interface with proper type safety
-        const transformedCourses = (data || []).map((course: any) => ({
+        const transformedCourses = (courses || []).map((course: any) => ({
           ...course,
           category: course.categories && typeof course.categories === 'object' && 'name' in course.categories 
             ? { name: course.categories.name } 
             : undefined,
-          profile: course.profiles && typeof course.profiles === 'object' && 'full_name' in course.profiles 
-            ? { full_name: course.profiles.full_name } 
-            : undefined
+          instructor: instructorProfiles?.find((p: any) => p.user_id === course.instructor_id) || undefined
         }));
 
         setCourses(transformedCourses);

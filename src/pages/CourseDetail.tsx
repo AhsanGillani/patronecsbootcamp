@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Course {
   id: string;
+  instructor_id: string;
   title: string;
   description: string;
   thumbnail_url: string;
@@ -24,7 +25,7 @@ interface Course {
   total_duration: number;
   lesson_count: number;
   category?: { name: string };
-  profile?: { full_name: string };
+  instructor?: { full_name: string };
 }
 
 interface LessonSummary {
@@ -61,8 +62,7 @@ const CourseDetail = () => {
         
         const baseSelect = `
             *,
-            category:categories!courses_category_id_fkey(name),
-            profile:profiles!courses_instructor_id_fkey(full_name)
+            category:categories!courses_category_id_fkey(name)
           `;
 
         let courseData: Course | null = null;
@@ -96,8 +96,23 @@ const CourseDetail = () => {
         if (!courseData) {
           throw new Error('Course not found');
         }
+
+        // Get instructor profile separately using the secure function
+        const { data: instructorProfiles, error: instructorError } = await supabase
+          .rpc('get_public_instructor_profiles');
+
+        if (instructorError) {
+          console.error('Error fetching instructor profile:', instructorError);
+        }
+
+        // Combine the data
+        const instructor = instructorProfiles?.find((p: any) => p.user_id === courseData.instructor_id) || null;
+        const courseWithInstructor = {
+          ...courseData,
+          instructor
+        };
         
-        setCourse(courseData);
+        setCourse(courseWithInstructor);
 
         // Fetch first lesson
         const fetchFirstLesson = async () => {
@@ -389,7 +404,7 @@ const CourseDetail = () => {
                 <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-900">{course.title}</h1>
                 
                 <p className="text-lg text-slate-600 mb-6">
-                  by <span className="font-medium text-slate-900">{course.profile?.full_name || 'Patronecs'}</span>
+                  by <span className="font-medium text-slate-900">{course.instructor?.full_name || 'Patronecs'}</span>
                 </p>
 
                 <div className="flex items-center gap-6 text-sm text-slate-500 mb-6">

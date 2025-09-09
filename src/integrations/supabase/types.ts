@@ -823,6 +823,17 @@ export type Database = {
         Args: { title: string }
         Returns: string
       }
+      get_public_instructor_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          full_name: string
+          location: string
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
