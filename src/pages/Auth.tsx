@@ -302,7 +302,7 @@ const Auth = () => {
           <div className="space-y-8">
             <div className="space-y-6">
               <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 leading-tight">
-                Join Pakistan's
+                Join world's
                 <span className="block bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   Learning Revolution
                 </span>

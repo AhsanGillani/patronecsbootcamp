@@ -53,7 +53,7 @@ export const Stats = () => {
             </span>
           </h2>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            Join Pakistan's fastest-growing community of <span className="text-emerald-600 font-semibold">skilled professionals</span>
+            Join worlds's fastest-growing community of <span className="text-emerald-600 font-semibold">skilled professionals</span>
           </p>
         </div>
 
