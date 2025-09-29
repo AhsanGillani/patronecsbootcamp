@@ -46,6 +46,12 @@ const menuItems = [
     description: "Track quiz submissions",
   },
   {
+    id: "blogs",
+    title: "Blog Manager",
+    icon: FileText,
+    description: "Create & manage blogs",
+  },
+  {
     id: "analytics",
     title: "Analytics",
     icon: BarChart3,
